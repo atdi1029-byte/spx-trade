@@ -1,0 +1,63 @@
+SPX Trade Dashboard — Project Notes
+=====================================
+
+OVERVIEW
+--------
+macOS app + web dashboard for stock trading tools (SPX/stocks).
+Opens all trading tools in one click and displays a live dashboard
+that pulls data from the Google Sheet Trade Tracker.
+
+FILES
+-----
+SPX/index.html
+  - Single-file HTML dashboard (dark trading theme)
+  - Fetches live data from Apps Script doGet(?action=dashboard)
+  - Auto-refreshes every 60 seconds
+  - Sections: Quick Stats, Action Needed, Ticker Grid, Recent Signals, Performance
+
+RSI_Trendline_Buy (Stocks)/trade_tracker/apps_script.gs
+  - Modified: added ?action=dashboard JSON endpoint to doGet()
+  - Returns: tickers, recentSignals, actionNeeded, stats
+  - No auth needed — same public web app URL
+
+/Applications/SPX Trade.app
+  - macOS app bundle (same structure as Trade.app for crypto)
+  - Opens Chrome fullscreen with 3 tabs:
+    1. Dashboard (file://...SPX/index.html)
+    2. TradingView (stock charts)
+    3. Google Sheet (Trade Tracker)
+
+DEPLOYMENT — Apps Script
+------------------------
+1. Open Google Sheet → Extensions → Apps Script
+2. Replace code with contents of apps_script.gs
+3. Deploy → Manage deployments → Edit → New version → Deploy
+4. Test: visit deployed URL with ?action=dashboard appended
+   Should return JSON with tickers, stats, etc.
+
+DEPLOYMENT — macOS App
+----------------------
+Already installed at /Applications/SPX Trade.app
+Double-click to launch. If Chrome tabs don't open:
+  - Check that Google Chrome is installed
+  - The launcher script is at SPX Trade.app/Contents/MacOS/launcher
+
+DASHBOARD DATA FLOW
+--------------------
+TradingView Alert → webhook POST → doPost() → Signal Log + Positions
+User marks Action/Outcome in Positions → Dashboard tab formulas update
+Dashboard HTML → fetch doGet(?action=dashboard) → renders all tabs as JSON
+
+CUSTOMIZATION
+-------------
+- Dashboard theme: edit CSS in index.html (currently dark trading theme)
+- Refresh interval: change REFRESH_INTERVAL in index.html <script> (default 60s)
+- TradingView chart URL: edit launcher script in app bundle
+- Google Sheet URL: edit launcher script in app bundle
+
+API ENDPOINT
+------------
+URL: https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec
+  ?action=dashboard → returns JSON dashboard data
+  (no params)       → returns health check JSON
+  POST with JSON    → logs trade signal

@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#12100e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>SPX Trade Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nosifer&family=Noto+Serif+JP:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-deep: #12100e;
+            --bg-dark: #1a1815;
+            --bg-card: #221f1a;
+            --bg-card-hover: #2a2620;
+            --border: #3a3530;
+            --border-light: #4a4238;
+            --text: #d4c8b0;
+            --text-dim: #8a7e6a;
+            --text-bright: #f0e6cc;
+            --pumpkin: #d4843e;
+            --pumpkin-glow: #e8a04c;
+            --pumpkin-deep: #b8602a;
+            --green-candle: #4a8a4a;
+            --green-bright: #6aaa5a;
+            --green-dim: #3d5c3d;
+            --red-candle: #c44b3f;
+            --red-bright: #e05545;
+            --cream: #e8d5a8;
+            --moon: #f5ecd0;
+            --navy: #2d3040;
+        }
+
+        body {
+            font-family: 'Space Mono', 'Noto Serif JP', monospace;
+            background: var(--bg-deep);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Full background image */
+        .bg-watermark {
+            position: fixed;
+            top: -15vh; left: 0;
+            width: 100vw;
+            height: 115vh;
+            object-fit: cover;
+            object-position: center top;
+            opacity: 0.55;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ============ SVG BACKGROUND SCENE ============ */
+        .scene-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ============ FOG ANIMATION ============ */
+        @keyframes drift-right {
+            0% { transform: translateX(-10%); opacity: 0.3; }
+            50% { opacity: 0.5; }
+            100% { transform: translateX(10%); opacity: 0.3; }
+        }
+        @keyframes drift-left {
+            0% { transform: translateX(10%); opacity: 0.25; }
+            50% { opacity: 0.45; }
+            100% { transform: translateX(-10%); opacity: 0.25; }
+        }
+        @keyframes moon-glow {
+            0%, 100% { filter: drop-shadow(0 0 30px #f5ecd044); }
+            50% { filter: drop-shadow(0 0 50px #f5ecd066); }
+        }
+        @keyframes sway {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+        @keyframes sway-reverse {
+            0%, 100% { transform: rotate(2deg); }
+            50% { transform: rotate(-2deg); }
+        }
+        @keyframes float-coin {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.15; }
+            50% { transform: translateY(-8px) rotate(10deg); opacity: 0.25; }
+        }
+
+        /* ============ MAIN CONTENT ============ */
+        .content {
+            position: relative;
+            z-index: 1;
+            padding: 1.5rem 2rem 4rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ============ HEADER ============ */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+            border-image: linear-gradient(90deg, transparent, var(--pumpkin-deep), var(--border), transparent) 1;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .header-logo {
+            width: 160px;
+            height: 160px;
+            border-radius: 18px;
+            border: 2px solid var(--pumpkin-deep);
+            box-shadow: 0 0 25px #d4843e44;
+        }
+        .header h1 {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--cream);
+            letter-spacing: 3px;
+            line-height: 1;
+        }
+        .header h1 span {
+            font-family: 'Nosifer', cursive;
+            font-size: 3.8rem;
+            color: var(--pumpkin);
+            text-shadow: 0 0 25px #d4843e44, 0 3px 6px #00000066;
+            letter-spacing: 6px;
+        }
+        .header-sub {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+        .refresh-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--pumpkin-glow);
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        .refresh-btn:hover {
+            background: var(--border);
+            border-color: var(--pumpkin-deep);
+            box-shadow: 0 0 10px #d4843e22;
+        }
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--green-candle);
+            display: inline-block;
+            margin-right: 4px;
+            box-shadow: 0 0 6px #4a8a4a66;
+        }
+        .status-dot.error { background: var(--red-candle); box-shadow: 0 0 6px #c44b3f66; }
+        .status-dot.loading { background: var(--pumpkin); animation: pulse 1s infinite; box-shadow: 0 0 6px #d4843e66; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* ============ SECTION HEADERS ============ */
+        .section-header {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--cream);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-left: 12px;
+            border-left: 3px solid var(--pumpkin);
+        }
+        .section-header .count {
+            background: var(--pumpkin-deep);
+            color: var(--cream);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 700;
+        }
+
+        /* ============ QUOTE BANNER ============ */
+        .quote-banner {
+            text-align: center;
+            padding: 0.8rem 2rem;
+            margin-bottom: 1.25rem;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            border-image: linear-gradient(90deg, transparent, var(--border-light), transparent) 1;
+            animation: fadeIn 1s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .quote-text {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 0.85rem;
+            font-style: italic;
+            color: var(--cream);
+            opacity: 0.7;
+            line-height: 1.5;
+        }
+        .quote-author {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--pumpkin);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: 0.3rem;
+            opacity: 0.6;
+        }
+
+        /* ============ QUICK STATS BAR ============ */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--pumpkin-deep), transparent);
+        }
+        .stat-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--cream);
+            line-height: 1.2;
+        }
+        .stat-value.green { color: var(--green-bright); text-shadow: 0 0 10px #6aaa5a33; }
+        .stat-value.red { color: var(--red-bright); text-shadow: 0 0 10px #e0554533; }
+        .stat-label {
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 6px;
+        }
+
+        /* ============ ACTION NEEDED ============ */
+        .action-section { margin-bottom: 1.5rem; }
+        .action-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .action-item {
+            background: var(--bg-card);
+            border: 1px solid var(--pumpkin-deep);
+            border-left: 4px solid var(--pumpkin);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .action-item .ticker-badge {
+            background: var(--pumpkin);
+            color: var(--bg-deep);
+            font-weight: 700;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-right: 0.75rem;
+            letter-spacing: 1px;
+        }
+        .action-item .message { font-size: 0.8rem; color: var(--cream); }
+        .action-item .meta { font-size: 0.7rem; color: var(--text-dim); }
+        .action-buttons {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+        }
+        .action-btn {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 3px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        .action-btn:hover { transform: translateY(-1px); }
+        .action-btn.entered {
+            background: var(--green-dim);
+            color: var(--green-bright);
+            border-color: var(--green-candle);
+        }
+        .action-btn.entered:hover { background: var(--green-candle); color: var(--cream); }
+        .action-btn.skipped {
+            background: var(--bg-dark);
+            color: var(--text-dim);
+            border-color: var(--border);
+        }
+        .action-btn.skipped:hover { background: var(--border); color: var(--text); }
+        .action-btn.tp-hit {
+            background: var(--green-dim);
+            color: var(--green-bright);
+            border-color: var(--green-candle);
+        }
+        .action-btn.tp-hit:hover { background: var(--green-candle); color: var(--cream); }
+        .action-btn.stopped-out {
+            background: #c44b3f22;
+            color: var(--red-bright);
+            border-color: var(--red-candle);
+        }
+        .action-btn.stopped-out:hover { background: var(--red-candle); color: var(--cream); }
+        .action-btn.open-pos {
+            background: #1f6feb22;
+            color: #6a9fdb;
+            border-color: #1f6feb44;
+        }
+        .action-btn.open-pos:hover { background: #1f6feb44; color: var(--cream); }
+        .action-btn:disabled {
+            opacity: 0.4;
+            cursor: default;
+            transform: none;
+        }
+        /* Entry size input */
+        .entry-input {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--cream);
+            padding: 4px 8px;
+            border-radius: 3px;
+            width: 60px;
+            text-align: center;
+        }
+        .entry-input::placeholder { color: var(--text-dim); }
+        .entry-input:focus { outline: none; border-color: var(--pumpkin); }
+        .no-actions {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--green-candle);
+            font-size: 0.8rem;
+        }
+
+        /* ============ BUY/SELL TOGGLE ============ */
+        .side-toggle {
+            display: flex;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .side-toggle button {
+            padding: 4px 10px;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            background: transparent;
+            color: var(--text-dim);
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+            letter-spacing: inherit;
+        }
+        .side-toggle button.active-buy {
+            background: var(--green-dim);
+            color: var(--green-bright);
+        }
+        .side-toggle button.active-sell {
+            background: #c44b3f33;
+            color: var(--red-bright);
+        }
+        .side-toggle button:hover:not(.active-buy):not(.active-sell) {
+            background: var(--border);
+            color: var(--text);
+        }
+        .ticker-side-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 2px;
+            margin-left: 0.5rem;
+        }
+        .ticker-side-label.buy { color: var(--green-bright); }
+        .ticker-side-label.sell { color: var(--red-bright); }
+
+        /* ============ TICKER GRID ============ */
+        .ticker-search-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            align-items: center;
+        }
+        .ticker-search-bar input {
+            flex: 1;
+            max-width: 300px;
+            padding: 0.4rem 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--cream);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+        }
+        .ticker-search-bar input::placeholder { color: var(--text-dim); }
+        .ticker-search-bar input:focus {
+            outline: none;
+            border-color: var(--pumpkin);
+        }
+        .ticker-search-bar button {
+            padding: 0.4rem 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-dim);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ticker-search-bar button:hover { border-color: var(--pumpkin); color: var(--cream); }
+        .ticker-search-bar button.active {
+            background: var(--pumpkin-deep);
+            border-color: var(--pumpkin);
+            color: var(--cream);
+        }
+        .ticker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .ticker-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            transition: all 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+        .ticker-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 40px;
+            background: linear-gradient(transparent, #1a181508);
+            pointer-events: none;
+        }
+        .ticker-card:hover {
+            border-color: var(--pumpkin-deep);
+            box-shadow: 0 4px 20px #0008, 0 0 15px #d4843e11;
+            transform: translateY(-2px);
+        }
+        .ticker-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .ticker-name {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: var(--cream);
+            letter-spacing: 1px;
+        }
+        .ticker-status {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .ticker-status.OPEN { background: #1f6feb22; color: #6a9fdb; border: 1px solid #1f6feb44; }
+        .ticker-status.PROFIT { background: #3d5c3d44; color: var(--green-bright); border: 1px solid var(--green-dim); }
+        .ticker-status.STOPPED { background: #c44b3f22; color: var(--red-bright); border: 1px solid #c44b3f44; }
+        .ticker-status.BLOCKED { background: #c44b3f44; color: var(--red-bright); border: 1px solid var(--red-candle); }
+        .ticker-status.IDLE { background: var(--bg-dark); color: var(--text-dim); border: 1px solid var(--border); }
+        .ticker-status.NEW_SIGNAL { background: #d4843e22; color: var(--pumpkin-glow); border: 1px solid var(--pumpkin-deep); }
+
+        .ticker-detail {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.35rem 1rem;
+            font-size: 0.75rem;
+        }
+        .ticker-detail dt { color: var(--text-dim); font-size: 0.65rem; letter-spacing: 0.5px; }
+        .ticker-detail dd { color: var(--text); font-weight: 700; text-align: right; }
+        .ticker-detail dd.green { color: var(--green-bright); }
+        .ticker-detail dd.red { color: var(--red-bright); }
+        .ticker-phase {
+            margin-top: 0.6rem;
+            padding-top: 0.6rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+        .ticker-action {
+            font-size: 0.7rem;
+            color: var(--pumpkin-glow);
+            margin-top: 0.3rem;
+        }
+        .ticker-links {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.6rem;
+            padding-top: 0.6rem;
+            border-top: 1px solid var(--border);
+        }
+        .ticker-link {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 3px;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+            background: var(--bg-dark);
+            color: var(--text-dim);
+        }
+        .ticker-link:hover {
+            border-color: var(--pumpkin-deep);
+            color: var(--cream);
+            background: var(--border);
+        }
+        .ticker-link.tv { color: #2196F3; border-color: #2196F322; }
+        .ticker-link.tv:hover { background: #2196F322; border-color: #2196F3; color: #64B5F6; }
+        .ticker-link.hl { color: #4ade80; border-color: #4ade8022; }
+        .ticker-link.hl:hover { background: #4ade8022; border-color: #4ade80; color: #86efac; }
+
+        /* ============ BOTTOM GRID ============ */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 900px) {
+            .bottom-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ============ SIGNALS TABLE ============ */
+        .section-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+        }
+        .signals-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        .signals-table th {
+            text-align: left;
+            padding: 0.5rem 0.5rem;
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+        }
+        .signals-table td {
+            padding: 0.45rem 0.5rem;
+            border-bottom: 1px solid #221f1a;
+        }
+        .signals-table tr:hover td { background: #2a262044; }
+        .signal-badge {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .signal-badge.buy { background: var(--green-dim); color: var(--green-bright); }
+        .signal-badge.sell { background: #c44b3f33; color: var(--red-bright); }
+        .signal-badge.add { background: #1f6feb22; color: #6a9fdb; }
+        .signal-badge.reduce { background: #d4843e22; color: var(--pumpkin-glow); }
+
+        /* ============ PERFORMANCE GRID ============ */
+        .perf-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+        }
+        .perf-item {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        .perf-item .perf-val {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--cream);
+        }
+        .perf-item .perf-label {
+            font-size: 0.55rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 3px;
+        }
+
+        /* ============ LOADING / ERROR ============ */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #12100eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .loading-overlay.hidden { display: none; }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--pumpkin);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-banner {
+            background: #c44b3f18;
+            border: 1px solid var(--red-candle);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            color: var(--red-bright);
+            font-size: 0.8rem;
+            display: none;
+        }
+        .error-banner.show { display: block; }
+
+        /* ============ VICTORY GARDEN ============ */
+        .graveyard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            padding: 3rem 1.5rem 2rem;
+            background: url('graveyard-bg.png') center/cover no-repeat;
+            border: none;
+            border-radius: 0;
+            min-height: 200px;
+            align-items: flex-end;
+            justify-content: center;
+            position: relative;
+            margin-left: -2rem;
+            margin-right: -2rem;
+            padding-left: 3rem;
+            padding-right: 3rem;
+            -webkit-mask-image: radial-gradient(ellipse 60% 72% at center, black 30%, transparent 85%);
+            mask-image: radial-gradient(ellipse 60% 72% at center, black 30%, transparent 85%);
+        }
+        .graveyard::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at center, transparent 30%, #12100e66 70%, #12100ecc 100%);
+            pointer-events: none;
+        }
+        .victory-stone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: stoneRise 0.5s ease-out;
+            position: relative;
+            z-index: 1;
+        }
+        @keyframes stoneRise {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .stone-marker {
+            width: 140px;
+            position: relative;
+        }
+        .stone-marker svg {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 4px 8px #0008);
+        }
+        .stone-date {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.4rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+        .victory-empty {
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-style: italic;
+            padding: 1rem;
+            text-align: center;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============ OMIKUJI ============ */
+        .omikuji-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 0;
+            margin-bottom: 1rem;
+        }
+        .omikuji-slip {
+            width: 120px;
+            height: 180px;
+            background: linear-gradient(180deg, #e8d5a8, #d4c8a0, #c4b890);
+            border-radius: 4px 4px 2px 2px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px #0006, 0 0 20px #d4843e11;
+            border: 1px solid #b8a878;
+            position: relative;
+        }
+        .omikuji-slip:hover {
+            transform: translateY(-5px) rotate(-2deg);
+            box-shadow: 0 8px 25px #0008, 0 0 30px #d4843e22;
+        }
+        .omikuji-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            color: #8a7050;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        .omikuji-icon {
+            font-size: 1.8rem;
+            color: #6a5030;
+            writing-mode: vertical-rl;
+            font-family: 'Noto Serif JP', serif;
+            font-weight: 900;
+        }
+        .omikuji-hint {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.4rem;
+            color: #8a7050;
+            letter-spacing: 1px;
+            margin-top: 0.75rem;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .omikuji-result {
+            text-align: center;
+            max-width: 400px;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            animation: fadeIn 0.5s ease;
+        }
+        .omikuji-result.hidden { display: none; }
+        .omikuji-fortune {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            margin-bottom: 0.75rem;
+        }
+        .omikuji-fortune.great { color: var(--green-bright); }
+        .omikuji-fortune.good { color: var(--pumpkin-glow); }
+        .omikuji-fortune.small { color: var(--cream); }
+        .omikuji-fortune.uncertain { color: var(--text-dim); }
+        .omikuji-tip {
+            font-size: 0.8rem;
+            color: var(--text);
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        /* ============ FOOTER ============ */
+        .footer {
+            text-align: center;
+            padding: 2rem 0 1rem;
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============ BACKGROUND SCENE (ukiyo-e night) ============ -->
+<svg class="scene-bg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- Noise texture for washi paper feel -->
+        <filter id="grain">
+            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+            <feColorMatrix type="saturate" values="0"/>
+            <feBlend in="SourceGraphic" mode="multiply" result="noisy"/>
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="0.08"/>
+            </feComponentTransfer>
+            <feBlend in="SourceGraphic" mode="normal"/>
+        </filter>
+        <!-- Moon glow -->
+        <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#f5ecd0" stop-opacity="0.15"/>
+            <stop offset="60%" stop-color="#f5ecd0" stop-opacity="0.05"/>
+            <stop offset="100%" stop-color="#f5ecd0" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Fog gradient -->
+        <linearGradient id="fog1" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#1a1815" stop-opacity="0"/>
+            <stop offset="20%" stop-color="#2a2520" stop-opacity="0.3"/>
+            <stop offset="50%" stop-color="#2a2520" stop-opacity="0.5"/>
+            <stop offset="80%" stop-color="#2a2520" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#1a1815" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="fog2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#1a1815" stop-opacity="0"/>
+            <stop offset="30%" stop-color="#221f1a" stop-opacity="0.25"/>
+            <stop offset="60%" stop-color="#221f1a" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#1a1815" stop-opacity="0"/>
+        </linearGradient>
+        <!-- Treeline gradient -->
+        <linearGradient id="treeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#1a2018"/>
+            <stop offset="100%" stop-color="#12100e"/>
+        </linearGradient>
+    </defs>
+
+    <!-- Sky gradient -->
+    <rect width="1920" height="1080" fill="#12100e"/>
+    <rect width="1920" height="600" fill="#161412" opacity="0.5"/>
+
+    <!-- Moon -->
+    <g style="animation: moon-glow 6s ease-in-out infinite;">
+        <circle cx="1620" cy="140" r="200" fill="url(#moonGlow)"/>
+        <circle cx="1620" cy="140" r="65" fill="#f5ecd0" opacity="0.12"/>
+        <circle cx="1620" cy="140" r="50" fill="#f5ecd0" opacity="0.08"/>
+    </g>
+
+    <!-- Distant tree silhouettes -->
+    <path d="M0,380 Q100,340 200,360 Q300,330 400,355 Q500,320 600,350 Q700,310 800,340 Q900,300 1000,330 Q1100,310 1200,335 Q1300,300 1400,325 Q1500,310 1600,330 Q1700,300 1800,320 Q1920,310 1920,340 L1920,450 L0,450Z" fill="url(#treeGrad)" opacity="0.6"/>
+    <path d="M0,400 Q150,370 300,390 Q450,360 600,380 Q750,350 900,375 Q1050,345 1200,370 Q1350,355 1500,372 Q1650,350 1800,368 Q1920,358 1920,380 L1920,480 L0,480Z" fill="#12100e" opacity="0.8"/>
+
+    <!-- Susuki grass (pampas grass) - left cluster -->
+    <g transform="translate(80, 700)" style="animation: sway 5s ease-in-out infinite; transform-origin: 80px 700px;">
+        <line x1="0" y1="380" x2="-20" y2="100" stroke="#4a4030" stroke-width="1.5" opacity="0.4"/>
+        <line x1="10" y1="380" x2="5" y2="80" stroke="#4a4030" stroke-width="1.5" opacity="0.35"/>
+        <line x1="20" y1="380" x2="35" y2="90" stroke="#4a4030" stroke-width="1.5" opacity="0.3"/>
+        <!-- Plumes -->
+        <ellipse cx="-20" cy="85" rx="4" ry="20" fill="#6a5a40" opacity="0.3" transform="rotate(-8,-20,85)"/>
+        <ellipse cx="5" cy="65" rx="4" ry="22" fill="#6a5a40" opacity="0.25" transform="rotate(3,5,65)"/>
+        <ellipse cx="35" cy="75" rx="4" ry="18" fill="#6a5a40" opacity="0.2" transform="rotate(10,35,75)"/>
+    </g>
+
+    <!-- Susuki grass - right cluster -->
+    <g transform="translate(1780, 720)" style="animation: sway-reverse 6s ease-in-out infinite; transform-origin: 1780px 720px;">
+        <line x1="0" y1="360" x2="15" y2="90" stroke="#4a4030" stroke-width="1.5" opacity="0.35"/>
+        <line x1="15" y1="360" x2="30" y2="70" stroke="#4a4030" stroke-width="1.5" opacity="0.3"/>
+        <line x1="-10" y1="360" x2="-25" y2="100" stroke="#4a4030" stroke-width="1.5" opacity="0.25"/>
+        <ellipse cx="15" cy="75" rx="4" ry="20" fill="#6a5a40" opacity="0.25" transform="rotate(5,15,75)"/>
+        <ellipse cx="30" cy="55" rx="4" ry="22" fill="#6a5a40" opacity="0.2" transform="rotate(10,30,55)"/>
+        <ellipse cx="-25" cy="85" rx="4" ry="18" fill="#6a5a40" opacity="0.2" transform="rotate(-8,-25,85)"/>
+    </g>
+
+    <!-- Drifting fog layers -->
+    <rect x="-200" y="500" width="2320" height="60" fill="url(#fog1)" opacity="0.4" style="animation: drift-right 25s ease-in-out infinite;"/>
+    <rect x="-200" y="600" width="2320" height="80" fill="url(#fog2)" opacity="0.35" style="animation: drift-left 30s ease-in-out infinite;"/>
+    <rect x="-200" y="750" width="2320" height="50" fill="url(#fog1)" opacity="0.25" style="animation: drift-right 20s ease-in-out infinite;"/>
+
+    <!-- Scattered coins (floating) -->
+    <g style="animation: float-coin 4s ease-in-out infinite;">
+        <circle cx="300" cy="850" r="6" fill="#d4843e" opacity="0.12" stroke="#e8a04c" stroke-width="0.5" stroke-opacity="0.15"/>
+    </g>
+    <g style="animation: float-coin 5s ease-in-out 1s infinite;">
+        <circle cx="1500" cy="900" r="5" fill="#d4843e" opacity="0.1" stroke="#e8a04c" stroke-width="0.5" stroke-opacity="0.12"/>
+    </g>
+    <g style="animation: float-coin 3.5s ease-in-out 0.5s infinite;">
+        <circle cx="900" cy="950" r="7" fill="#d4843e" opacity="0.08" stroke="#e8a04c" stroke-width="0.5" stroke-opacity="0.1"/>
+    </g>
+
+    <!-- Candlestick pattern (subtle, like the hakama fabric) -->
+    <g opacity="0.06">
+        <!-- Green candles -->
+        <rect x="200" y="920" width="4" height="30" fill="#4a8a4a" rx="1"/>
+        <line x1="202" y1="910" x2="202" y2="960" stroke="#4a8a4a" stroke-width="1"/>
+        <rect x="215" y="930" width="4" height="20" fill="#4a8a4a" rx="1"/>
+        <line x1="217" y1="925" x2="217" y2="955" stroke="#4a8a4a" stroke-width="1"/>
+        <!-- Red candles -->
+        <rect x="230" y="925" width="4" height="25" fill="#c44b3f" rx="1"/>
+        <line x1="232" y1="915" x2="232" y2="955" stroke="#c44b3f" stroke-width="1"/>
+        <rect x="245" y="935" width="4" height="15" fill="#c44b3f" rx="1"/>
+        <line x1="247" y1="928" x2="247" y2="958" stroke="#c44b3f" stroke-width="1"/>
+        <!-- More green -->
+        <rect x="260" y="920" width="4" height="25" fill="#4a8a4a" rx="1"/>
+        <line x1="262" y1="912" x2="262" y2="950" stroke="#4a8a4a" stroke-width="1"/>
+
+        <!-- Right side cluster -->
+        <rect x="1600" y="930" width="4" height="20" fill="#4a8a4a" rx="1"/>
+        <line x1="1602" y1="922" x2="1602" y2="955" stroke="#4a8a4a" stroke-width="1"/>
+        <rect x="1615" y="925" width="4" height="28" fill="#c44b3f" rx="1"/>
+        <line x1="1617" y1="918" x2="1617" y2="960" stroke="#c44b3f" stroke-width="1"/>
+        <rect x="1630" y="935" width="4" height="18" fill="#4a8a4a" rx="1"/>
+        <line x1="1632" y1="930" x2="1632" y2="958" stroke="#4a8a4a" stroke-width="1"/>
+    </g>
+
+    <!-- Grain overlay -->
+    <rect width="1920" height="1080" filter="url(#grain)" opacity="0.4"/>
+</svg>
+
+<img src="bg.png" alt="" class="bg-watermark">
+
+<!-- ============ LOADING ============ -->
+<div class="loading-overlay" id="loading">
+    <div class="spinner"></div>
+    <div style="color: var(--text-dim); font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase;">Loading dashboard...</div>
+</div>
+
+<!-- ============ MAIN CONTENT ============ -->
+<div class="content">
+    <div class="error-banner" id="errorBanner"></div>
+
+    <div class="header">
+        <div class="header-left">
+            <img src="logo.png" alt="SPX" class="header-logo">
+            <div>
+                <h1><span>SPX</span> Trade</h1>
+                <div class="header-sub">Stock Position Tracker</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <span><span class="status-dot loading" id="statusDot"></span><span id="statusText">Connecting...</span></span>
+            <span id="lastUpdate"></span>
+            <button class="refresh-btn" onclick="fetchData()">Refresh</button>
+        </div>
+    </div>
+
+    <!-- Quote Banner -->
+    <div class="quote-banner" id="quoteBanner">
+        <div class="quote-text" id="quoteText"></div>
+        <div class="quote-author" id="quoteAuthor"></div>
+    </div>
+
+    <!-- Quick Stats Bar -->
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-card">
+            <div class="stat-value" id="statOpen">-</div>
+            <div class="stat-label">Open Positions</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statWinRate">-</div>
+            <div class="stat-label">Win Rate</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statPnl">-</div>
+            <div class="stat-label">Net P&L</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statToday">-</div>
+            <div class="stat-label">Today's Signals</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statStreak">-</div>
+            <div class="stat-label">Current Streak</div>
+        </div>
+    </div>
+
+    <!-- Action Needed -->
+    <div class="action-section" id="actionSection">
+        <div class="section-header">Action Needed <span class="count" id="actionCount">0</span></div>
+        <div class="action-list" id="actionList"></div>
+    </div>
+
+    <!-- Ticker Grid -->
+    <div class="section-header">Tickers <span class="count" id="tickerCount">0</span></div>
+    <div class="ticker-search-bar">
+        <input type="text" id="tickerSearch" placeholder="Search tickers..." oninput="filterTickers()">
+        <button id="tickerShowAll" onclick="toggleShowAll()">Show All</button>
+    </div>
+    <div class="ticker-grid" id="tickerGrid"></div>
+
+    <!-- Bottom: Recent Signals + Performance -->
+    <div class="bottom-grid">
+        <div>
+            <div class="section-header">Recent Signals <span class="count" id="signalCount">0</span></div>
+            <div class="section-box">
+                <table class="signals-table" id="signalsTable">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Ticker</th>
+                            <th>Signal</th>
+                            <th>Price</th>
+                            <th>TF</th>
+                            <th>RSI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="signalsBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div>
+            <div class="section-header">Performance Summary</div>
+            <div class="section-box">
+                <div class="perf-grid" id="perfGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graveyard Of Wins -->
+    <div class="section-header" style="justify-content: center; border-left: none; padding-left: 0;">Graveyard Of Wins <span class="count" id="graveyardCount">0</span></div>
+    <div class="graveyard" id="graveyard"></div>
+
+    <!-- Omikuji Fortune -->
+    <div class="omikuji-section">
+        <div class="omikuji-slip" id="omikujiSlip" onclick="drawOmikuji()">
+            <div class="omikuji-label">OMIKUJI</div>
+            <div class="omikuji-icon">&#x304A;&#x307F;&#x304F;&#x3058;</div>
+            <div class="omikuji-hint">Click to draw your fortune</div>
+        </div>
+        <div class="omikuji-result hidden" id="omikujiResult">
+            <div class="omikuji-fortune" id="omikujiFortune"></div>
+            <div class="omikuji-tip" id="omikujiTip"></div>
+            <button class="refresh-btn" onclick="resetOmikuji()" style="margin-top:0.75rem">Draw Again</button>
+        </div>
+    </div>
+
+    <div class="footer">SPX Trade Dashboard</div>
+</div>
+
+<script>
+    // ====== CONFIG ======
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec?action=dashboard';
+    const REFRESH_INTERVAL = 60000; // 60 seconds
+
+    let refreshTimer = null;
+    let allTickers = [];
+    let showAllTickers = false;
+    const TICKER_LIMIT = 8;
+
+    // ====== FETCH DATA ======
+    async function fetchData() {
+        const dot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        dot.className = 'status-dot loading';
+        statusText.textContent = 'Fetching...';
+
+        try {
+            const resp = await fetch(API_URL);
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+
+            if (data.status !== 'ok') throw new Error(data.message || 'Bad response');
+
+            renderDashboard(data);
+
+            dot.className = 'status-dot';
+            statusText.textContent = 'Live';
+            document.getElementById('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString();
+            document.getElementById('errorBanner').className = 'error-banner';
+            document.getElementById('loading').className = 'loading-overlay hidden';
+        } catch (err) {
+            // Fall back to sample data for preview
+            renderDashboard(SAMPLE_DATA);
+            dot.className = 'status-dot';
+            statusText.textContent = 'Preview';
+            document.getElementById('lastUpdate').textContent = 'Sample data';
+            document.getElementById('errorBanner').className = 'error-banner';
+            document.getElementById('loading').className = 'loading-overlay hidden';
+        }
+
+        // Schedule next refresh
+        if (refreshTimer) clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(fetchData, REFRESH_INTERVAL);
+    }
+
+    // ====== RENDER ======
+    function renderDashboard(data) {
+        const { tickers, recentSignals, actionNeeded, stats } = data;
+
+        // --- Quick Stats ---
+        document.getElementById('statOpen').textContent = stats.openPositions || 0;
+        const wrEl = document.getElementById('statWinRate');
+        wrEl.textContent = stats.winRate || '0%';
+        wrEl.className = 'stat-value' + (parseFloat(stats.winRate) >= 50 ? ' green' : parseFloat(stats.winRate) > 0 ? ' red' : '');
+
+        const pnlEl = document.getElementById('statPnl');
+        pnlEl.textContent = stats.netPnl || '$0.00';
+        const pnlNum = parseFloat((stats.netPnl || '').replace('$', ''));
+        pnlEl.className = 'stat-value' + (pnlNum >= 0 ? ' green' : ' red');
+
+        document.getElementById('statToday').textContent = stats.todaySignals || 0;
+
+        const streakEl = document.getElementById('statStreak');
+        const streakStr = stats.currentStreak || '0';
+        streakEl.textContent = streakStr;
+        streakEl.className = 'stat-value' + (streakStr.includes('W') ? ' green' : streakStr.includes('L') ? ' red' : '');
+
+        // --- Action Needed ---
+        const actionList = document.getElementById('actionList');
+        const actionCount = document.getElementById('actionCount');
+        actionCount.textContent = actionNeeded.length;
+        if (actionNeeded.length === 0) {
+            actionList.innerHTML = '<div class="no-actions">All caught up - no actions needed</div>';
+        } else {
+            actionList.innerHTML = actionNeeded.map((a, i) => {
+                const id = 'action-' + i;
+                if (a.type === 'mark_action') {
+                    return `
+                        <div class="action-item" id="${id}">
+                            <div>
+                                <div><span class="ticker-badge">${esc(a.ticker)}</span><span class="message">${esc(a.message)}</span></div>
+                                <div class="action-buttons">
+                                    <input type="text" class="entry-input" placeholder="Size $" id="${id}-size">
+                                    <button class="action-btn entered" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Entered','${id}')">Entered</button>
+                                    <button class="action-btn skipped" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Skipped','${id}')">Skipped</button>
+                                </div>
+                            </div>
+                            <div class="meta">${esc(a.signal.toUpperCase())} @ $${a.price}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}</div>
+                        </div>`;
+                } else {
+                    return `
+                        <div class="action-item" id="${id}">
+                            <div>
+                                <div><span class="ticker-badge">${esc(a.ticker)}</span><span class="message">${esc(a.message)}</span></div>
+                                <div class="action-buttons">
+                                    <input type="text" class="entry-input" placeholder="Profit $" id="${id}-profit">
+                                    <button class="action-btn tp-hit" onclick="markOutcome('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'TP Hit','${id}')">TP Hit</button>
+                                    <button class="action-btn stopped-out" onclick="markOutcome('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Stopped Out','${id}')">Stopped Out</button>
+                                    <button class="action-btn open-pos" onclick="markOutcome('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Open','${id}')">Open</button>
+                                </div>
+                            </div>
+                            <div class="meta">${esc(a.signal.toUpperCase())} @ $${a.price}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}</div>
+                        </div>`;
+                }
+            }).join('');
+        }
+
+        // --- Ticker Grid ---
+        allTickers = tickers;
+        document.getElementById('tickerCount').textContent = tickers.length;
+        renderTickerGrid();
+
+        // --- Recent Signals ---
+        document.getElementById('signalCount').textContent = recentSignals.length;
+        const tbody = document.getElementById('signalsBody');
+        tbody.innerHTML = recentSignals.map(s => `
+            <tr>
+                <td>${esc(s.timestamp)}</td>
+                <td style="font-weight:700;color:var(--cream)">${esc(s.ticker)}</td>
+                <td><span class="signal-badge ${s.signal}">${esc(s.signal)}</span></td>
+                <td>$${Number(s.price || 0).toFixed(2)}</td>
+                <td>${esc(s.timeframe || '-')}</td>
+                <td>${s.rsi != null ? Number(s.rsi).toFixed(1) : '-'}</td>
+            </tr>
+        `).join('');
+
+        // --- Graveyard Of Wins ---
+        renderVictories(data);
+
+        // --- Performance Summary ---
+        const perfGrid = document.getElementById('perfGrid');
+        perfGrid.innerHTML = `
+            <div class="perf-item">
+                <div class="perf-val">${stats.totalTrades}</div>
+                <div class="perf-label">Total Trades</div>
+            </div>
+            <div class="perf-item">
+                <div class="perf-val" style="color:${parseFloat(stats.winRate) >= 50 ? 'var(--green-bright)' : 'var(--red-bright)'}">${stats.winRate}</div>
+                <div class="perf-label">Win Rate</div>
+            </div>
+            <div class="perf-item">
+                <div class="perf-val" style="color:var(--green-bright)">${stats.totalProfit}</div>
+                <div class="perf-label">Total Profit</div>
+            </div>
+            <div class="perf-item">
+                <div class="perf-val" style="color:var(--red-bright)">${stats.totalLost}</div>
+                <div class="perf-label">Total Lost</div>
+            </div>
+            <div class="perf-item">
+                <div class="perf-val">${stats.bestWinStreak}W</div>
+                <div class="perf-label">Best Win Streak</div>
+            </div>
+            <div class="perf-item">
+                <div class="perf-val">${stats.worstLossStreak}L</div>
+                <div class="perf-label">Worst Loss Streak</div>
+            </div>
+            <div class="perf-item">
+                <div class="perf-val">${stats.bestTicker}</div>
+                <div class="perf-label">Best Ticker</div>
+            </div>
+            <div class="perf-item">
+                <div class="perf-val">${stats.worstTicker}</div>
+                <div class="perf-label">Worst Ticker</div>
+            </div>
+        `;
+    }
+
+    // ====== SIDE FLIP ======
+    function flipSide(cardId, side) {
+        const card = document.getElementById(cardId);
+        if (!card) return;
+        const buyBase = parseFloat(card.dataset.buyBase) || 30;
+        const sellBase = parseFloat(card.dataset.sellBase) || 30;
+        card.dataset.side = side;
+
+        // Update toggle buttons
+        const btns = card.querySelectorAll('.side-toggle button');
+        btns[0].className = side === 'buy' ? 'active-buy' : '';
+        btns[1].className = side === 'sell' ? 'active-sell' : '';
+
+        // Update side label
+        const label = card.querySelector('.ticker-side-label');
+        if (label) {
+            label.textContent = side.toUpperCase();
+            label.className = 'ticker-side-label ' + side;
+        }
+
+        // Update base size display
+        const base = side === 'sell' ? sellBase : buyBase;
+        const baseEl = card.querySelector('.side-base');
+        if (baseEl) baseEl.textContent = '$' + base.toFixed(2);
+
+        // Recalc next size (half base for DCA, etc. — simplified)
+        const nextEl = card.querySelector('.side-next');
+        if (nextEl && nextEl.textContent !== 'SIT OUT') {
+            nextEl.textContent = '$' + base.toFixed(2);
+        }
+    }
+
+    // ====== HELPERS ======
+    function esc(str) {
+        const d = document.createElement('div');
+        d.textContent = str || '';
+        return d.innerHTML;
+    }
+
+    // ====== API WRITE FUNCTIONS ======
+    const POST_URL = 'https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec';
+
+    async function markAction(ticker, signal, price, value, elemId) {
+        const sizeInput = document.getElementById(elemId + '-size');
+        const entrySize = sizeInput ? sizeInput.value : '';
+        const el = document.getElementById(elemId);
+
+        // Disable buttons
+        el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
+
+        try {
+            await fetch(POST_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'update_position',
+                    ticker: ticker,
+                    signal: signal,
+                    price: price,
+                    field: 'action',
+                    value: value,
+                    entrySize: entrySize
+                })
+            });
+            el.style.borderColor = value === 'Entered' ? 'var(--green-candle)' : 'var(--text-dim)';
+            el.style.opacity = '0.5';
+            el.innerHTML = '<div><span class="ticker-badge">' + esc(ticker) + '</span><span class="message">' + value.toUpperCase() + (entrySize ? ' ($' + entrySize + ')' : '') + '</span></div>';
+            // Refresh after a beat
+            setTimeout(fetchData, 2000);
+        } catch (err) {
+            el.querySelectorAll('.action-btn').forEach(b => b.disabled = false);
+            alert('Failed to update: ' + err.message);
+        }
+    }
+
+    async function markOutcome(ticker, signal, price, value, elemId) {
+        const profitInput = document.getElementById(elemId + '-profit');
+        const profitLocked = profitInput ? profitInput.value : '';
+        const el = document.getElementById(elemId);
+
+        el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
+
+        try {
+            await fetch(POST_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'update_position',
+                    ticker: ticker,
+                    signal: signal,
+                    price: price,
+                    field: 'outcome',
+                    value: value,
+                    profitLocked: profitLocked
+                })
+            });
+            const color = value === 'TP Hit' ? 'var(--green-candle)' : value === 'Stopped Out' ? 'var(--red-candle)' : '#1f6feb';
+            el.style.borderColor = color;
+            el.style.opacity = '0.5';
+            el.innerHTML = '<div><span class="ticker-badge">' + esc(ticker) + '</span><span class="message">' + value.toUpperCase() + (profitLocked ? ' ($' + profitLocked + ' locked)' : '') + '</span></div>';
+            setTimeout(fetchData, 2000);
+        } catch (err) {
+            el.querySelectorAll('.action-btn').forEach(b => b.disabled = false);
+            alert('Failed to update: ' + err.message);
+        }
+    }
+
+    // ====== EMPTY FALLBACK (shows when Apps Script not yet deployed) ======
+    const SAMPLE_DATA = {
+        status: 'ok',
+        tickers: [],
+        recentSignals: [],
+        actionNeeded: [],
+        stats: {
+            totalTrades: 0, wins: 0, losses: 0, winRate: '0%',
+            netPnl: '$0', totalProfit: '$0', totalLost: '$0',
+            openPositions: 0, todaySignals: 0, bestWinStreak: 0,
+            worstLossStreak: 0, currentStreak: '-',
+            bestTicker: '-', worstTicker: '-'
+        }
+    };
+
+    // ====== TICKER LINKS (editable, saved to localStorage) ======
+    // ====== TICKER GRID RENDERING ======
+    function renderTickerCard(t, i) {
+        const statusClass = (t.status || 'IDLE').replace(/\s+/g, '_');
+        const lockedClass = (Number(t.locked) || 0) > 0 ? 'green' : '';
+        const stopClass = (Number(t.stopouts) || 0) > 0 ? 'red' : '';
+        const tid = 'ticker-' + i;
+        const buyBase = Number(t.buyBase || t.base || 30);
+        const sellBase = Number(t.sellBase || t.base || 30);
+        const activeSide = (t.lastSignal === 'sell' || t.lastSignal === 'reduce') ? 'sell' : 'buy';
+        return `
+            <div class="ticker-card" id="${tid}" data-buy-base="${buyBase}" data-sell-base="${sellBase}" data-side="${activeSide}">
+                <div class="ticker-card-header">
+                    <div style="display:flex;align-items:center;gap:0.5rem">
+                        <span class="ticker-name">${esc(t.ticker)}</span>
+                        <span class="ticker-status ${statusClass}">${esc(t.status || 'IDLE')}</span>
+                    </div>
+                    <div class="side-toggle">
+                        <button class="${activeSide === 'buy' ? 'active-buy' : ''}" onclick="flipSide('${tid}','buy')">Buy</button>
+                        <button class="${activeSide === 'sell' ? 'active-sell' : ''}" onclick="flipSide('${tid}','sell')">Sell</button>
+                    </div>
+                </div>
+                <dl class="ticker-detail">
+                    <dt>Side</dt><dd><span class="ticker-side-label ${activeSide}">${activeSide.toUpperCase()}</span></dd>
+                    <dt>Last Signal</dt><dd>${esc((t.lastSignal || '-').toUpperCase())}</dd>
+                    <dt>Price</dt><dd>${t.price ? '$' + Number(t.price).toFixed(2) : '-'}</dd>
+                    <dt>Base Size</dt><dd class="side-base">$${(activeSide === 'sell' ? sellBase : buyBase).toFixed(2)}</dd>
+                    <dt>Next Size</dt><dd class="side-next">${t.nextSize === 'SIT OUT' ? '<span class="red">SIT OUT</span>' : '$' + Number(t.nextSize || 0).toFixed(2)}</dd>
+                    <dt>Locked Profit</dt><dd class="${lockedClass}">${Number(t.locked || 0) > 0 ? '$' + Number(t.locked).toFixed(2) : '$0.00'}</dd>
+                    <dt>Stop-outs</dt><dd class="${stopClass}">${t.stopouts || 0}</dd>
+                </dl>
+                <div class="ticker-phase">${esc(t.phase || 'No data')}</div>
+                ${t.nextAction ? '<div class="ticker-action">' + esc(t.nextAction) + '</div>' : ''}
+                <div class="ticker-links">
+                    <a class="ticker-link tv" href="${getTickerLink(t.ticker, 'tv')}" target="_blank">TradingView</a>
+                    <a class="ticker-link hl" href="${getTickerLink(t.ticker, 'hl')}" target="_blank">Hyperliquid</a>
+                    <button class="ticker-link" onclick="editLinks('${esc(t.ticker)}')" title="Edit links">&#9998;</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderTickerGrid(filtered) {
+        const grid = document.getElementById('tickerGrid');
+        const btn = document.getElementById('tickerShowAll');
+        const search = document.getElementById('tickerSearch').value.trim().toUpperCase();
+        let tickers = filtered || allTickers;
+
+        if (search) {
+            // When searching, show all matches
+            tickers = allTickers.filter(t => t.ticker.toUpperCase().includes(search));
+            btn.textContent = `${tickers.length} match${tickers.length !== 1 ? 'es' : ''}`;
+            btn.classList.remove('active');
+        } else if (!showAllTickers && tickers.length > TICKER_LIMIT) {
+            // Default: show most recent 8
+            tickers = tickers.slice(0, TICKER_LIMIT);
+            btn.textContent = `Show All (${allTickers.length})`;
+            btn.classList.remove('active');
+        } else {
+            btn.textContent = 'Show Recent';
+            btn.classList.add('active');
+        }
+
+        grid.innerHTML = tickers.map((t, i) => renderTickerCard(t, i)).join('');
+    }
+
+    function filterTickers() {
+        showAllTickers = false;
+        renderTickerGrid();
+    }
+
+    function toggleShowAll() {
+        const search = document.getElementById('tickerSearch');
+        if (search.value.trim()) {
+            search.value = '';
+        }
+        showAllTickers = !showAllTickers;
+        renderTickerGrid();
+    }
+
+    // ====== TICKER LINKS ======
+    const TV_EXCHANGE_MAP = {
+        'AAPL':'NASDAQ','AMD':'NASDAQ','AMZN':'NASDAQ','BABA':'NYSE','BOTZ':'NASDAQ',
+        'CL1!':'NYMEX','COIN':'NASDAQ','COPPER':'CAPITALCOM','CRCL':'NYSE','CRWV':'NASDAQ',
+        'GOOGL':'NASDAQ','HOOD':'NASDAQ','INTC':'NASDAQ','ITA':'CBOE','IWM':'AMEX',
+        'MAGS':'CBOE','META':'NASDAQ','MSFT':'NASDAQ','MSTR':'NASDAQ','MU':'NASDAQ',
+        'NFLX':'NASDAQ','NG1!':'NYMEX','NLR':'AMEX','NVDA':'NASDAQ','ORCL':'NYSE',
+        'PLATINUM':'CAPITALCOM','PLTR':'NASDAQ','RIVN':'NASDAQ','SILVER':'CAPITALCOM',
+        'SMH':'NASDAQ','SNDK':'NASDAQ','TLT':'NASDAQ','TSLA':'NASDAQ','URNM':'AMEX',
+        'USAR':'NASDAQ','USOIL':'TVC','VOO':'AMEX','XBI':'AMEX','XLE':'AMEX',
+        'XLK':'AMEX','XPDUSD':'OANDA'
+    };
+    const DEFAULT_TV = ticker => {
+        const ex = TV_EXCHANGE_MAP[ticker.toUpperCase()] || 'NASDAQ';
+        return `https://www.tradingview.com/chart/rVtW3nNy/?symbol=${encodeURIComponent(ex)}%3A${encodeURIComponent(ticker.toUpperCase())}`;
+    };
+    const HL_TICKER_MAP = {
+        'AAPL':'flx:APPL','AMD':'flx:AMD','AMZN':'flx:AMZN','BABA':'flx:BABA','BOTZ':'flx:ROBOT',
+        'CL1!':'flx:OIL','COIN':'flx:COIN','COPPER':'flx:COPPER','CRCL':'flx:CRCL','CRWV':'flx:CRWV',
+        'GOOGL':'flx:GOOGL','HOOD':'flx:HOOD','INTC':'flx:INTC','ITA':'flx:DEFENSE','IWM':'flx:SMALL2000',
+        'MAGS':'flx:MAG7','META':'flx:META','MSFT':'flx:MSFT','MSTR':'flx:MSTR','MU':'flx:MU',
+        'NFLX':'flx:NFLX','NG1!':'flx:NATGAS','NLR':'flx:NUCLEAR','NVDA':'flx:NVDA','ORCL':'flx:ORCL',
+        'PLATINUM':'flx:PLATINUM','PLTR':'flx:PLTR','RIVN':'xyz:RIVN','SILVER':'flx:SILVER',
+        'SMH':'flx:SEMIS','SNDK':'flx:SNDK','TLT':'flx:USBOND','TSLA':'flx:TSLA','URNM':'flx:URNM',
+        'USAR':'flx:USAR','USOIL':'flx:USOIL','VOO':'flx:USA500','XBI':'flx:BIOTECH','XLE':'flx:ENERGY',
+        'XLK':'flx:INFOTECH','XPDUSD':'flx:PALLADIUM'
+    };
+    const DEFAULT_HL = ticker => {
+        const path = HL_TICKER_MAP[ticker.toUpperCase()] || 'flx:' + ticker.toUpperCase();
+        return `https://app.hyperliquid.xyz/trade/${encodeURIComponent(path)}`;
+    };
+
+    function getTickerLinks() {
+        try { return JSON.parse(localStorage.getItem('spx_ticker_links') || '{}'); }
+        catch { return {}; }
+    }
+
+    function saveTickerLinks(links) {
+        localStorage.setItem('spx_ticker_links', JSON.stringify(links));
+    }
+
+    function getTickerLink(ticker, platform) {
+        const links = getTickerLinks();
+        const key = ticker.toUpperCase();
+        if (links[key] && links[key][platform]) return links[key][platform];
+        return platform === 'tv' ? DEFAULT_TV(ticker) : DEFAULT_HL(ticker);
+    }
+
+    function editLinks(ticker) {
+        const key = ticker.toUpperCase();
+        const links = getTickerLinks();
+        const current = links[key] || {};
+
+        const tvUrl = prompt(
+            `TradingView URL for ${key}:\n(Leave empty for default)`,
+            current.tv || DEFAULT_TV(ticker)
+        );
+        if (tvUrl === null) return; // cancelled
+
+        const hlUrl = prompt(
+            `Hyperliquid URL for ${key}:\n(Leave empty for default)`,
+            current.hl || DEFAULT_HL(ticker)
+        );
+        if (hlUrl === null) return;
+
+        if (!links[key]) links[key] = {};
+        links[key].tv = tvUrl || '';
+        links[key].hl = hlUrl || '';
+
+        // Clean up empty entries
+        if (!links[key].tv) delete links[key].tv;
+        if (!links[key].hl) delete links[key].hl;
+        if (Object.keys(links[key]).length === 0) delete links[key];
+
+        saveTickerLinks(links);
+        fetchData(); // re-render with new links
+    }
+
+    // ====== VICTORY GARDEN ======
+    function renderVictories(data) {
+        const garden = document.getElementById('graveyard');
+        const countEl = document.getElementById('graveyardCount');
+        // Extract winning trades from recent signals + stats
+        // In live mode, we'd get this from the API. For now, use sample wins.
+        const wins = (data.recentSignals || []).filter((s, i) => i % 3 === 0).map(s => ({
+            ticker: s.ticker,
+            profit: (Math.random() * 15 + 2).toFixed(2),
+            date: s.timestamp.split(' ')[0]
+        }));
+        countEl.textContent = wins.length;
+        if (wins.length === 0) {
+            garden.innerHTML = '<div class="victory-empty">No wins buried yet — your first victory will rise here</div>';
+            return;
+        }
+        garden.innerHTML = wins.map(w => `
+            <div class="victory-stone">
+                <div class="stone-marker">
+                    <svg viewBox="0 0 90 130" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Ground -->
+                        <rect x="0" y="115" width="90" height="15" fill="#2a3828" rx="1"/>
+                        <path d="M0,115 Q15,112 30,115 Q45,111 60,115 Q75,112 90,115" fill="#3a4a35" opacity="0.6"/>
+
+                        <!-- Gravestone body — woodblock style with bold outlines -->
+                        <path d="M18,50 L18,108 L72,108 L72,50 Q72,18 45,18 Q18,18 18,50 Z" fill="#4a6068" stroke="#1a1815" stroke-width="2.5"/>
+                        <!-- Inner border line (woodblock double-line style) -->
+                        <path d="M23,52 L23,103 L67,103 L67,52 Q67,26 45,26 Q23,26 23,52 Z" fill="none" stroke="#5a7a80" stroke-width="1" opacity="0.5"/>
+
+                        <!-- Moss & lichen patches (ukiyo-e organic shapes) -->
+                        <ellipse cx="25" cy="55" rx="8" ry="5" fill="#5a8a5a" opacity="0.5"/>
+                        <ellipse cx="62" cy="65" rx="7" ry="4" fill="#6a9a5a" opacity="0.4"/>
+                        <ellipse cx="30" cy="95" rx="6" ry="3" fill="#5a8a5a" opacity="0.35"/>
+                        <ellipse cx="55" cy="45" rx="5" ry="4" fill="#4a7a4a" opacity="0.3"/>
+                        <circle cx="22" cy="40" r="3" fill="#6a9a5a" opacity="0.25"/>
+
+                        <!-- Pedestal base -->
+                        <rect x="12" y="105" width="66" height="12" rx="1" fill="#3a4a50" stroke="#1a1815" stroke-width="2"/>
+                        <line x1="14" y1="108" x2="76" y2="108" stroke="#5a7a80" stroke-width="0.5" opacity="0.4"/>
+
+                        <!-- Engraved text -->
+                        <text x="45" y="58" text-anchor="middle" font-family="'Noto Serif JP',serif" font-size="14" font-weight="900" fill="#e8d5a8" stroke="#1a1815" stroke-width="0.3">${esc(w.ticker)}</text>
+                        <text x="45" y="76" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" font-weight="700" fill="#8ae08a" stroke="#1a1815" stroke-width="0.2">+$${w.profit}</text>
+                        <text x="45" y="92" text-anchor="middle" font-family="'Noto Serif JP',serif" font-size="7" fill="#c8d8d0" opacity="0.8">R.I.P.</text>
+
+                        <!-- Grass & reeds (susuki style) -->
+                        <path d="M5,118 Q8,100 10,85" stroke="#6a9a50" stroke-width="1.2" fill="none" opacity="0.7"/>
+                        <path d="M8,118 Q12,102 13,90" stroke="#5a8a48" stroke-width="1" fill="none" opacity="0.6"/>
+                        <path d="M2,118 Q4,105 3,92" stroke="#7aaa58" stroke-width="1" fill="none" opacity="0.5"/>
+                        <!-- Plume -->
+                        <ellipse cx="10" cy="83" rx="2.5" ry="8" fill="#a8b878" opacity="0.5" transform="rotate(-5,10,83)"/>
+                        <ellipse cx="3" cy="90" rx="2" ry="7" fill="#a8b878" opacity="0.4" transform="rotate(3,3,90)"/>
+
+                        <!-- Right grass -->
+                        <path d="M82,118 Q84,104 86,88" stroke="#6a9a50" stroke-width="1.2" fill="none" opacity="0.7"/>
+                        <path d="M85,118 Q82,106 80,93" stroke="#5a8a48" stroke-width="1" fill="none" opacity="0.6"/>
+                        <ellipse cx="86" cy="86" rx="2.5" ry="8" fill="#a8b878" opacity="0.45" transform="rotate(5,86,86)"/>
+
+                        <!-- Fallen leaves (ukiyo-e style) -->
+                        <ellipse cx="15" cy="116" rx="3" ry="1.5" fill="#d4843e" opacity="0.6" transform="rotate(20,15,116)"/>
+                        <ellipse cx="70" cy="117" rx="2.5" ry="1.2" fill="#c47830" opacity="0.5" transform="rotate(-15,70,117)"/>
+                        <ellipse cx="40" cy="118" rx="2" ry="1" fill="#e8a04c" opacity="0.4" transform="rotate(30,40,118)"/>
+
+                        <!-- Firefly / spirit wisp -->
+                        <circle cx="75" cy="40" r="2" fill="#e8d5a8" opacity="0.5">
+                            <animate attributeName="opacity" values="0.2;0.6;0.2" dur="3s" repeatCount="indefinite"/>
+                        </circle>
+                        <circle cx="75" cy="40" r="4" fill="#e8d5a8" opacity="0.15">
+                            <animate attributeName="opacity" values="0.05;0.2;0.05" dur="3s" repeatCount="indefinite"/>
+                        </circle>
+                    </svg>
+                </div>
+                <div class="stone-date">${esc(w.date)}</div>
+            </div>
+        `).join('');
+    }
+
+    // ====== OMIKUJI ======
+    const OMIKUJI = [
+        { level: 'great', label: 'Great Blessing', tip: 'The market favors the prepared mind today. Trust your setups and size with confidence.' },
+        { level: 'great', label: 'Great Blessing', tip: 'A strong trend awaits you. Let winners run and do not cut them early.' },
+        { level: 'good', label: 'Good Fortune', tip: 'Patience will be rewarded. Wait for the signal — do not chase.' },
+        { level: 'good', label: 'Good Fortune', tip: 'Your discipline is your edge. Stick to the plan and profits will follow.' },
+        { level: 'good', label: 'Good Fortune', tip: 'A reversal brings opportunity. Watch RSI for the trendline break.' },
+        { level: 'small', label: 'Small Blessing', tip: 'Small gains compound into great wealth. Do not underestimate the power of consistency.' },
+        { level: 'small', label: 'Small Blessing', tip: 'Today is for learning. Review your past trades and find the pattern.' },
+        { level: 'small', label: 'Small Blessing', tip: 'Protect your capital. A smaller position today means a bigger one tomorrow.' },
+        { level: 'uncertain', label: 'Uncertain Fortune', tip: 'The market is choppy. Sometimes the best trade is no trade at all.' },
+        { level: 'uncertain', label: 'Uncertain Fortune', tip: 'Beware of overtrading. Step away from the screen and return with fresh eyes.' },
+        { level: 'great', label: 'Great Blessing', tip: 'The pumpkin trader smiles upon you. Multiple setups align — be ready to act.' },
+        { level: 'good', label: 'Good Fortune', tip: 'Cut the losers early and you will find the winners take care of themselves.' },
+        { level: 'small', label: 'Small Blessing', tip: 'A DCA add at the right moment turns a good trade into a great one.' },
+        { level: 'uncertain', label: 'Uncertain Fortune', tip: 'Three stops in a row means sit out. The market will be there tomorrow.' },
+        { level: 'great', label: 'Great Blessing', tip: 'Your locked profits are seeds. Reinvest them wisely and watch them grow.' },
+    ];
+
+    function drawOmikuji() {
+        const slip = document.getElementById('omikujiSlip');
+        const result = document.getElementById('omikujiResult');
+        const fortune = document.getElementById('omikujiFortune');
+        const tip = document.getElementById('omikujiTip');
+
+        const o = OMIKUJI[Math.floor(Math.random() * OMIKUJI.length)];
+        fortune.textContent = o.label;
+        fortune.className = 'omikuji-fortune ' + o.level;
+        tip.textContent = o.tip;
+
+        slip.style.display = 'none';
+        result.className = 'omikuji-result';
+    }
+
+    function resetOmikuji() {
+        document.getElementById('omikujiSlip').style.display = 'flex';
+        document.getElementById('omikujiResult').className = 'omikuji-result hidden';
+    }
+
+    // ====== QUOTES ======
+    const QUOTES = [
+        { text: "The stock market is a device for transferring money from the impatient to the patient.", author: "Warren Buffett" },
+        { text: "The trend is your friend until the end when it bends.", author: "Ed Seykota" },
+        { text: "It's not whether you're right or wrong, but how much money you make when you're right and how much you lose when you're wrong.", author: "George Soros" },
+        { text: "The goal of a successful trader is to make the best trades. Money is secondary.", author: "Alexander Elder" },
+        { text: "Cut your losses short and let your profits run.", author: "Jesse Livermore" },
+        { text: "Markets can remain irrational longer than you can remain solvent.", author: "John Maynard Keynes" },
+        { text: "In trading, the impossible happens about twice a year.", author: "Henri M. Simoes" },
+        { text: "The elements of good trading are: cutting losses, cutting losses, and cutting losses.", author: "Ed Seykota" },
+        { text: "Risk comes from not knowing what you are doing.", author: "Warren Buffett" },
+        { text: "Plan your trade and trade your plan.", author: "Richard Dennis" },
+        { text: "The market is never wrong — opinions often are.", author: "Jesse Livermore" },
+        { text: "Amateurs think about how much money they can make. Professionals think about how much money they could lose.", author: "Jack Schwager" },
+        { text: "You don't need to know what is going to happen next in order to make money.", author: "Mark Douglas" },
+        { text: "The most important thing in making money is not letting your losses get out of hand.", author: "Marty Schwartz" },
+        { text: "Win or lose, everybody gets what they want out of the market.", author: "Ed Seykota" },
+        { text: "There is a time to go long, a time to go short, and a time to go fishing.", author: "Jesse Livermore" },
+        { text: "The hard work in trading comes in the preparation. The actual process of trading should be effortless.", author: "Jack Schwager" },
+        { text: "Every battle is won before it is fought.", author: "Sun Tzu" },
+        { text: "Discipline is the bridge between goals and accomplishment.", author: "Jim Rohn" },
+        { text: "Do not anticipate and move without market confirmation.", author: "Jesse Livermore" }
+    ];
+
+    function showQuote() {
+        const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+        const textEl = document.getElementById('quoteText');
+        const authEl = document.getElementById('quoteAuthor');
+        textEl.style.opacity = '0';
+        authEl.style.opacity = '0';
+        setTimeout(() => {
+            textEl.textContent = '"' + q.text + '"';
+            authEl.textContent = '— ' + q.author;
+            textEl.style.opacity = '0.7';
+            authEl.style.opacity = '0.6';
+        }, 300);
+    }
+    showQuote();
+
+    // ====== INIT ======
+    fetchData();
+
+    // ====== SERVICE WORKER ======
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./service-worker.js');
+    }
+</script>
+
+</body>
+</html>
