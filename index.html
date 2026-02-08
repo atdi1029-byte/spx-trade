@@ -1028,7 +1028,6 @@
             <span><span class="status-dot loading" id="statusDot"></span><span id="statusText">Connecting...</span></span>
             <span id="lastUpdate"></span>
             <button class="refresh-btn" onclick="fetchData()">Refresh</button>
-            <button class="refresh-btn" id="notifBtn" onclick="enableNotifs()" style="background:var(--pumpkin-deep);">Enable Alerts</button>
         </div>
     </div>
 
@@ -1206,21 +1205,8 @@
         }
         setKnownSignals(keys);
     }
-    function enableNotifs() {
-        if (!('Notification' in window)) { alert('Notifications not supported on this browser'); return; }
-        Notification.requestPermission().then(p => {
-            if (p === 'granted') {
-                document.getElementById('notifBtn').textContent = 'Alerts ON';
-                document.getElementById('notifBtn').style.background = 'var(--green-candle)';
-                new Notification('Alerts Enabled', { body: 'You will be notified of new trade signals.', icon: 'icon-192.png' });
-            }
-        });
-    }
-    if ('Notification' in window && Notification.permission === 'granted') {
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('notifBtn');
-            if (btn) { btn.textContent = 'Alerts ON'; btn.style.background = 'var(--green-candle)'; }
-        });
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
     }
 
     // ====== LOCAL SKIP TRACKING ======
