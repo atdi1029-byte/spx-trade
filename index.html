@@ -622,6 +622,7 @@
                 max-height: 400px;
                 overflow-y: auto;
             }
+            .action-item .meta { display: none; }
         }
 
         /* ============ SIGNALS TABLE ============ */
@@ -1070,7 +1071,7 @@
     <div class="section-header">Open Trades <span class="count" id="openCount">0</span></div>
     <div class="open-trades-filters">
         <button class="filter-btn active" onclick="setOpenFilter('all',this)">All</button>
-        <button class="filter-btn" onclick="setOpenFilter('no-0x0',this)">No 0x0</button>
+        <button class="filter-btn" onclick="setOpenFilter('no-0x0',this)">No OxO</button>
         <button class="filter-btn" onclick="setOpenFilter('no-tp',this)">No TP</button>
     </div>
     <div class="action-list" id="openTradesList" style="max-height:420px;overflow-y:auto">
@@ -1490,7 +1491,7 @@
             el.style.borderLeftColor = '#1f6feb';
             badge.style.display = 'inline-block';
             badge.className = 'pnl-badge neutral';
-            badge.textContent = '0x0';
+            badge.textContent = 'OxO';
             // Persist 0x0 status to sheet
             fetch(POST_URL, {
                 method: 'POST',
@@ -1637,7 +1638,7 @@
             const initBorder = outcome === '0x0' ? 'border-left-color:#1f6feb' : (pnl > 0 ? 'border-left-color:var(--green-candle)' : '');
             const badgeDisplay = (outcome === '0x0' || pnl > 0) ? 'inline-block' : 'none';
             const badgeClass = outcome === '0x0' ? 'pnl-badge neutral' : (pnl > 0 ? 'pnl-badge positive' : 'pnl-badge neutral');
-            const badgeText = outcome === '0x0' ? '0x0' : (pnl > 0 ? 'TP +$' + pnl.toFixed(2) : '');
+            const badgeText = outcome === '0x0' ? 'OxO' : (pnl > 0 ? 'TP +$' + pnl.toFixed(2) : '');
             const closeDisplay = pnl > 0 ? 'inline-block' : 'none';
             return `
                 <div class="action-item" id="${id}" data-pnl="${pnl}" data-status="${initStatus}" style="${initBorder}">
@@ -1653,7 +1654,7 @@
                             <input type="text" class="entry-input" placeholder="P&L $" id="${id}-profit">
                             <button class="action-btn won" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'Won','${id}')">Won</button>
                             <button class="action-btn lost" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'Lost','${id}')">Lost</button>
-                            <button class="action-btn zero" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'0x0','${id}')">0x0</button>
+                            <button class="action-btn zero" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'0x0','${id}')">OxO</button>
                             <button class="action-btn close-trade" id="${id}-close" style="display:${closeDisplay}" onclick="closeTrade('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'${id}')">CLOSE</button>
                         </div>
                     </div>
