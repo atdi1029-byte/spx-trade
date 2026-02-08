@@ -1028,6 +1028,7 @@
             <span><span class="status-dot loading" id="statusDot"></span><span id="statusText">Connecting...</span></span>
             <span id="lastUpdate"></span>
             <button class="refresh-btn" onclick="fetchData()">Refresh</button>
+            <button class="refresh-btn" id="notifBtn" onclick="enableNotifs()" style="background:var(--pumpkin-deep);">Enable Alerts</button>
         </div>
     </div>
 
@@ -1179,6 +1180,63 @@
         return s;
     }
 
+    // ====== PUSH NOTIFICATIONS ======
+    const NOTIF_KEY = 'spx_known_signals';
+    function getKnownSignals() {
+        try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; }
+    }
+    function setKnownSignals(keys) {
+        localStorage.setItem(NOTIF_KEY, JSON.stringify(keys));
+    }
+    function checkNewSignals(data) {
+        if (Notification.permission !== 'granted') return;
+        const actions = (data.actionNeeded || []).filter(a => a.type === 'mark_action');
+        const keys = actions.map(a => (a.ticker || '') + '|' + (a.signal || '') + '|' + (a.price || ''));
+        const known = getKnownSignals();
+        const newOnes = keys.filter(k => !known.includes(k));
+        if (newOnes.length > 0 && known.length > 0) {
+            newOnes.forEach(k => {
+                const [ticker, sig] = k.split('|');
+                new Notification('Trade Alert: ' + ticker, {
+                    body: (sig || '').toUpperCase() + ' signal',
+                    icon: 'icon-192.png',
+                    tag: k
+                });
+            });
+        }
+        setKnownSignals(keys);
+    }
+    function enableNotifs() {
+        if (!('Notification' in window)) { alert('Notifications not supported on this browser'); return; }
+        Notification.requestPermission().then(p => {
+            if (p === 'granted') {
+                document.getElementById('notifBtn').textContent = 'Alerts ON';
+                document.getElementById('notifBtn').style.background = 'var(--green-candle)';
+                new Notification('Alerts Enabled', { body: 'You will be notified of new trade signals.', icon: 'icon-192.png' });
+            }
+        });
+    }
+    if ('Notification' in window && Notification.permission === 'granted') {
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('notifBtn');
+            if (btn) { btn.textContent = 'Alerts ON'; btn.style.background = 'var(--green-candle)'; }
+        });
+    }
+
+    // ====== LOCAL SKIP TRACKING ======
+    const ACTED_KEY = 'spx_acted_items';
+    function getActedItems() {
+        try { return JSON.parse(localStorage.getItem(ACTED_KEY) || '[]'); } catch { return []; }
+    }
+    function addActedItem(ticker, signal, price) {
+        const items = getActedItems().filter(i => Date.now() - i.ts < 86400000);
+        items.push({ t: ticker.toUpperCase(), s: signal.toLowerCase(), p: String(price), ts: Date.now() });
+        localStorage.setItem(ACTED_KEY, JSON.stringify(items));
+    }
+    function isActed(ticker, signal, price) {
+        return getActedItems().some(i => i.t === ticker.toUpperCase() && i.s === signal.toLowerCase() && i.p === String(price));
+    }
+
     // ====== FETCH DATA ======
     async function fetchData() {
         const dot = document.getElementById('statusDot');
@@ -1194,6 +1252,7 @@
             if (data.status !== 'ok') throw new Error(data.message || 'Bad response');
 
             renderDashboard(data);
+            checkNewSignals(data);
 
             dot.className = 'status-dot';
             statusText.textContent = 'Live';
@@ -1219,6 +1278,9 @@
     // ====== RENDER ======
     function renderDashboard(data) {
         let { tickers, recentSignals, actionNeeded, stats } = data;
+
+        // Filter out locally acted items
+        actionNeeded = actionNeeded.filter(a => !isActed(a.ticker || '', a.signal || '', a.price || ''));
 
         // --- Quick Stats ---
         document.getElementById('statOpen').textContent = stats.openPositions || 0;
@@ -1428,31 +1490,25 @@
         const entrySize = sizeInput ? sizeInput.value : '';
         const el = document.getElementById(elemId);
 
-        // Disable buttons
-        el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
+        // Instant hide via localStorage
+        addActedItem(ticker, signal, price);
+        el.style.transition = 'opacity 0.3s';
+        el.style.opacity = '0';
+        setTimeout(() => el.style.display = 'none', 300);
 
-        try {
-            await fetch(POST_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'update_position',
-                    ticker: ticker,
-                    signal: signal,
-                    price: price,
-                    field: 'action',
-                    value: value,
-                    entrySize: entrySize
-                })
-            });
-            el.style.borderColor = value === 'Entered' ? 'var(--green-candle)' : 'var(--text-dim)';
-            el.style.opacity = '0.5';
-            el.innerHTML = '<div><span class="ticker-badge">' + esc(ticker) + '</span><span class="message">' + value.toUpperCase() + (entrySize ? ' ($' + entrySize + ')' : '') + '</span></div>';
-            // Refresh after a beat
-            setTimeout(fetchData, 2000);
-        } catch (err) {
-            el.querySelectorAll('.action-btn').forEach(b => b.disabled = false);
-            alert('Failed to update: ' + err.message);
-        }
+        // Fire server update in background
+        fetch(POST_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'update_position',
+                ticker: ticker,
+                signal: signal,
+                price: price,
+                field: 'action',
+                value: value,
+                entrySize: entrySize
+            })
+        }).then(() => setTimeout(fetchData, 3000));
     }
 
     async function markOutcome(ticker, signal, price, value, elemId) {
