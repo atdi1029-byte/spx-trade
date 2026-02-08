@@ -300,8 +300,8 @@
             background: var(--pumpkin);
             color: var(--bg-deep);
             font-weight: 700;
-            font-size: 0.7rem;
-            padding: 2px 8px;
+            font-size: 0.6rem;
+            padding: 2px 6px;
             border-radius: 3px;
             margin-right: 0.75rem;
             letter-spacing: 1px;
@@ -356,6 +356,29 @@
             border-color: #1f6feb44;
         }
         .action-btn.open-pos:hover { background: #1f6feb44; color: var(--cream); }
+        .action-btn.won { background: var(--green-dim); color: var(--green-bright); border-color: var(--green-candle); }
+        .action-btn.won:hover { background: var(--green-candle); color: var(--cream); }
+        .action-btn.lost { background: #c44b3f22; color: var(--red-bright); border-color: var(--red-candle); }
+        .action-btn.lost:hover { background: var(--red-candle); color: var(--cream); }
+        .action-btn.zero { background: #1f6feb22; color: #6a9fdb; border-color: #1f6feb44; }
+        .action-btn.zero:hover { background: #1f6feb44; color: var(--cream); }
+        .action-btn.close-trade { background: #f5a62322; color: #f5a623; border-color: #f5a62344; display: none; }
+        .action-btn.close-trade:hover { background: #f5a62344; color: var(--cream); }
+        .pnl-badge { display: inline-block; font-size: 0.5rem; font-weight: 700; padding: 1px 6px; border-radius: 3px; margin-left: 0; vertical-align: middle; }
+        .pnl-badge.positive { background: var(--green-dim); color: var(--green-bright); }
+        .pnl-badge.negative { background: #c44b3f22; color: var(--red-bright); }
+        .pnl-badge.neutral { background: #1f6feb22; color: #6a9fdb; }
+        .stock-logo { width: 22px; height: 22px; border-radius: 50%; object-fit: contain; background: var(--bg-dark); border: 1px solid var(--border); vertical-align: middle; margin-right: 6px; }
+        .stock-logo-fallback { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; align-items: center; justify-content: center; font-size: 0.45rem; font-weight: 700; color: var(--cream); background: var(--pumpkin-deep); vertical-align: middle; margin-right: 6px; }
+        .ticker-card .stock-logo, .ticker-card .stock-logo-fallback { width: 28px; height: 28px; font-size: 0.5rem; margin-right: 0; }
+        .open-trades-filters { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; }
+        .filter-btn {
+            font-family: 'Space Mono', monospace; font-size: 0.55rem; font-weight: 700; padding: 4px 12px;
+            border-radius: 3px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-dim);
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;
+        }
+        .filter-btn:hover { border-color: var(--pumpkin); color: var(--text); }
+        .filter-btn.active { background: var(--pumpkin-deep); color: var(--cream); border-color: var(--pumpkin); }
         .action-btn:disabled {
             opacity: 0.4;
             cursor: default;
@@ -528,7 +551,6 @@
         .ticker-status.OPEN { background: #1f6feb22; color: #6a9fdb; border: 1px solid #1f6feb44; }
         .ticker-status.PROFIT { background: #3d5c3d44; color: var(--green-bright); border: 1px solid var(--green-dim); }
         .ticker-status.STOPPED { background: #c44b3f22; color: var(--red-bright); border: 1px solid #c44b3f44; }
-        .ticker-status.BLOCKED { background: #c44b3f44; color: var(--red-bright); border: 1px solid var(--red-candle); }
         .ticker-status.IDLE { background: var(--bg-dark); color: var(--text-dim); border: 1px solid var(--border); }
         .ticker-status.NEW_SIGNAL { background: #d4843e22; color: var(--pumpkin-glow); border: 1px solid var(--pumpkin-deep); }
 
@@ -595,6 +617,11 @@
         }
         @media (max-width: 900px) {
             .bottom-grid { grid-template-columns: 1fr; }
+            .ticker-grid {
+                grid-template-columns: 1fr;
+                max-height: 750px;
+                overflow-y: auto;
+            }
         }
 
         /* ============ SIGNALS TABLE ============ */
@@ -1039,8 +1066,19 @@
         <div class="action-list" id="actionList"></div>
     </div>
 
+    <!-- Open Trades -->
+    <div class="section-header">Open Trades <span class="count" id="openCount">0</span></div>
+    <div class="open-trades-filters">
+        <button class="filter-btn active" onclick="setOpenFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setOpenFilter('no-0x0',this)">No 0x0</button>
+        <button class="filter-btn" onclick="setOpenFilter('no-tp',this)">No TP</button>
+    </div>
+    <div class="action-list" id="openTradesList">
+        <div class="no-actions">No open trades right now.</div>
+    </div>
+
     <!-- Ticker Grid -->
-    <div class="section-header">Tickers <span class="count" id="tickerCount">0</span></div>
+    <div class="section-header" style="margin-top:2rem">Tickers <span class="count" id="tickerCount">0</span></div>
     <div class="ticker-search-bar">
         <input type="text" id="tickerSearch" placeholder="Search tickers..." oninput="filterTickers()">
         <button id="tickerShowAll" onclick="toggleShowAll()">Show All</button>
@@ -1104,7 +1142,41 @@
     let refreshTimer = null;
     let allTickers = [];
     let showAllTickers = false;
+    let openTradeFilter = 'all'; // all, no-0x0, no-tp
     const TICKER_LIMIT = 8;
+    const LOGO_URL = 'https://financialmodelingprep.com/image-stock/';
+    const TV_LOGO = 'https://s3-symbol-logo.tradingview.com/';
+    const TV_LOGO_MAP = {
+        'AAPL': 'apple', 'GOOGL': 'alphabet', 'AMD': 'advanced-micro-devices',
+        'AMZN': 'amazon', 'BABA': 'alibaba', 'CL1!': 'crude-oil',
+        'COIN': 'coinbase', 'COPPER': 'metal/copper', 'CRCL': 'circle',
+        'CRWV': 'coreweave', 'HOOD': 'robinhood', 'INTC': 'intel',
+        'META': 'meta-platforms', 'MSFT': 'microsoft', 'MSTR': 'microstrategy',
+        'MU': 'micron-technology', 'NFLX': 'netflix', 'NG1!': 'natural-gas',
+        'NVDA': 'nvidia', 'ORCL': 'oracle', 'PLATINUM': 'metal/platinum',
+        'PLTR': 'palantir', 'RIVN': 'rivian', 'SILVER': 'silver',
+        'SNDK': 'sandisk', 'TSLA': 'tesla', 'USAR': 'usa-rare-earth',
+        'PALLADIUM': 'metal/palladium', 'USOIL': 'crude-oil'
+    };
+    function logoUrl(ticker) {
+        const tv = TV_LOGO_MAP[ticker.toUpperCase()];
+        if (tv) return TV_LOGO + tv + '.svg';
+        return LOGO_URL + ticker + '.png';
+    }
+
+    // Signal label mapping
+    function signalLabel(sig) {
+        const s = (sig || '').toLowerCase();
+        if (s === 'add') return 'BUY DCA';
+        if (s === 'reduce') return 'SELL DCA';
+        return s.toUpperCase();
+    }
+    function signalClass(sig) {
+        const s = (sig || '').toLowerCase();
+        if (s === 'add') return 'add';
+        if (s === 'reduce') return 'reduce';
+        return s;
+    }
 
     // ====== FETCH DATA ======
     async function fetchData() {
@@ -1128,8 +1200,9 @@
             document.getElementById('errorBanner').className = 'error-banner';
             document.getElementById('loading').className = 'loading-overlay hidden';
         } catch (err) {
+            console.error('Dashboard error:', err);
             // Fall back to sample data for preview
-            renderDashboard(SAMPLE_DATA);
+            try { renderDashboard(SAMPLE_DATA); } catch(e) { console.error('Render error:', e); }
             dot.className = 'status-dot';
             statusText.textContent = 'Preview';
             document.getElementById('lastUpdate').textContent = 'Sample data';
@@ -1144,7 +1217,7 @@
 
     // ====== RENDER ======
     function renderDashboard(data) {
-        const { tickers, recentSignals, actionNeeded, stats } = data;
+        let { tickers, recentSignals, actionNeeded, stats } = data;
 
         // --- Quick Stats ---
         document.getElementById('statOpen').textContent = stats.openPositions || 0;
@@ -1164,47 +1237,58 @@
         streakEl.textContent = streakStr;
         streakEl.className = 'stat-value' + (streakStr.includes('W') ? ' green' : streakStr.includes('L') ? ' red' : '');
 
-        // --- Action Needed ---
+        // --- Action Needed (only new signals, not outcomes) ---
         const actionList = document.getElementById('actionList');
         const actionCount = document.getElementById('actionCount');
-        actionCount.textContent = actionNeeded.length;
-        if (actionNeeded.length === 0) {
+        let newSignals = actionNeeded.filter(a => a.type === 'mark_action');
+        actionCount.textContent = newSignals.length;
+        if (newSignals.length === 0) {
             actionList.innerHTML = '<div class="no-actions">All caught up - no actions needed</div>';
         } else {
-            actionList.innerHTML = actionNeeded.map((a, i) => {
+            actionList.innerHTML = newSignals.map((a, i) => {
                 const id = 'action-' + i;
-                if (a.type === 'mark_action') {
-                    return `
-                        <div class="action-item" id="${id}">
-                            <div>
-                                <div><span class="ticker-badge">${esc(a.ticker)}</span><span class="message">${esc(a.message)}</span></div>
-                                <div class="action-buttons">
-                                    <input type="text" class="entry-input" placeholder="Size $" id="${id}-size">
-                                    <button class="action-btn entered" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Entered','${id}')">Entered</button>
-                                    <button class="action-btn skipped" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Skipped','${id}')">Skipped</button>
-                                </div>
+                const logo = logoUrl(a.ticker);
+                const logoHtml = `<img src="${logo}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="stock-logo-fallback" style="display:none">${esc(a.ticker.slice(0,2))}</span>`;
+                return `
+                    <div class="action-item" id="${id}">
+                        <div>
+                            <div>${logoHtml}<span class="ticker-badge">${esc(a.ticker)}</span><span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span></div>
+                            <div class="action-buttons">
+                                <input type="text" class="entry-input" placeholder="Size $" id="${id}-size">
+                                <button class="action-btn entered" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Entered','${id}')">Entered</button>
+                                <button class="action-btn skipped" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Skipped','${id}')">Skipped</button>
                             </div>
-                            <div class="meta">${esc(a.signal.toUpperCase())} @ $${a.price}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}</div>
-                        </div>`;
-                } else {
-                    return `
-                        <div class="action-item" id="${id}">
-                            <div>
-                                <div><span class="ticker-badge">${esc(a.ticker)}</span><span class="message">${esc(a.message)}</span></div>
-                                <div class="action-buttons">
-                                    <input type="text" class="entry-input" placeholder="Profit $" id="${id}-profit">
-                                    <button class="action-btn tp-hit" onclick="markOutcome('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'TP Hit','${id}')">TP Hit</button>
-                                    <button class="action-btn stopped-out" onclick="markOutcome('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Stopped Out','${id}')">Stopped Out</button>
-                                    <button class="action-btn open-pos" onclick="markOutcome('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Open','${id}')">Open</button>
-                                </div>
-                            </div>
-                            <div class="meta">${esc(a.signal.toUpperCase())} @ $${a.price}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}</div>
-                        </div>`;
-                }
+                        </div>
+                        <div class="meta">@ $${a.price}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}</div>
+                    </div>`;
             }).join('');
         }
 
-        // --- Ticker Grid ---
+        // --- Open Trades (per-side) ---
+        let openTrades = [];
+        tickers.forEach(t => {
+            const bs = t.buyStatus || t.status || '';
+            const ss = t.sellStatus || '';
+            if (bs === 'OPEN' || bs === 'NEW SIGNAL') {
+                openTrades.push({ ticker: t.ticker, lastSignal: t.buyLastSignal || 'buy', price: t.buyPrice || t.price, phase: t.buyPhase || t.phase, nextSize: t.buyNextSize != null ? t.buyNextSize : t.nextSize, status: bs, side: 'buy', outcome: t.buyOutcome || '', profitLocked: t.buyProfitLocked || 0 });
+            }
+            if (ss === 'OPEN' || ss === 'NEW SIGNAL') {
+                openTrades.push({ ticker: t.ticker, lastSignal: t.sellLastSignal || 'sell', price: t.sellPrice || t.price, phase: t.sellPhase || '', nextSize: t.sellNextSize || 0, status: ss, side: 'sell', outcome: t.sellOutcome || '', profitLocked: t.sellProfitLocked || 0 });
+            }
+        });
+        renderOpenTrades(openTrades);
+
+        // --- Ticker Grid (sort by most recent signal first) ---
+        const signalOrder = {};
+        recentSignals.forEach((s, i) => {
+            const tk = s.ticker.toUpperCase();
+            if (!(tk in signalOrder)) signalOrder[tk] = i;
+        });
+        tickers.sort((a, b) => {
+            const ai = signalOrder[a.ticker] !== undefined ? signalOrder[a.ticker] : 9999;
+            const bi = signalOrder[b.ticker] !== undefined ? signalOrder[b.ticker] : 9999;
+            return ai - bi;
+        });
         allTickers = tickers;
         document.getElementById('tickerCount').textContent = tickers.length;
         renderTickerGrid();
@@ -1268,32 +1352,64 @@
     function flipSide(cardId, side) {
         const card = document.getElementById(cardId);
         if (!card) return;
-        const buyBase = parseFloat(card.dataset.buyBase) || 30;
-        const sellBase = parseFloat(card.dataset.sellBase) || 30;
+
+        const raw = side === 'sell' ? card.dataset.sellData : card.dataset.buyData;
+        if (!raw) return;
+        const data = JSON.parse(raw);
         card.dataset.side = side;
 
-        // Update toggle buttons
+        // Toggle buttons
         const btns = card.querySelectorAll('.side-toggle button');
         btns[0].className = side === 'buy' ? 'active-buy' : '';
         btns[1].className = side === 'sell' ? 'active-sell' : '';
 
-        // Update side label
+        // Side label
         const label = card.querySelector('.ticker-side-label');
-        if (label) {
-            label.textContent = side.toUpperCase();
-            label.className = 'ticker-side-label ' + side;
+        if (label) { label.textContent = side.toUpperCase(); label.className = 'ticker-side-label ' + side; }
+
+        // Status badge
+        const statusEl = card.querySelector('.ticker-status');
+        if (statusEl) {
+            const sc = (data.status || 'IDLE').replace(/\s+/g, '_');
+            statusEl.className = 'ticker-status ' + sc;
+            statusEl.textContent = data.status || 'IDLE';
         }
 
-        // Update base size display
-        const base = side === 'sell' ? sellBase : buyBase;
+        // Signal badge
+        const sigEl = card.querySelector('.side-signal');
+        if (sigEl) sigEl.innerHTML = '<span class="signal-badge ' + signalClass(data.lastSignal) + '" style="font-size:0.55rem;padding:2px 6px">' + signalLabel(data.lastSignal) + '</span>';
+
+        // Price
+        const priceEl = card.querySelector('.side-price');
+        if (priceEl) priceEl.textContent = data.price ? '$' + Number(data.price).toFixed(2) : '-';
+
+        // Base size
         const baseEl = card.querySelector('.side-base');
-        if (baseEl) baseEl.textContent = '$' + base.toFixed(2);
+        if (baseEl) baseEl.textContent = '$' + Number(data.base || 0).toFixed(2);
 
-        // Recalc next size (half base for DCA, etc. — simplified)
+        // Next size
         const nextEl = card.querySelector('.side-next');
-        if (nextEl && nextEl.textContent !== 'SIT OUT') {
-            nextEl.textContent = '$' + base.toFixed(2);
+        if (nextEl) nextEl.innerHTML = data.nextSize === 'SIT OUT' ? '<span class="red">SIT OUT</span>' : '$' + Number(data.nextSize || 0).toFixed(2);
+
+        // Locked profit
+        const lockedEl = card.querySelector('.side-locked');
+        if (lockedEl) {
+            lockedEl.textContent = Number(data.locked) > 0 ? '$' + Number(data.locked).toFixed(2) : '$0.00';
+            lockedEl.className = 'side-locked' + (Number(data.locked) > 0 ? ' green' : '');
         }
+
+        // Stop-outs
+        const stopsEl = card.querySelector('.side-stops');
+        if (stopsEl) {
+            stopsEl.textContent = data.stopouts || 0;
+            stopsEl.className = 'side-stops' + (Number(data.stopouts) > 0 ? ' red' : '');
+        }
+
+        // Phase + action
+        const phaseEl = card.querySelector('.ticker-phase');
+        if (phaseEl) phaseEl.textContent = data.phase || 'No data';
+        const actionEl = card.querySelector('.ticker-action');
+        if (actionEl) actionEl.textContent = data.nextAction || '';
     }
 
     // ====== HELPERS ======
@@ -1339,10 +1455,55 @@
     }
 
     async function markOutcome(ticker, signal, price, value, elemId) {
-        const profitInput = document.getElementById(elemId + '-profit');
-        const profitLocked = profitInput ? profitInput.value : '';
         const el = document.getElementById(elemId);
+        const profitInput = document.getElementById(elemId + '-profit');
+        const inputVal = profitInput ? parseFloat(profitInput.value) || 0 : 0;
+        const badge = document.getElementById(elemId + '-badge');
+        const closeBtn = document.getElementById(elemId + '-close');
+        const prevTotal = parseFloat(el.dataset.pnl) || 0;
 
+        if (value === 'Won') {
+            // Add to running total, keep card open for more partials
+            const newTotal = prevTotal + inputVal;
+            el.dataset.pnl = newTotal;
+            el.dataset.status = 'tp';
+            el.style.borderLeftColor = 'var(--green-candle)';
+            badge.style.display = 'inline-block';
+            badge.className = 'pnl-badge positive';
+            badge.textContent = 'TP +$' + newTotal.toFixed(2);
+            if (closeBtn) closeBtn.style.display = 'inline-block';
+            if (profitInput) profitInput.value = '';
+            // Persist partial profit to sheet
+            fetch(POST_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'update_position', ticker: ticker, signal: signal,
+                    price: price, field: 'partial_profit', value: newTotal.toFixed(2)
+                })
+            });
+            return;
+        }
+
+        if (value === '0x0') {
+            // Safe — stop moved to breakeven, trade still open
+            el.dataset.status = '0x0';
+            el.style.borderLeftColor = '#1f6feb';
+            badge.style.display = 'inline-block';
+            badge.className = 'pnl-badge neutral';
+            badge.textContent = '0x0';
+            // Persist 0x0 status to sheet
+            fetch(POST_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'update_position', ticker: ticker, signal: signal,
+                    price: price, field: 'outcome', value: '0x0'
+                })
+            });
+            return;
+        }
+
+        // Lost — stopped out, final close, send to sheet
+        const grandTotal = prevTotal + inputVal;
         el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
 
         try {
@@ -1354,9 +1515,64 @@
                     signal: signal,
                     price: price,
                     field: 'outcome',
-                    value: value,
-                    profitLocked: profitLocked
+                    value: 'Stopped Out',
+                    profitLocked: grandTotal.toFixed(2)
                 })
+            });
+            badge.style.display = 'inline-block';
+            badge.className = 'pnl-badge negative';
+            badge.textContent = grandTotal < 0 ? '-$' + Math.abs(grandTotal).toFixed(2) : '$' + grandTotal.toFixed(2);
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 600);
+            setTimeout(fetchData, 3000);
+        } catch (err) {
+            el.querySelectorAll('.action-btn').forEach(b => b.disabled = false);
+            alert('Failed to update: ' + err.message);
+        }
+    }
+
+    // Close trade — finalizes with accumulated profit, sends to sheet
+    async function closeTrade(ticker, signal, price, elemId) {
+        const el = document.getElementById(elemId);
+        const grandTotal = parseFloat(el.dataset.pnl) || 0;
+        const badge = document.getElementById(elemId + '-badge');
+        el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
+
+        try {
+            await fetch(POST_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'update_position',
+                    ticker: ticker,
+                    signal: signal,
+                    price: price,
+                    field: 'outcome',
+                    value: 'TP Hit',
+                    profitLocked: grandTotal.toFixed(2)
+                })
+            });
+            badge.style.display = 'inline-block';
+            badge.className = 'pnl-badge positive';
+            badge.textContent = '+$' + grandTotal.toFixed(2);
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 600);
+            setTimeout(fetchData, 3000);
+        } catch (err) {
+            el.querySelectorAll('.action-btn').forEach(b => b.disabled = false);
+            alert('Failed to close: ' + err.message);
+        }
+    }
+
+    // ====== ACTION NEEDED OUTCOME (simple, sends directly to sheet) ======
+    async function markActionOutcome(ticker, signal, price, value, elemId) {
+        const profitInput = document.getElementById(elemId + '-profit');
+        const profitLocked = profitInput ? profitInput.value : '';
+        const el = document.getElementById(elemId);
+        el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
+        try {
+            await fetch(POST_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'update_position', ticker, signal, price, field: 'outcome', value, profitLocked })
             });
             const color = value === 'TP Hit' ? 'var(--green-candle)' : value === 'Stopped Out' ? 'var(--red-candle)' : '#1f6feb';
             el.style.borderColor = color;
@@ -1367,6 +1583,26 @@
             el.querySelectorAll('.action-btn').forEach(b => b.disabled = false);
             alert('Failed to update: ' + err.message);
         }
+    }
+
+    // ====== OPEN TRADE FILTERS ======
+    function setOpenFilter(filter, btn) {
+        openTradeFilter = filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterOpenTrades();
+    }
+    function filterOpenTrades() {
+        document.querySelectorAll('#openTradesList .action-item').forEach(el => {
+            const status = (el.dataset.status || '').toLowerCase();
+            if (openTradeFilter === 'no-0x0' && status === '0x0') {
+                el.style.display = 'none';
+            } else if (openTradeFilter === 'no-tp' && status === 'tp') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = '';
+            }
+        });
     }
 
     // ====== EMPTY FALLBACK (shows when Apps Script not yet deployed) ======
@@ -1384,22 +1620,92 @@
         }
     };
 
+    // ====== OPEN TRADES RENDERING ======
+    function renderOpenTrades(trades) {
+        const el = document.getElementById('openTradesList');
+        document.getElementById('openCount').textContent = trades.length;
+        if (trades.length === 0) {
+            el.innerHTML = '<div class="no-actions">No open trades right now.</div>';
+            return;
+        }
+        el.innerHTML = trades.map((t, i) => {
+            const id = 'open-' + i;
+            const logo = logoUrl(t.ticker);
+            const pnl = Number(t.profitLocked || 0);
+            const outcome = (t.outcome || '').toLowerCase();
+            const initStatus = outcome === '0x0' ? '0x0' : (pnl > 0 ? 'tp' : '');
+            const initBorder = outcome === '0x0' ? 'border-left-color:#1f6feb' : (pnl > 0 ? 'border-left-color:var(--green-candle)' : '');
+            const badgeDisplay = (outcome === '0x0' || pnl > 0) ? 'inline-block' : 'none';
+            const badgeClass = outcome === '0x0' ? 'pnl-badge neutral' : (pnl > 0 ? 'pnl-badge positive' : 'pnl-badge neutral');
+            const badgeText = outcome === '0x0' ? '0x0' : (pnl > 0 ? 'TP +$' + pnl.toFixed(2) : '');
+            const closeDisplay = pnl > 0 ? 'inline-block' : 'none';
+            return `
+                <div class="action-item" id="${id}" data-pnl="${pnl}" data-status="${initStatus}" style="${initBorder}">
+                    <div>
+                        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem">
+                            <img src="${logo}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" style="margin-right:0">
+                            <span class="stock-logo-fallback" style="display:none;margin-right:0">${esc(t.ticker.slice(0,2))}</span>
+                            <span class="ticker-badge" style="margin-right:0">${esc(t.ticker)}</span>
+                            <span class="signal-badge ${signalClass(t.lastSignal)}" style="font-size:0.5rem;padding:1px 5px">${signalLabel(t.lastSignal)}</span>
+                            <span class="${badgeClass}" id="${id}-badge" style="display:${badgeDisplay}">${badgeText}</span>
+                        </div>
+                        <div class="action-buttons">
+                            <input type="text" class="entry-input" placeholder="P&L $" id="${id}-profit">
+                            <button class="action-btn won" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'Won','${id}')">Won</button>
+                            <button class="action-btn lost" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'Lost','${id}')">Lost</button>
+                            <button class="action-btn zero" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'0x0','${id}')">0x0</button>
+                            <button class="action-btn close-trade" id="${id}-close" style="display:${closeDisplay}" onclick="closeTrade('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'${id}')">CLOSE</button>
+                        </div>
+                    </div>
+                    <div class="meta">${esc(t.phase || '')} · $${Number(t.price || 0).toFixed(2)} · Next: $${t.nextSize === 'SIT OUT' ? 'SIT OUT' : Number(t.nextSize || 0).toFixed(2)}</div>
+                </div>`;
+        }).join('');
+    }
+
     // ====== TICKER LINKS (editable, saved to localStorage) ======
     // ====== TICKER GRID RENDERING ======
     function renderTickerCard(t, i) {
-        const statusClass = (t.status || 'IDLE').replace(/\s+/g, '_');
-        const lockedClass = (Number(t.locked) || 0) > 0 ? 'green' : '';
-        const stopClass = (Number(t.stopouts) || 0) > 0 ? 'red' : '';
         const tid = 'ticker-' + i;
-        const buyBase = Number(t.buyBase || t.base || 30);
-        const sellBase = Number(t.sellBase || t.base || 30);
         const activeSide = (t.lastSignal === 'sell' || t.lastSignal === 'reduce') ? 'sell' : 'buy';
+
+        // Build per-side data objects
+        const buyData = {
+            base: Number(t.buyBase || t.base || 30),
+            phase: t.buyPhase || t.phase || 'No trades',
+            nextSize: t.buyNextSize != null ? t.buyNextSize : (activeSide === 'buy' ? t.nextSize : 0),
+            locked: Number(t.buyLocked || (activeSide === 'buy' ? t.locked : 0)),
+            stopouts: Number(t.buyStopouts || (activeSide === 'buy' ? t.stopouts : 0)),
+            status: t.buyStatus || (activeSide === 'buy' ? t.status : 'IDLE'),
+            nextAction: t.buyNextAction || (activeSide === 'buy' ? t.nextAction : ''),
+            lastSignal: t.buyLastSignal || (activeSide === 'buy' ? t.lastSignal : ''),
+            price: t.buyPrice || (activeSide === 'buy' ? t.price : 0)
+        };
+        const sellData = {
+            base: Number(t.sellBase || 0),
+            phase: t.sellPhase || 'No trades',
+            nextSize: t.sellNextSize != null ? t.sellNextSize : (activeSide === 'sell' ? t.nextSize : 0),
+            locked: Number(t.sellLocked || (activeSide === 'sell' ? t.locked : 0)),
+            stopouts: Number(t.sellStopouts || (activeSide === 'sell' ? t.stopouts : 0)),
+            status: t.sellStatus || (activeSide === 'sell' ? t.status : 'IDLE'),
+            nextAction: t.sellNextAction || (activeSide === 'sell' ? t.nextAction : ''),
+            lastSignal: t.sellLastSignal || (activeSide === 'sell' ? t.lastSignal : ''),
+            price: t.sellPrice || (activeSide === 'sell' ? t.price : 0)
+        };
+
+        const sd = activeSide === 'sell' ? sellData : buyData;
+        const statusClass = (sd.status || 'IDLE').replace(/\s+/g, '_');
+        const lockedClass = sd.locked > 0 ? 'green' : '';
+        const stopClass = sd.stopouts > 0 ? 'red' : '';
+
         return `
-            <div class="ticker-card" id="${tid}" data-buy-base="${buyBase}" data-sell-base="${sellBase}" data-side="${activeSide}">
+            <div class="ticker-card" id="${tid}" data-side="${activeSide}"
+                 data-buy-data='${JSON.stringify(buyData).replace(/'/g, "&#39;")}'
+                 data-sell-data='${JSON.stringify(sellData).replace(/'/g, "&#39;")}'>
                 <div class="ticker-card-header">
                     <div style="display:flex;align-items:center;gap:0.5rem">
+                        <img src="${logoUrl(t.ticker)}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="stock-logo-fallback" style="display:none">${esc(t.ticker.slice(0,2))}</span>
                         <span class="ticker-name">${esc(t.ticker)}</span>
-                        <span class="ticker-status ${statusClass}">${esc(t.status || 'IDLE')}</span>
+                        <span class="ticker-status ${statusClass}">${esc(sd.status || 'IDLE')}</span>
                     </div>
                     <div class="side-toggle">
                         <button class="${activeSide === 'buy' ? 'active-buy' : ''}" onclick="flipSide('${tid}','buy')">Buy</button>
@@ -1408,15 +1714,15 @@
                 </div>
                 <dl class="ticker-detail">
                     <dt>Side</dt><dd><span class="ticker-side-label ${activeSide}">${activeSide.toUpperCase()}</span></dd>
-                    <dt>Last Signal</dt><dd>${esc((t.lastSignal || '-').toUpperCase())}</dd>
-                    <dt>Price</dt><dd>${t.price ? '$' + Number(t.price).toFixed(2) : '-'}</dd>
-                    <dt>Base Size</dt><dd class="side-base">$${(activeSide === 'sell' ? sellBase : buyBase).toFixed(2)}</dd>
-                    <dt>Next Size</dt><dd class="side-next">${t.nextSize === 'SIT OUT' ? '<span class="red">SIT OUT</span>' : '$' + Number(t.nextSize || 0).toFixed(2)}</dd>
-                    <dt>Locked Profit</dt><dd class="${lockedClass}">${Number(t.locked || 0) > 0 ? '$' + Number(t.locked).toFixed(2) : '$0.00'}</dd>
-                    <dt>Stop-outs</dt><dd class="${stopClass}">${t.stopouts || 0}</dd>
+                    <dt>Last Signal</dt><dd class="side-signal"><span class="signal-badge ${signalClass(sd.lastSignal)}" style="font-size:0.55rem;padding:2px 6px">${signalLabel(sd.lastSignal)}</span></dd>
+                    <dt>Price</dt><dd class="side-price">${sd.price ? '$' + Number(sd.price).toFixed(2) : '-'}</dd>
+                    <dt>Base Size</dt><dd class="side-base">$${sd.base.toFixed(2)}</dd>
+                    <dt>Next Size</dt><dd class="side-next">${sd.nextSize === 'SIT OUT' ? '<span class="red">SIT OUT</span>' : '$' + Number(sd.nextSize || 0).toFixed(2)}</dd>
+                    <dt>Locked Profit</dt><dd class="side-locked ${lockedClass}">${sd.locked > 0 ? '$' + sd.locked.toFixed(2) : '$0.00'}</dd>
+                    <dt>Stop-outs</dt><dd class="side-stops ${stopClass}">${sd.stopouts || 0}</dd>
                 </dl>
-                <div class="ticker-phase">${esc(t.phase || 'No data')}</div>
-                ${t.nextAction ? '<div class="ticker-action">' + esc(t.nextAction) + '</div>' : ''}
+                <div class="ticker-phase">${esc(sd.phase || 'No data')}</div>
+                ${sd.nextAction ? '<div class="ticker-action">' + esc(sd.nextAction) + '</div>' : ''}
                 <div class="ticker-links">
                     <a class="ticker-link tv" href="${getTickerLink(t.ticker, 'tv')}" target="_blank">TradingView</a>
                     <a class="ticker-link hl" href="${getTickerLink(t.ticker, 'hl')}" target="_blank">Hyperliquid</a>
@@ -1546,12 +1852,10 @@
     function renderVictories(data) {
         const garden = document.getElementById('graveyard');
         const countEl = document.getElementById('graveyardCount');
-        // Extract winning trades from recent signals + stats
-        // In live mode, we'd get this from the API. For now, use sample wins.
-        const wins = (data.recentSignals || []).filter((s, i) => i % 3 === 0).map(s => ({
-            ticker: s.ticker,
-            profit: (Math.random() * 15 + 2).toFixed(2),
-            date: s.timestamp.split(' ')[0]
+        const wins = (data.closedTrades || []).map(t => ({
+            ticker: t.ticker,
+            profit: Number(t.profit || 0).toFixed(2),
+            date: t.date || ''
         }));
         countEl.textContent = wins.length;
         if (wins.length === 0) {
