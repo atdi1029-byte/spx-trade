@@ -619,7 +619,7 @@
             .bottom-grid { grid-template-columns: 1fr; }
             .ticker-grid {
                 grid-template-columns: 1fr;
-                max-height: 750px;
+                max-height: 400px;
                 overflow-y: auto;
             }
         }
@@ -1073,7 +1073,7 @@
         <button class="filter-btn" onclick="setOpenFilter('no-0x0',this)">No 0x0</button>
         <button class="filter-btn" onclick="setOpenFilter('no-tp',this)">No TP</button>
     </div>
-    <div class="action-list" id="openTradesList">
+    <div class="action-list" id="openTradesList" style="max-height:420px;overflow-y:auto">
         <div class="no-actions">No open trades right now.</div>
     </div>
 
@@ -1089,7 +1089,7 @@
     <div class="bottom-grid">
         <div>
             <div class="section-header">Recent Signals <span class="count" id="signalCount">0</span></div>
-            <div class="section-box">
+            <div class="section-box" style="max-height:300px;overflow-y:auto">
                 <table class="signals-table" id="signalsTable">
                     <thead>
                         <tr>
