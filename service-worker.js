@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spx-trade-v23';
+const CACHE_NAME = 'spx-trade-v24';
 const ASSETS = [
   './',
   './index.html',
@@ -29,12 +29,23 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch — serve from cache, fallback to network
+// Fetch — network-first for HTML, cache-first for static assets
 self.addEventListener('fetch', event => {
-  // Always go to network for API calls
-  if (event.request.url.includes('script.google.com')) {
-    return event.respondWith(fetch(event.request));
+  if (event.request.method !== 'GET' || event.request.url.includes('script.google.com')) {
+    return;
   }
+  // Network-first for HTML — always get latest, fall back to cache offline
+  if (event.request.mode === 'navigate' || event.request.url.endsWith('.html') || event.request.url.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request).then(resp => {
+        const clone = resp.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return resp;
+      }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+  // Cache-first for static assets (images, fonts)
   event.respondWith(
     caches.match(event.request).then(cached => cached || fetch(event.request))
   );

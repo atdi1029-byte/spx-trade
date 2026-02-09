@@ -239,6 +239,46 @@
             opacity: 0.6;
         }
 
+        /* ============ WEEKLY TASKS ============ */
+        .weekly-tasks { margin-bottom: 1.25rem; }
+        .weekly-tasks-list {
+            background: var(--bg-card);
+            border: 2px solid var(--pumpkin);
+            border-radius: 10px;
+            padding: 0.4rem 1rem;
+            display: flex; flex-direction: column; gap: 0;
+            box-shadow: 0 0 15px rgba(212, 132, 62, 0.15);
+        }
+        .weekly-task-item {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.3rem 0.35rem;
+            border-bottom: 1px solid rgba(58, 53, 48, 0.6);
+            cursor: pointer; transition: opacity 0.2s, background 0.2s; border-radius: 4px;
+        }
+        .weekly-task-item:last-child { border-bottom: none; }
+        .weekly-task-item:hover { background: rgba(212, 132, 62, 0.08); }
+        .weekly-task-item.checked { opacity: 0.35; }
+        .weekly-task-item.checked .task-text { text-decoration: line-through; }
+        .weekly-task-checkbox {
+            width: 20px; height: 20px; border: 2px solid var(--pumpkin);
+            border-radius: 4px; flex-shrink: 0; display: flex; align-items: center;
+            justify-content: center; background: rgba(212, 132, 62, 0.08);
+            transition: all 0.2s; box-shadow: 0 0 6px rgba(212, 132, 62, 0.2);
+        }
+        .weekly-task-item:hover .weekly-task-checkbox { box-shadow: 0 0 10px rgba(212, 132, 62, 0.35); }
+        .weekly-task-item.checked .weekly-task-checkbox { background: var(--green-candle); border-color: var(--green-candle); box-shadow: 0 0 8px rgba(74, 138, 74, 0.4); }
+        .weekly-task-item.checked .weekly-task-checkbox::after { content: '\2713'; color: var(--text-bright); font-size: 0.8rem; font-weight: 700; }
+        .task-text { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--text-bright); transition: all 0.2s; }
+
+        /* ============ 4-DAY CHECK ============ */
+        .action-btn.four-day-btn { background: rgba(58, 53, 48, 0.3); color: var(--text-dim); border-color: rgba(58, 53, 48, 0.5); opacity: 0.5; }
+        .action-btn.four-day-btn:hover { background: rgba(58, 53, 48, 0.5); color: var(--text); opacity: 0.8; }
+        .action-btn.four-day-btn.checked { background: var(--green-dim); color: var(--green-bright); border-color: var(--green-candle); opacity: 1; }
+        .action-btn.four-day-btn.needs-check { background: rgba(196, 75, 63, 0.15); color: var(--red-bright); border-color: var(--red-candle); opacity: 1; animation: flash4day 1.5s ease-in-out infinite alternate; }
+        .filter-btn.need-4day-btn.has-alerts { background: rgba(196, 75, 63, 0.15); border-color: var(--red-candle); color: var(--red-bright); animation: flash4day 1s ease-in-out infinite alternate; }
+        .filter-btn.need-4day-btn.has-alerts.active { background: rgba(196, 75, 63, 0.3); }
+        @keyframes flash4day { from { opacity: 0.6; } to { opacity: 1; box-shadow: 0 0 10px rgba(196, 75, 63, 0.4); } }
+
         /* ============ QUICK STATS BAR ============ */
         .stats-bar {
             display: grid;
@@ -623,6 +663,9 @@
                 overflow-y: auto;
             }
             .action-item .meta { display: none; }
+            .weekly-tasks { display: none !important; }
+            .four-day-btn { display: none !important; }
+            .need-4day-btn { display: none !important; }
         }
 
         /* ============ SIGNALS TABLE ============ */
@@ -1037,6 +1080,11 @@
         <div class="quote-author" id="quoteAuthor"></div>
     </div>
 
+    <!-- Weekly Tasks -->
+    <div class="weekly-tasks" id="weeklyTasks" style="display:none">
+        <div class="weekly-tasks-list" id="weeklyTasksList"></div>
+    </div>
+
     <!-- Quick Stats Bar -->
     <div class="stats-bar" id="statsBar">
         <div class="stat-card">
@@ -1073,6 +1121,7 @@
         <button class="filter-btn active" onclick="setOpenFilter('all',this)">All</button>
         <button class="filter-btn" onclick="setOpenFilter('no-0x0',this)">No OxO</button>
         <button class="filter-btn" onclick="setOpenFilter('no-tp',this)">No TP</button>
+        <button class="filter-btn need-4day-btn" onclick="setOpenFilter('need-4day',this)">Need 4 Day</button>
     </div>
     <div class="action-list" id="openTradesList" style="max-height:420px;overflow-y:auto">
         <div class="no-actions">No open trades right now.</div>
@@ -1698,6 +1747,7 @@
                             <button class="action-btn lost" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'Lost','${id}')">Lost</button>
                             <button class="action-btn zero" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'0x0','${id}')">OxO</button>
                             <button class="action-btn close-trade" id="${id}-close" style="display:${closeDisplay}" onclick="closeTrade('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'${id}')">CLOSE</button>
+                            <button class="action-btn four-day-btn" id="${id}-4day" onclick="toggle4DayCheck('${esc(t.ticker)}','${id}')">4 Day</button>
                         </div>
                     </div>
                     <div class="meta">${esc(t.phase || '')} · $${Number(t.price || 0).toFixed(2)} · Next: $${t.nextSize === 'SIT OUT' ? 'SIT OUT' : Number(t.nextSize || 0).toFixed(2)}</div>
@@ -2044,8 +2094,136 @@
     }
     showQuote();
 
+    // ====== WEEKLY TASKS ======
+    function getMonday() {
+        const d = new Date(); d.setHours(0,0,0,0);
+        const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        d.setDate(diff); return d.toISOString().slice(0,10);
+    }
+    function getCheckedTasks() { try { return JSON.parse(localStorage.getItem('spx_weekly_todos_' + getMonday()) || '[]'); } catch(e) { return []; } }
+    function setCheckedTasks(arr) { localStorage.setItem('spx_weekly_todos_' + getMonday(), JSON.stringify(arr)); }
+    async function fetchWeeklyTasks() {
+        try {
+            const resp = await fetch(POST_URL + '?action=tasks');
+            const data = await resp.json();
+            if (data.status === 'ok' && data.tasks && data.tasks.length > 0) renderWeeklyTasks(data.tasks);
+        } catch(e) { console.error('Weekly tasks error:', e); }
+    }
+    function renderWeeklyTasks(tasks) {
+        const checked = getCheckedTasks();
+        const allDone = tasks.every((_, i) => checked.includes(i));
+        const container = document.getElementById('weeklyTasks');
+        if (allDone) { container.style.display = 'none'; return; }
+        container.style.display = '';
+        document.getElementById('weeklyTasksList').innerHTML = tasks.map((task, i) => {
+            const isDone = checked.includes(i);
+            return `<div class="weekly-task-item${isDone ? ' checked' : ''}" onclick="toggleTask(${i}, ${JSON.stringify(tasks).replace(/"/g, '&quot;')})">
+                <div class="weekly-task-checkbox"></div>
+                <span class="task-text">${esc(task)}</span>
+            </div>`;
+        }).join('');
+    }
+    function toggleTask(idx, tasks) {
+        const checked = getCheckedTasks();
+        const pos = checked.indexOf(idx);
+        if (pos === -1) checked.push(idx); else checked.splice(pos, 1);
+        setCheckedTasks(checked);
+        renderWeeklyTasks(tasks);
+    }
+
+    // ====== 4-DAY CHECK ======
+    function get4DayStates() { try { return JSON.parse(localStorage.getItem('spx_4day_checks') || '{}'); } catch(e) { return {}; } }
+    function set4DayStates(obj) { localStorage.setItem('spx_4day_checks', JSON.stringify(obj)); }
+    function toggle4DayCheck(ticker, cardId) {
+        const states = get4DayStates();
+        states[ticker] = Date.now();
+        set4DayStates(states);
+        update4DayBtn(ticker, cardId);
+        updateNeed4DayCount();
+    }
+    function update4DayBtn(ticker, cardId) {
+        const btn = document.getElementById(cardId + '-4day');
+        if (!btn) return;
+        const states = get4DayStates();
+        const ts = states[ticker];
+        if (!ts) {
+            // Auto-start timer
+            states[ticker] = Date.now();
+            set4DayStates(states);
+        }
+        const elapsed = Date.now() - (states[ticker] || Date.now());
+        const fourDays = 4 * 24 * 60 * 60 * 1000;
+        const remaining = fourDays - elapsed;
+        if (remaining <= 0) {
+            btn.className = 'action-btn four-day-btn needs-check';
+            btn.textContent = 'CHECK!';
+        } else {
+            btn.className = 'action-btn four-day-btn checked';
+            const hoursLeft = Math.ceil(remaining / (1000 * 60 * 60));
+            if (hoursLeft > 24) {
+                btn.textContent = Math.ceil(hoursLeft / 24) + 'd';
+            } else {
+                btn.textContent = hoursLeft + 'h';
+            }
+        }
+    }
+    function restore4DayStates() {
+        document.querySelectorAll('#openTradesList .action-item').forEach(el => {
+            const ticker = el.querySelector('.ticker-badge')?.textContent;
+            if (ticker) update4DayBtn(ticker, el.id);
+        });
+        updateNeed4DayCount();
+    }
+    function updateNeed4DayCount() {
+        const states = get4DayStates();
+        const fourDays = 4 * 24 * 60 * 60 * 1000;
+        let count = 0;
+        document.querySelectorAll('#openTradesList .action-item').forEach(el => {
+            const ticker = el.querySelector('.ticker-badge')?.textContent;
+            if (ticker && states[ticker]) {
+                const remaining = fourDays - (Date.now() - states[ticker]);
+                if (remaining <= 0) count++;
+            }
+        });
+        const btn = document.querySelector('.need-4day-btn');
+        if (btn) {
+            btn.textContent = count > 0 ? 'Need 4 Day (' + count + ')' : 'Need 4 Day';
+            btn.classList.toggle('has-alerts', count > 0);
+        }
+    }
+
+    // Override filterOpenTrades to handle need-4day
+    const _origFilterOpen = filterOpenTrades;
+    filterOpenTrades = function() {
+        const states = get4DayStates();
+        const fourDays = 4 * 24 * 60 * 60 * 1000;
+        document.querySelectorAll('#openTradesList .action-item').forEach(el => {
+            const status = (el.dataset.status || '').toLowerCase();
+            const ticker = el.querySelector('.ticker-badge')?.textContent;
+            if (openTradeFilter === 'no-0x0' && status === '0x0') {
+                el.style.display = 'none';
+            } else if (openTradeFilter === 'no-tp' && status === 'tp') {
+                el.style.display = 'none';
+            } else if (openTradeFilter === 'need-4day') {
+                const ts = ticker && states[ticker];
+                const needsCheck = ts && (fourDays - (Date.now() - ts)) <= 0;
+                el.style.display = needsCheck ? '' : 'none';
+            } else {
+                el.style.display = '';
+            }
+        });
+    };
+
+    // Hook into renderOpenTrades to restore 4-day states after render
+    const _origRenderOpen = renderOpenTrades;
+    renderOpenTrades = function(trades) {
+        _origRenderOpen(trades);
+        setTimeout(restore4DayStates, 50);
+    };
+
     // ====== INIT ======
     fetchData();
+    fetchWeeklyTasks();
 
     // ====== SERVICE WORKER ======
     if ('serviceWorker' in navigator) {
