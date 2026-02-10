@@ -59,5 +59,39 @@ API ENDPOINT
 ------------
 URL: https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec
   ?action=dashboard → returns JSON dashboard data
+  ?action=tasks     → returns weekly tasks from "Weekly Tasks" tab
   (no params)       → returns health check JSON
   POST with JSON    → logs trade signal
+
+WEBSITE-ONLY FEATURES (Feb 9, 2026)
+------------------------------------
+Hidden on mobile via @media (max-width: 900px)
+
+Weekly Tasks:
+  - Google Sheet "Weekly Tasks" tab, Column A = tasks
+  - Served via ?action=tasks endpoint
+  - localStorage key: spx_weekly_todos_YYYY-MM-DD (resets each Monday)
+  - Section appears between quote banner and stats bar
+  - Hides when all tasks checked
+
+4 Day Check (Open Trades):
+  - 96h timer auto-starts when trade first appears
+  - Shows days: 4d, 3d, 2d, 1d — then hours: 23h, 22h... for last day
+  - Red "CHECK!" with glow after 4 days, click resets timer
+  - "Need 4 Day" filter button flashes red with count
+  - localStorage key: spx_4day_checks
+
+Other Changes:
+  - Open trades only show AFTER clicking "Entered" (filters pending action-needed)
+  - OxO/TP badge positioned on right side of card
+  - BUY/OxO tags made smaller (0.4rem, opacity 0.7) to reduce clutter
+  - Service worker v29: network-first for HTML (prevents stale cache)
+  - ALWAYS bump service-worker.js cache version when pushing changes
+
+Updates (Feb 9, 2026 — session 2):
+  - Won button now immediately closes trade as TP Hit (no more partial/CLOSE flow)
+  - All dashboard writes use GET (not POST) — POST silently fails due to CORS redirects
+  - Apps Script doGet handles ?action=update_position with query params
+  - Fixed updatePosition_ matching: outcome updates find rows where Action=Entered (was looking for empty Action)
+  - Fixed sumLockedBySide_: only sums profitLocked from TP Hit trades (was including stopped out losses)
+  - Performance summary: glow effects on profit/loss values, streaks show "Win"/"Loss" not "W"/"L"
