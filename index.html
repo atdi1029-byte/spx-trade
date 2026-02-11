@@ -1696,10 +1696,6 @@
         btns[0].className = side === 'buy' ? 'active-buy' : '';
         btns[1].className = side === 'sell' ? 'active-sell' : '';
 
-        // Side label
-        const label = card.querySelector('.ticker-side-label');
-        if (label) { label.textContent = side.toUpperCase(); label.className = 'ticker-side-label ' + side; }
-
         // Status badge
         const statusEl = card.querySelector('.ticker-status');
         if (statusEl) {
@@ -2119,7 +2115,6 @@
                     </div>
                 </div>
                 <dl class="ticker-detail">
-                    <dt>Side</dt><dd><span class="ticker-side-label ${activeSide}">${activeSide.toUpperCase()}</span></dd>
                     <dt>Badge</dt><dd class="side-badge"><span class="badge-label">${esc(bi.name)}</span>${multLabel}</dd>
                     <dt>Last Signal</dt><dd class="side-signal"><span class="signal-badge ${signalClass(sd.lastSignal)}" style="font-size:0.55rem;padding:2px 6px">${signalLabel(sd.lastSignal)}</span></dd>
                     <dt>Price</dt><dd class="side-price">${sd.price ? '$' + Number(sd.price).toFixed(2) : '-'}</dd>
