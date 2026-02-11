@@ -1468,11 +1468,21 @@
         if (newOnes.length > 0 && known.length > 0) {
             newOnes.forEach(k => {
                 const [ticker, sig] = k.split('|');
-                new Notification('Trade Alert: ' + ticker, {
-                    body: (sig || '').toUpperCase() + ' signal',
-                    icon: 'icon-192.png',
-                    tag: k
-                });
+                if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.showNotification('Trade Alert: ' + ticker, {
+                            body: (sig || '').toUpperCase() + ' signal',
+                            icon: 'icon-192.png',
+                            tag: k
+                        });
+                    });
+                } else {
+                    new Notification('Trade Alert: ' + ticker, {
+                        body: (sig || '').toUpperCase() + ' signal',
+                        icon: 'icon-192.png',
+                        tag: k
+                    });
+                }
             });
         }
         setKnownSignals(keys);
