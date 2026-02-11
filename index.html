@@ -1888,18 +1888,21 @@
         let ineligible = [];
         allTickers.forEach(t => {
             const badge = t.buyBadge || { grade: 1, name: 'Boulder', weight: 0 };
+            const base = Number(t.buyBase || t.base || 30);
             if (badge.grade >= 3) {
-                eligible.push({ ticker: t.ticker, badge: badge.name, grade: badge.grade, weight: badge.weight });
+                eligible.push({ ticker: t.ticker, badge: badge.name, grade: badge.grade, weight: badge.weight, base });
             } else {
                 ineligible.push({ ticker: t.ticker, badge: badge.name, grade: badge.grade });
             }
         });
 
-        const totalWeight = eligible.reduce((s, e) => s + e.weight, 0);
+        // Diminishing returns: absorb_rate = 1000 / (1000 + base)
+        eligible.forEach(e => { e.absorbRate = 1000 / (1000 + e.base); e.effWeight = e.weight * e.absorbRate; });
+        const totalEffWeight = eligible.reduce((s, e) => s + e.effWeight, 0);
 
         let html = '';
         eligible.forEach(e => {
-            const pct = totalWeight > 0 ? (e.weight / totalWeight) : 0;
+            const pct = totalEffWeight > 0 ? (e.effWeight / totalEffWeight) : 0;
             const alloc = Math.round(amount * pct * 100) / 100;
             const bi = getBadgeInfo(e.grade);
             html += `<tr>
