@@ -650,6 +650,66 @@
         .ticker-link.hl { color: #4ade80; border-color: #4ade8022; }
         .ticker-link.hl:hover { background: #4ade8022; border-color: #4ade80; color: #86efac; }
 
+        /* ============ BADGE DISPLAY ============ */
+        .badge-icon { width: 20px; height: 20px; vertical-align: middle; image-rendering: auto; }
+        .badge-label { font-family: 'Space Mono', monospace; font-size: 0.5rem; font-weight: 700; color: var(--pumpkin-glow); letter-spacing: 0.5px; vertical-align: middle; }
+        .badge-multiplier { font-family: 'Space Mono', monospace; font-size: 0.5rem; font-weight: 700; color: var(--cream); background: var(--pumpkin-deep); padding: 1px 5px; border-radius: 2px; vertical-align: middle; margin-left: 4px; }
+
+        /* ============ ADD TO PORTFOLIO BUTTON ============ */
+        .portfolio-btn {
+            background: var(--bg-card); border: 1px solid var(--pumpkin-deep); color: var(--pumpkin-glow);
+            padding: 6px 16px; border-radius: 4px; cursor: pointer; font-family: 'Space Mono', monospace;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;
+        }
+        .portfolio-btn:hover { background: var(--pumpkin-deep); color: var(--cream); box-shadow: 0 0 10px #d4843e33; }
+
+        /* ============ PORTFOLIO MODAL ============ */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); z-index: 9998; display: none;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: var(--bg-card); border: 2px solid var(--pumpkin-deep); border-radius: 10px;
+            padding: 1.5rem 2rem; max-width: 550px; width: 90%; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 0 40px rgba(212,132,62,0.3);
+        }
+        .modal-title {
+            font-family: 'Noto Serif JP', serif; font-size: 1.2rem; font-weight: 900;
+            color: var(--cream); margin-bottom: 1rem; text-align: center;
+        }
+        .modal-input {
+            width: 100%; padding: 0.6rem 1rem; background: var(--bg-dark); border: 1px solid var(--border);
+            border-radius: 4px; color: var(--cream); font-family: 'Space Mono', monospace; font-size: 1rem;
+            text-align: center; margin-bottom: 1rem;
+        }
+        .modal-input:focus { outline: none; border-color: var(--pumpkin); }
+        .modal-table {
+            width: 100%; border-collapse: collapse; font-size: 0.7rem; margin-bottom: 1rem;
+        }
+        .modal-table th {
+            text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border);
+            color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .modal-table td { padding: 6px 8px; border-bottom: 1px solid rgba(58,53,48,0.4); color: var(--text); }
+        .modal-table tr.unproven td { opacity: 0.35; }
+        .modal-table .alloc-amount { font-weight: 700; color: var(--green-bright); }
+        .modal-buttons { display: flex; gap: 0.5rem; justify-content: center; }
+        .modal-confirm {
+            background: var(--green-dim); color: var(--green-bright); border: 1px solid var(--green-candle);
+            padding: 8px 24px; border-radius: 4px; cursor: pointer; font-family: 'Space Mono', monospace;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;
+        }
+        .modal-confirm:hover { background: var(--green-candle); color: var(--cream); }
+        .modal-confirm:disabled { opacity: 0.4; cursor: default; }
+        .modal-cancel {
+            background: var(--bg-dark); color: var(--text-dim); border: 1px solid var(--border);
+            padding: 8px 24px; border-radius: 4px; cursor: pointer; font-family: 'Space Mono', monospace;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;
+        }
+        .modal-cancel:hover { background: var(--border); color: var(--text); }
+
         /* ============ BOTTOM GRID ============ */
         .bottom-grid {
             display: grid;
@@ -1196,6 +1256,7 @@
         <div class="header-right">
             <span><span class="status-dot loading" id="statusDot"></span><span id="statusText">Connecting...</span></span>
             <span id="lastUpdate"></span>
+            <button class="portfolio-btn" onclick="openPortfolioModal()">+ Portfolio</button>
             <button class="refresh-btn" onclick="fetchData()">Refresh</button>
         </div>
     </div>
@@ -1316,10 +1377,40 @@
     <div class="footer">SPX Trade Dashboard</div>
 </div>
 
+<!-- Portfolio Allocation Modal -->
+<div class="modal-overlay" id="portfolioModal">
+    <div class="modal-box">
+        <div class="modal-title">Add to Portfolio</div>
+        <input type="number" class="modal-input" id="portfolioAmount" placeholder="Enter amount ($)" min="1" oninput="previewAllocation()">
+        <table class="modal-table" id="portfolioTable">
+            <thead><tr><th>Ticker</th><th>Badge</th><th>Grade</th><th>Weight</th><th>%</th><th>$ Amount</th></tr></thead>
+            <tbody id="portfolioBody"></tbody>
+        </table>
+        <div class="modal-buttons">
+            <button class="modal-confirm" id="portfolioConfirm" onclick="confirmPortfolio()" disabled>Confirm</button>
+            <button class="modal-cancel" onclick="closePortfolioModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // ====== CONFIG ======
     const API_URL = 'https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec?action=dashboard';
     const REFRESH_INTERVAL = 60000; // 60 seconds
+
+    const BADGE_INFO = [
+        { grade: 1,  name: 'Boulder',    icon: 'badges/Boulder_Badge.png',  multiplier: 1.0, weight: 0 },
+        { grade: 2,  name: 'Cascade',    icon: 'badges/Cascade_Badge.png',  multiplier: 1.0, weight: 0 },
+        { grade: 3,  name: 'Thunder',    icon: 'badges/Thunder_Badge.png',  multiplier: 1.0, weight: 5 },
+        { grade: 4,  name: 'Rainbow',    icon: 'badges/Rainbow_Badge.png',  multiplier: 1.3, weight: 10 },
+        { grade: 5,  name: 'Soul',       icon: 'badges/Soul_Badge.png',     multiplier: 1.5, weight: 15 },
+        { grade: 6,  name: 'Marsh',      icon: 'badges/Marsh_Badge.png',    multiplier: 1.7, weight: 20 },
+        { grade: 7,  name: 'Volcano',    icon: 'badges/Volcano_Badge.png',  multiplier: 2.0, weight: 25 },
+        { grade: 8,  name: 'Earth',      icon: 'badges/Earth_Badge.png',    multiplier: 2.3, weight: 30 },
+        { grade: 9,  name: 'Elite Four', icon: 'badges/master-ball.png',    multiplier: 2.5, weight: 35 },
+        { grade: 10, name: 'Master',     icon: 'badges/master-ball.png',    multiplier: 3.0, weight: 40 }
+    ];
+    function getBadgeInfo(grade) { return BADGE_INFO.find(b => b.grade === grade) || BADGE_INFO[0]; }
 
     let refreshTimer = null;
     let allTickers = [];
@@ -1480,12 +1571,19 @@
                 const id = 'action-' + i;
                 const logo = logoUrl(a.ticker);
                 const logoHtml = `<img src="${logo}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="stock-logo-fallback" style="display:none">${esc(a.ticker.slice(0,2))}</span>`;
+                // Find effective size from tickers data
+                const isBuy = ['buy','add'].includes((a.signal || '').toLowerCase());
+                const matchTicker = tickers.find(t => t.ticker.toUpperCase() === a.ticker.toUpperCase());
+                const effSize = matchTicker ? (isBuy ? matchTicker.buyEffectiveSize : matchTicker.sellEffectiveSize) : 0;
+                const effSizeStr = effSize === 'SIT OUT' ? 'SIT OUT' : Number(effSize || 0).toFixed(2);
+                const badge = matchTicker ? (isBuy ? matchTicker.buyBadge : matchTicker.sellBadge) : null;
+                const badgeHtml = badge ? `<img src="${getBadgeInfo(badge.grade).icon}" class="badge-icon" style="margin-left:4px">` : '';
                 return `
                     <div class="action-item" id="${id}">
                         <div>
-                            <div>${logoHtml}<span class="ticker-badge">${esc(a.ticker)}</span><span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span></div>
+                            <div>${logoHtml}<span class="ticker-badge">${esc(a.ticker)}</span>${badgeHtml}<span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span><span style="margin-left:0.5rem;font-size:0.65rem;color:var(--green-bright);font-weight:700">${effSizeStr !== 'SIT OUT' ? 'Enter at $' + effSizeStr : 'SIT OUT'}</span></div>
                             <div class="action-buttons">
-                                <input type="text" class="entry-input" placeholder="Size $" id="${id}-size">
+                                <input type="text" class="entry-input" placeholder="Size $" id="${id}-size" value="${effSizeStr !== 'SIT OUT' ? effSizeStr : ''}">
                                 <button class="action-btn entered" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Entered','${id}')">Entered</button>
                                 <button class="action-btn skipped" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Skipped','${id}')">Skipped</button>
                             </div>
@@ -1610,6 +1708,20 @@
             statusEl.textContent = data.status || 'IDLE';
         }
 
+        // Badge
+        const badgeEl = card.querySelector('.side-badge');
+        if (badgeEl && data.badge) {
+            const bi2 = getBadgeInfo(data.badge.grade || 1);
+            const multLabel2 = data.badge.multiplier > 1 ? `<span class="badge-multiplier">&times;${data.badge.multiplier}</span>` : '';
+            badgeEl.innerHTML = `<span class="badge-label">${esc(bi2.name)}</span>${multLabel2}`;
+        }
+        const badgeIcon = card.querySelector('.badge-icon');
+        if (badgeIcon && data.badge) {
+            const bi3 = getBadgeInfo(data.badge.grade || 1);
+            badgeIcon.src = bi3.icon;
+            badgeIcon.title = bi3.name + ' Badge (Grade ' + bi3.grade + ')';
+        }
+
         // Signal badge
         const sigEl = card.querySelector('.side-signal');
         if (sigEl) sigEl.innerHTML = '<span class="signal-badge ' + signalClass(data.lastSignal) + '" style="font-size:0.55rem;padding:2px 6px">' + signalLabel(data.lastSignal) + '</span>';
@@ -1622,9 +1734,9 @@
         const baseEl = card.querySelector('.side-base');
         if (baseEl) baseEl.textContent = '$' + Number(data.base || 0).toFixed(2);
 
-        // Next size
+        // Effective size
         const nextEl = card.querySelector('.side-next');
-        if (nextEl) nextEl.innerHTML = data.nextSize === 'SIT OUT' ? '<span class="red">SIT OUT</span>' : '$' + Number(data.nextSize || 0).toFixed(2);
+        if (nextEl) nextEl.innerHTML = data.effectiveSize === 'SIT OUT' ? '<span class="red">SIT OUT</span>' : '$' + Number(data.effectiveSize || 0).toFixed(2);
 
         // Locked profit
         const lockedEl = card.querySelector('.side-locked');
@@ -1760,6 +1872,96 @@
         }
     }
 
+    // ====== PORTFOLIO ALLOCATION MODAL ======
+    function openPortfolioModal() {
+        document.getElementById('portfolioModal').classList.add('active');
+        document.getElementById('portfolioAmount').value = '';
+        document.getElementById('portfolioAmount').focus();
+        previewAllocation();
+    }
+    function closePortfolioModal() {
+        document.getElementById('portfolioModal').classList.remove('active');
+    }
+    function previewAllocation() {
+        const amount = parseFloat(document.getElementById('portfolioAmount').value) || 0;
+        const body = document.getElementById('portfolioBody');
+        const confirmBtn = document.getElementById('portfolioConfirm');
+
+        // Build allocation preview from allTickers data
+        let eligible = [];
+        let ineligible = [];
+        allTickers.forEach(t => {
+            const badge = t.buyBadge || { grade: 1, name: 'Boulder', weight: 0 };
+            if (badge.grade >= 3) {
+                eligible.push({ ticker: t.ticker, badge: badge.name, grade: badge.grade, weight: badge.weight });
+            } else {
+                ineligible.push({ ticker: t.ticker, badge: badge.name, grade: badge.grade });
+            }
+        });
+
+        const totalWeight = eligible.reduce((s, e) => s + e.weight, 0);
+
+        let html = '';
+        eligible.forEach(e => {
+            const pct = totalWeight > 0 ? (e.weight / totalWeight) : 0;
+            const alloc = Math.round(amount * pct * 100) / 100;
+            const bi = getBadgeInfo(e.grade);
+            html += `<tr>
+                <td style="font-weight:700;color:var(--cream)">${esc(e.ticker)}</td>
+                <td><img src="${bi.icon}" class="badge-icon"> ${esc(e.badge)}</td>
+                <td>${e.grade}</td>
+                <td>${e.weight}</td>
+                <td>${(pct * 100).toFixed(1)}%</td>
+                <td class="alloc-amount">$${alloc.toFixed(2)}</td>
+            </tr>`;
+        });
+        ineligible.forEach(e => {
+            const bi = getBadgeInfo(e.grade);
+            html += `<tr class="unproven">
+                <td>${esc(e.ticker)}</td>
+                <td><img src="${bi.icon}" class="badge-icon"> ${esc(e.badge)}</td>
+                <td>${e.grade}</td>
+                <td>-</td>
+                <td>-</td>
+                <td style="font-size:0.55rem;color:var(--text-dim)">Unproven</td>
+            </tr>`;
+        });
+
+        body.innerHTML = html;
+        confirmBtn.disabled = amount <= 0 || eligible.length === 0;
+    }
+    async function confirmPortfolio() {
+        const amount = parseFloat(document.getElementById('portfolioAmount').value) || 0;
+        if (amount <= 0) return;
+        const confirmBtn = document.getElementById('portfolioConfirm');
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Allocating...';
+
+        try {
+            const url = POST_URL + '?action=add_portfolio&amount=' + encodeURIComponent(amount);
+            const resp = await fetch(url);
+            const data = await resp.json();
+            if (data.status === 'ok') {
+                confirmBtn.textContent = 'Done!';
+                confirmBtn.style.background = 'var(--green-candle)';
+                setTimeout(() => {
+                    closePortfolioModal();
+                    confirmBtn.textContent = 'Confirm';
+                    confirmBtn.style.background = '';
+                    fetchData();
+                }, 1500);
+            } else {
+                alert('Error: ' + (data.message || 'Unknown error'));
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Confirm';
+            }
+        } catch (err) {
+            alert('Failed: ' + err.message);
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm';
+        }
+    }
+
     // ====== ACTION NEEDED OUTCOME (simple, sends directly to sheet) ======
     async function markActionOutcome(ticker, signal, price, value, elemId) {
         const profitInput = document.getElementById(elemId + '-profit');
@@ -1863,6 +2065,8 @@
         const activeSide = (t.lastSignal === 'sell' || t.lastSignal === 'reduce') ? 'sell' : 'buy';
 
         // Build per-side data objects
+        const buyBadge = t.buyBadge || { grade: 1, name: 'Boulder', multiplier: 1.0 };
+        const sellBadge = t.sellBadge || { grade: 1, name: 'Boulder', multiplier: 1.0 };
         const buyData = {
             base: Number(t.buyBase || t.base || 30),
             phase: t.buyPhase || t.phase || 'No trades',
@@ -1872,7 +2076,9 @@
             status: t.buyStatus || (activeSide === 'buy' ? t.status : 'IDLE'),
             nextAction: t.buyNextAction || (activeSide === 'buy' ? t.nextAction : ''),
             lastSignal: t.buyLastSignal || (activeSide === 'buy' ? t.lastSignal : ''),
-            price: t.buyPrice || (activeSide === 'buy' ? t.price : 0)
+            price: t.buyPrice || (activeSide === 'buy' ? t.price : 0),
+            badge: buyBadge,
+            effectiveSize: t.buyEffectiveSize || 0
         };
         const sellData = {
             base: Number(t.sellBase || 0),
@@ -1883,13 +2089,18 @@
             status: t.sellStatus || (activeSide === 'sell' ? t.status : 'IDLE'),
             nextAction: t.sellNextAction || (activeSide === 'sell' ? t.nextAction : ''),
             lastSignal: t.sellLastSignal || (activeSide === 'sell' ? t.lastSignal : ''),
-            price: t.sellPrice || (activeSide === 'sell' ? t.price : 0)
+            price: t.sellPrice || (activeSide === 'sell' ? t.price : 0),
+            badge: sellBadge,
+            effectiveSize: t.sellEffectiveSize || 0
         };
 
         const sd = activeSide === 'sell' ? sellData : buyData;
         const statusClass = (sd.status || 'IDLE').replace(/\s+/g, '_');
         const lockedClass = sd.locked > 0 ? 'green' : '';
         const stopClass = sd.stopouts > 0 ? 'red' : '';
+        const bi = getBadgeInfo(sd.badge ? sd.badge.grade : 1);
+        const multLabel = sd.badge && sd.badge.multiplier > 1 ? `<span class="badge-multiplier">&times;${sd.badge.multiplier}</span>` : '';
+        const effSize = sd.effectiveSize;
 
         return `
             <div class="ticker-card" id="${tid}" data-side="${activeSide}"
@@ -1899,6 +2110,7 @@
                     <div style="display:flex;align-items:center;gap:0.5rem">
                         <img src="${logoUrl(t.ticker)}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="stock-logo-fallback" style="display:none">${esc(t.ticker.slice(0,2))}</span>
                         <span class="ticker-name">${esc(t.ticker)}</span>
+                        <img src="${bi.icon}" class="badge-icon" title="${bi.name} Badge (Grade ${bi.grade})">
                         <span class="ticker-status ${statusClass}">${esc(sd.status || 'IDLE')}</span>
                     </div>
                     <div class="side-toggle">
@@ -1908,10 +2120,11 @@
                 </div>
                 <dl class="ticker-detail">
                     <dt>Side</dt><dd><span class="ticker-side-label ${activeSide}">${activeSide.toUpperCase()}</span></dd>
+                    <dt>Badge</dt><dd class="side-badge"><span class="badge-label">${esc(bi.name)}</span>${multLabel}</dd>
                     <dt>Last Signal</dt><dd class="side-signal"><span class="signal-badge ${signalClass(sd.lastSignal)}" style="font-size:0.55rem;padding:2px 6px">${signalLabel(sd.lastSignal)}</span></dd>
                     <dt>Price</dt><dd class="side-price">${sd.price ? '$' + Number(sd.price).toFixed(2) : '-'}</dd>
                     <dt>Base Size</dt><dd class="side-base">$${sd.base.toFixed(2)}</dd>
-                    <dt>Next Size</dt><dd class="side-next">${sd.nextSize === 'SIT OUT' ? '<span class="red">SIT OUT</span>' : '$' + Number(sd.nextSize || 0).toFixed(2)}</dd>
+                    <dt>Effective Size</dt><dd class="side-next">${effSize === 'SIT OUT' ? '<span class="red">SIT OUT</span>' : '$' + Number(effSize || 0).toFixed(2)}</dd>
                     <dt>Locked Profit</dt><dd class="side-locked ${lockedClass}">${sd.locked > 0 ? '$' + sd.locked.toFixed(2) : '$0.00'}</dd>
                     <dt>Stop-outs</dt><dd class="side-stops ${stopClass}">${sd.stopouts || 0}</dd>
                 </dl>
