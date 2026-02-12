@@ -1889,6 +1889,13 @@
         const entrySize = sizeInput ? sizeInput.value : '';
         const el = document.getElementById(elemId);
 
+        // Reset 4-day timer on entry
+        if (value === 'Entered') {
+            const states = get4DayStates();
+            states[ticker] = Date.now();
+            set4DayStates(states);
+        }
+
         // Instant hide via localStorage
         addActedItem(ticker, signal, price);
         el.style.transition = 'opacity 0.3s';
