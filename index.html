@@ -1541,7 +1541,7 @@
     }
 
     // ====== LOCAL SKIP TRACKING ======
-    const ACTED_KEY = 'spx_acted_items';
+    const ACTED_KEY = 'spx_acted_items_v2';
     function getActedItems() {
         try { return JSON.parse(localStorage.getItem(ACTED_KEY) || '[]'); } catch { return []; }
     }
