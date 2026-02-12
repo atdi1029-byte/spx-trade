@@ -58,10 +58,11 @@ CUSTOMIZATION
 API ENDPOINT
 ------------
 URL: https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec
-  ?action=dashboard → returns JSON dashboard data
-  ?action=tasks     → returns weekly tasks from "Weekly Tasks" tab
-  (no params)       → returns health check JSON
-  POST with JSON    → logs trade signal
+  ?action=dashboard          → returns JSON dashboard data (includes badge grades + effective sizes)
+  ?action=tasks              → returns weekly tasks from "Weekly Tasks" tab
+  ?action=add_portfolio&amount=300 → allocates paycheck to Grade 3+ buy-side tickers
+  (no params)                → returns health check JSON
+  POST with JSON             → logs trade signal
 
 WEBSITE-ONLY FEATURES (Feb 9, 2026)
 ------------------------------------
@@ -95,3 +96,56 @@ Updates (Feb 9, 2026 — session 2):
   - Fixed updatePosition_ matching: outcome updates find rows where Action=Entered (was looking for empty Action)
   - Fixed sumLockedBySide_: only sums profitLocked from TP Hit trades (was including stopped out losses)
   - Performance summary: glow effects on profit/loss values, streaks show "Win"/"Loss" not "W"/"L"
+
+BADGE SYSTEM — Ticker Trust (Feb 10, 2026)
+-------------------------------------------
+10 badge grades, per-side (buy/sell calculated independently):
+
+  Grade  Badge        Wins  Max Stop Rate  Multiplier  Alloc Weight
+  1      Boulder      0     —              1.0x        0
+  2      Cascade      1     —              1.0x        0
+  3      Thunder      2     —              1.0x        5
+  4      Rainbow      3     —              1.3x        10
+  5      Soul         4     <30%           1.5x        15
+  6      Marsh        6     <25%           1.7x        20
+  7      Volcano      8     <25%           2.0x        25
+  8      Earth        10    <20%           2.3x        30
+  9      Elite Four   15    <20%           2.5x        35
+  10     Master       20    <15%           3.0x        40
+
+How it works:
+  - calcBadgeGrade_(rows, side) counts wins/losses per side
+  - Finds highest grade where wins >= requirement AND stop rate < max
+  - Demotion: 2 consecutive stops = -1 grade, 3+ = -2 grades
+  - Effective Size = Next Size (from phase logic) × Badge Multiplier
+
+Dashboard JSON now includes per-ticker:
+  buyBadge, sellBadge (grade/name/multiplier/wins/losses/stopRate)
+  buyEffectiveSize, sellEffectiveSize
+
+Ticker cards show: badge icon (20px) next to name, badge name + multiplier in detail grid,
+"Effective Size" replaces "Next Size". Action needed cards show "Enter at $X" with pre-filled size.
+
+Badge images: SPX/badges/ (Boulder_Badge.png through master-ball.png)
+  - master-ball.png used for both Elite Four (9) and Master (10)
+
+PAYCHECK ALLOCATOR (Feb 10, 2026)
+----------------------------------
+"+ Portfolio" button in header → modal with amount input + preview table.
+Allocates to buy-side Grade 3+ tickers only. Grade 1-2 shown grayed as "Unproven".
+
+Diminishing returns formula:
+  absorb_rate = 1000 / (1000 + currentBase)
+  effective_weight = badge_weight × absorb_rate
+  allocation = amount × (effective_weight / sum_of_all_effective_weights)
+
+No hard ceiling — allocations asymptotically approach zero for high-base tickers.
+Excess naturally flows to lower-base tickers with room to grow.
+
+Examples at $100 paycheck:
+  Base $0     → absorbs ~100%
+  Base $1,000 → absorbs ~50%
+  Base $5,000 → absorbs ~17%
+  Base $10,000 → absorbs ~9%
+
+Service worker: v34
