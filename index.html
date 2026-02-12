@@ -1849,6 +1849,17 @@
         return url.toString();
     }
 
+    // Fire-and-forget GET that works on mobile (bypasses CORS redirect issues)
+    function fireGet(url) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve; // Apps Script returns JSON not an image, so onerror = success
+            setTimeout(() => resolve(), 5000); // 5s safety timeout
+            img.src = url;
+        });
+    }
+
     async function markAction(ticker, signal, price, value, elemId) {
         const sizeInput = document.getElementById(elemId + '-size');
         const entrySize = sizeInput ? sizeInput.value : '';
@@ -1860,8 +1871,8 @@
         el.style.opacity = '0';
         setTimeout(() => el.style.display = 'none', 300);
 
-        // Fire server update in background via GET
-        fetch(buildUpdateUrl({ ticker, signal, price, field: 'action', value, entrySize }))
+        // Fire server update in background via img GET (mobile-safe)
+        fireGet(buildUpdateUrl({ ticker, signal, price, field: 'action', value, entrySize }))
             .then(() => setTimeout(fetchData, 3000));
     }
 
@@ -1877,18 +1888,13 @@
             // Close trade as TP Hit with profit
             const grandTotal = prevTotal + inputVal;
             el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
-            try {
-                await fetch(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: 'TP Hit', profitLocked: grandTotal.toFixed(2) }));
-                badge.style.display = 'inline-block';
-                badge.className = 'pnl-badge positive';
-                badge.textContent = '+$' + grandTotal.toFixed(2);
-                el.style.opacity = '0';
-                setTimeout(() => el.remove(), 600);
-                setTimeout(fetchData, 3000);
-            } catch (err) {
-                el.querySelectorAll('.action-btn').forEach(b => b.disabled = false);
-                alert('Failed to close: ' + err.message);
-            }
+            await fireGet(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: 'TP Hit', profitLocked: grandTotal.toFixed(2) }));
+            badge.style.display = 'inline-block';
+            badge.className = 'pnl-badge positive';
+            badge.textContent = '+$' + grandTotal.toFixed(2);
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 600);
+            setTimeout(fetchData, 3000);
             return;
         }
 
@@ -1899,27 +1905,21 @@
             badge.style.display = 'inline-block';
             badge.className = 'pnl-badge neutral';
             badge.textContent = 'OxO';
-            // Persist 0x0 status to sheet via GET
-            fetch(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: '0x0' }));
+            // Persist 0x0 status to sheet via img GET (mobile-safe)
+            fireGet(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: '0x0' }));
             return;
         }
 
         // Lost — stopped out, final close, send to sheet
         const grandTotal = prevTotal + inputVal;
         el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
-
-        try {
-            await fetch(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: 'Stopped Out', profitLocked: grandTotal.toFixed(2) }));
-            badge.style.display = 'inline-block';
-            badge.className = 'pnl-badge negative';
-            badge.textContent = grandTotal < 0 ? '-$' + Math.abs(grandTotal).toFixed(2) : '$' + grandTotal.toFixed(2);
-            el.style.opacity = '0';
-            setTimeout(() => el.remove(), 600);
-            setTimeout(fetchData, 3000);
-        } catch (err) {
-            el.querySelectorAll('.action-btn').forEach(b => b.disabled = false);
-            alert('Failed to update: ' + err.message);
-        }
+        await fireGet(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: 'Stopped Out', profitLocked: grandTotal.toFixed(2) }));
+        badge.style.display = 'inline-block';
+        badge.className = 'pnl-badge negative';
+        badge.textContent = grandTotal < 0 ? '-$' + Math.abs(grandTotal).toFixed(2) : '$' + grandTotal.toFixed(2);
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 600);
+        setTimeout(fetchData, 3000);
     }
 
     // Close trade — finalizes with accumulated profit, sends to sheet
@@ -1928,19 +1928,13 @@
         const grandTotal = parseFloat(el.dataset.pnl) || 0;
         const badge = document.getElementById(elemId + '-badge');
         el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
-
-        try {
-            await fetch(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: 'TP Hit', profitLocked: grandTotal.toFixed(2) }));
-            badge.style.display = 'inline-block';
-            badge.className = 'pnl-badge positive';
-            badge.textContent = '+$' + grandTotal.toFixed(2);
-            el.style.opacity = '0';
-            setTimeout(() => el.remove(), 600);
-            setTimeout(fetchData, 3000);
-        } catch (err) {
-            el.querySelectorAll('.action-btn').forEach(b => b.disabled = false);
-            alert('Failed to close: ' + err.message);
-        }
+        await fireGet(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: 'TP Hit', profitLocked: grandTotal.toFixed(2) }));
+        badge.style.display = 'inline-block';
+        badge.className = 'pnl-badge positive';
+        badge.textContent = '+$' + grandTotal.toFixed(2);
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 600);
+        setTimeout(fetchData, 3000);
     }
 
     // ====== PORTFOLIO ALLOCATION MODAL ======
@@ -2042,17 +2036,12 @@
         const profitLocked = profitInput ? profitInput.value : '';
         const el = document.getElementById(elemId);
         el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
-        try {
-            await fetch(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value, profitLocked }));
-            const color = value === 'TP Hit' ? 'var(--green-candle)' : value === 'Stopped Out' ? 'var(--red-candle)' : '#1f6feb';
-            el.style.borderColor = color;
-            el.style.opacity = '0.5';
-            el.innerHTML = '<div><span class="ticker-badge">' + esc(ticker) + '</span><span class="message">' + value.toUpperCase() + (profitLocked ? ' ($' + profitLocked + ' locked)' : '') + '</span></div>';
-            setTimeout(fetchData, 2000);
-        } catch (err) {
-            el.querySelectorAll('.action-btn').forEach(b => b.disabled = false);
-            alert('Failed to update: ' + err.message);
-        }
+        await fireGet(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value, profitLocked }));
+        const color = value === 'TP Hit' ? 'var(--green-candle)' : value === 'Stopped Out' ? 'var(--red-candle)' : '#1f6feb';
+        el.style.borderColor = color;
+        el.style.opacity = '0.5';
+        el.innerHTML = '<div><span class="ticker-badge">' + esc(ticker) + '</span><span class="message">' + value.toUpperCase() + (profitLocked ? ' ($' + profitLocked + ' locked)' : '') + '</span></div>';
+        setTimeout(fetchData, 2000);
     }
 
     // ====== OPEN TRADE FILTERS ======
