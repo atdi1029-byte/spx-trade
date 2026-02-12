@@ -1641,7 +1641,7 @@
                 const bt = getBacktest(a.ticker, btSide);
                 const btEntry = BACKTEST[a.ticker.toUpperCase()];
                 const btNote = btEntry ? btEntry.note : null;
-                const p = Number(a.price);
+                const p = Number(String(a.price).replace(/,/g, ''));
                 const noteHtml = btNote ? ` &middot; <span style="color:var(--pumpkin-glow);font-weight:700">${esc(btNote)}</span>` : '';
                 // Build initial SL/TP display from signal price
                 const btDataAttr = bt ? `data-sl="${bt.sl}" data-tp="${bt.tp}" data-half="${bt.halfTp}" data-side="${btSide}"` : '';
@@ -1869,7 +1869,7 @@
         const card = input.closest('.action-item');
         const levelsEl = card.querySelector('.bt-levels');
         if (!levelsEl) return;
-        const p = parseFloat(input.value);
+        const p = parseFloat(input.value.replace(/,/g, ''));
         if (!p || p <= 0) return;
         const sl = parseFloat(levelsEl.dataset.sl);
         const tp = parseFloat(levelsEl.dataset.tp);
