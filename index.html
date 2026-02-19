@@ -1453,6 +1453,12 @@
         'XLE':      { buy: { sl: 6, tp: 5, wr: 58.4, halfTp: 2.5 }, sell: { sl: 6, tp: 4, wr: 66.7, halfTp: 2 }, note: 'Both work' },
         'XLK':      { buy: { sl: 6, tp: 4, wr: 70.7, halfTp: 2 }, sell: null, note: 'REDUCE-only sell' },
         'XPDUSD':   { buy: { sl: 5, tp: 4, wr: 61.6, halfTp: 2 }, sell: { sl: 4, tp: 5, wr: 60.9, halfTp: 2.5 }, note: 'SELL-signals-only shorts' },
+        'K2I1!':    { buy: { sl: 13, tp: 3, wr: 94.6, halfTp: 1.5 }, sell: { sl: 8, tp: 2, wr: 84.6, halfTp: 1 }, note: 'Sell thin' },
+        'QQQ':      { buy: { sl: 14, tp: 4, wr: 91.7, halfTp: 2 }, sell: { sl: 9, tp: 2, wr: 93.3, halfTp: 1 }, note: 'Both work' },
+        '005930':   { buy: { sl: 14, tp: 5, wr: 96.2, halfTp: 2.5 }, sell: { sl: 14, tp: 3, wr: 86.5, halfTp: 1.5 }, note: 'Sell thin' },
+        '000660':   { buy: { sl: 14, tp: 8, wr: 78.7, halfTp: 4 }, sell: { sl: 14, tp: 3, wr: 85.7, halfTp: 1.5 }, note: 'Sell thin' },
+        '011760':   { buy: { sl: 14, tp: 9, wr: 72, halfTp: 4.5 }, sell: { sl: 14, tp: 8, wr: 70.6, halfTp: 4 }, note: 'Sell thin' },
+        'HAFC':     { buy: { sl: 14, tp: 5, wr: 80.6, halfTp: 2.5 }, sell: { sl: 14, tp: 5, wr: 88.6, halfTp: 2.5 }, note: 'Both work' },
     };
 
     function getBacktest(ticker, side) {
@@ -2320,7 +2326,8 @@
         'PLATINUM':'CAPITALCOM','PLTR':'NASDAQ','RIVN':'NASDAQ','SILVER':'CAPITALCOM',
         'SMH':'NASDAQ','SNDK':'NASDAQ','TLT':'NASDAQ','TSLA':'NASDAQ','URNM':'AMEX',
         'USAR':'NASDAQ','USOIL':'TVC','VOO':'AMEX','XBI':'AMEX','XLE':'AMEX',
-        'XLK':'AMEX','XPDUSD':'OANDA'
+        'XLK':'AMEX','XPDUSD':'OANDA',
+        'K2I1!':'KRX','QQQ':'NASDAQ','005930':'KRX','000660':'KRX','011760':'KRX','HAFC':'NASDAQ'
     };
     const DEFAULT_TV = ticker => {
         const ex = TV_EXCHANGE_MAP[ticker.toUpperCase()] || 'NASDAQ';
