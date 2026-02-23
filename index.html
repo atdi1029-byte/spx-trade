@@ -1949,7 +1949,9 @@
         }
 
         // Lost — stopped out, final close, send to sheet
-        const grandTotal = prevTotal + inputVal;
+        // Auto-negate positive input for losses (user enters 0.34, we record -0.34)
+        const adjustedInput = inputVal > 0 ? -inputVal : inputVal;
+        const grandTotal = prevTotal + adjustedInput;
         el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
         await fireGet(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: 'Stopped Out', profitLocked: grandTotal.toFixed(2) }));
         badge.style.display = 'inline-block';
