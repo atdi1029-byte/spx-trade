@@ -1415,6 +1415,7 @@
     // ====== BACKTEST DATA (Feb 11, 2026 — 42 assets) ======
     const BACKTEST = {
         'AAPL':     { buy: { sl: 7, tp: 5, wr: 68.8, halfTp: 2.5 }, sell: null, note: 'Never short' },
+        'AVGO':     { buy: { sl: 14, tp: 10, wr: 80.6, halfTp: 5 }, sell: null, note: 'Buy-only' },
         'AMD':      { buy: { sl: 12.5, tp: 13, wr: 56, halfTp: 6.5 }, sell: { sl: 16.5, tp: 6, wr: 75, halfTp: 3 }, note: 'Sell small edge' },
         'AMZN':     { buy: { sl: 12.5, tp: 8, wr: 70.7, halfTp: 4 }, sell: { sl: 16.5, tp: 8, wr: 81.4, halfTp: 4 }, note: 'Both work' },
         'BABA':     { buy: { sl: 11, tp: 9.5, wr: 57.7, halfTp: 4.75 }, sell: null, note: 'Never short' },
@@ -1452,6 +1453,7 @@
         'XBI':      { buy: { sl: 7, tp: 4, wr: 70.2, halfTp: 2 }, sell: null, note: 'Buy-only' },
         'XLE':      { buy: { sl: 6, tp: 5, wr: 58.4, halfTp: 2.5 }, sell: { sl: 6, tp: 4, wr: 66.7, halfTp: 2 }, note: 'Both work' },
         'XLK':      { buy: { sl: 6, tp: 4, wr: 70.7, halfTp: 2 }, sell: null, note: 'REDUCE-only sell' },
+        'WMT':      { buy: { sl: 14, tp: 4, wr: 95.1, halfTp: 2 }, sell: { sl: 12, tp: 4, wr: 94.4, halfTp: 2 }, note: 'Both work' },
         'XPDUSD':   { buy: { sl: 5, tp: 4, wr: 61.6, halfTp: 2 }, sell: { sl: 4, tp: 5, wr: 60.9, halfTp: 2.5 }, note: 'SELL-signals-only shorts' },
         'K2I1!':    { buy: { sl: 13, tp: 3, wr: 94.6, halfTp: 1.5 }, sell: { sl: 8, tp: 2, wr: 84.6, halfTp: 1 }, note: 'Sell thin' },
         'QQQ':      { buy: { sl: 14, tp: 4, wr: 91.7, halfTp: 2 }, sell: { sl: 9, tp: 2, wr: 93.3, halfTp: 1 }, note: 'Both work' },

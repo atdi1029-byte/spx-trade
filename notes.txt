@@ -149,3 +149,303 @@ Examples at $100 paycheck:
   Base $10,000 → absorbs ~9%
 
 Service worker: v34
+
+TSM BACKTEST (Feb 17, 2026)
+---------------------------
+Sell side — tested on 4h timeframe, 50 bar lookforward, 22 sell signals.
+
+Settings tested (Sell WR / Overall WR):
+  SL 7%  / TP 10% →  6.3% / 14.3%  (way too greedy on TP)
+  SL 5%  / TP 4%  → 19%   / 36.8%  (SL too tight)
+  SL 7%  / TP 4%  → 35%   / 48.6%
+  SL 8%  / TP 4%  → 40%   / 57.1%
+  SL 9%  / TP 4%  → 42.1% / 58.8%
+  SL 10% / TP 4%  → 44.4% / 60.6%
+  SL 12% / TP 4%  → 61.5% / 76.9%
+  SL 12% / TP 5%  → 50%   / 68.2%
+  SL 13% / TP 4%  → 66.7% / 83.3%  *** BEST ***
+  SL 13% / TP 5%  → 54.5% / 75%
+  SL 14% / TP 4%  → 66.7% / 83.3%  (same as 13%, more risk)
+  SL 14% / TP 5%  → 54.5% / 75%
+
+Winner: SL 13% / TP 4% (halfTp 2%)
+  - Sell WR: 66.7% (8W/4L), Reduce WR: 100% (10W/0L), Overall: 83.3% (20W/4L)
+  - Dollar math ($30 trade): Win $1.20, Loss $3.90
+  - Per 24 trades: +$8.40 net (+$0.35/trade, ~1.2% edge)
+  - Same WR as SL 14% but less risk per trade
+
+Buy side — tested on 4h timeframe, 50 bar lookforward, 138 buy signals.
+
+Settings tested (Buy WR / Overall WR):
+  SL 7%  / TP 10% → 42.3% / 45.1%  (baseline)
+  SL 7%  / TP 8%  → 48.4% / 52.6%
+  SL 8%  / TP 8%  → 55.7% / 57.9%
+  SL 9%  / TP 8%  → 58.6% / 62.6%
+  SL 10% / TP 8%  → 62.3% / 66.2%
+  SL 12% / TP 8%  → 70.1% / 73.4%
+  SL 13% / TP 8%  → 72.6% / 76.8%
+  SL 13% / TP 9%  → 68.6% / 73%
+  SL 14% / TP 8%  → 75.8% / 79.3%  *** BEST ***
+  SL 14% / TP 9%  → 72%   / 75.7%
+
+Winner: SL 14% / TP 8% (halfTp 4%)
+  - Buy WR: 75.8% (69W/22L), DCA ADD WR: 81.5% (123W/28L), Overall: 79.3% (192W/50L)
+  - Dollar math ($30 trade): Win $2.40, Loss $4.20
+  - Per 242 trades: +$250.80 net (+$1.04/trade, ~3.5% edge)
+
+FINAL TSM settings: Buy SL 14% TP 8% | Sell SL 13% TP 4%
+
+KOSPI (K2I1!) BACKTEST (Feb 18, 2026)
+--------------------------------------
+Buy side — tested on 4h timeframe, 50 bar lookforward, 48 buy + 76 DCA ADD signals.
+
+Settings tested (Buy WR / Overall WR):
+  SL 7%  / TP 10% → 21.1% / 37.5%  (way too greedy)
+  SL 7%  / TP 5%  → 53.1% / 59.5%
+  SL 7%  / TP 4%  → 63.2% / 65.5%
+  SL 7%  / TP 3%  → 65.9% / 70.8%
+  SL 7%  / TP 2%  → 72.1% / 76.4%
+  SL 5%  / TP 2%  → 66.7% / 71.8%  (SL too tight)
+  SL 8%  / TP 2%  → 78%   / 82.8%
+  SL 9%  / TP 2%  → 91.7% / 91.2%
+  SL 10% / TP 2%  → 91.7% / 93.3%
+  SL 10% / TP 3%  → 85.3% / 89.7%
+  SL 12% / TP 2%  → 94.3% / 95.4%
+  SL 12% / TP 3%  → 87.9% / 92.1%
+  SL 13% / TP 3%  → 93.5% / 94.6%  *** BEST ***
+  SL 14% / TP 3%  → 93.5% / 94.6%  (same as 13%, more risk)
+
+Winner: SL 13% / TP 3% (halfTp 1.5%)
+  - Buy WR: 93.5% (29W/2L), DCA ADD WR: 95.3% (41W/2L), Overall: 94.6% (70W/4L)
+  - Dollar math ($30 trade): Win $0.90, Loss $3.90
+  - Per 74 trades: +$47.40 net (+$0.64/trade, ~2.1% edge)
+
+Sell side — tested on 4h timeframe, 50 bar lookforward, 13 sell + 1 BUY FB + 10 REDUCE signals.
+
+Settings tested (Sell WR / Overall WR):
+  SL 7%  / TP 10% →  0%   /  0%    (no wins at all)
+  SL 7%  / TP 2%  → 80%   / 64.7%  (REDUCE dragging)
+  SL 8%  / TP 2%  → 80%   / 84.6%  *** BEST ***
+  SL 9%  / TP 2%  → 80%   / 84.6%  (same as 8%, more risk)
+
+Winner: SL 8% / TP 2% (halfTp 1%)
+  - Sell WR: 80% (8W/2L), Reduce WR: 100% (3W/0L), Overall: 84.6% (11W/2L)
+  - Dollar math ($30 trade): Win $0.60, Loss $2.40
+  - Per 13 trades: +$1.80 net — thin data, sell side marginal
+
+FINAL KOSPI settings: Buy SL 13% TP 3% | Sell SL 8% TP 2%
+
+QQQ BACKTEST (Feb 18, 2026)
+----------------------------
+Buy side — tested on 4h timeframe, 50 bar lookforward, 121 buy + 268 DCA ADD signals.
+
+Settings tested (Buy WR / Overall WR):
+  SL 7%  / TP 10% → 32.1% / 29%    (baseline)
+  SL 13% / TP 3%  → 91.7% / 93.2%
+  SL 13% / TP 4%  → 88.4% / 90.9%
+  SL 14% / TP 3%  → 91.7% / 93.6%
+  SL 14% / TP 4%  → 88.4% / 91.7%  *** BEST $ ***
+
+Winner: SL 14% / TP 4% (halfTp 2%)
+  - Buy WR: 88.4% (76W/10L), DCA ADD WR: 93.5% (144W/10L), Overall: 91.7% (220W/20L)
+  - Dollar math ($30 trade): Win $1.20, Loss $4.20
+  - Per 240 trades: +$180.00 net (+$0.75/trade, ~2.5% edge)
+
+Sell side — tested on 4h timeframe, 50 bar lookforward, 31 sell + 8 BUY FB + 27 REDUCE signals.
+
+Settings tested (Sell WR / Overall WR):
+  SL 7%  / TP 10% → 28.6% / 25%    (baseline)
+  SL 8%  / TP 2%  → 83.3% / 87.5%
+  SL 9%  / TP 2%  → 83.3% / 93.3%  *** BEST ***
+  SL 10% / TP 2%  → 83.3% / 93.3%  (same as 9%, more risk)
+
+Winner: SL 9% / TP 2% (halfTp 1%)
+  - Sell WR: 83.3% (15W/3L), BUY FB: 100% (6W/0L), Reduce WR: 100% (21W/0L), Overall: 93.3% (42W/3L)
+  - Dollar math ($30 trade): Win $0.60, Loss $2.70
+  - Per 45 trades: +$17.10 net (+$0.38/trade, ~1.3% edge)
+
+FINAL QQQ settings: Buy SL 14% TP 4% | Sell SL 9% TP 2%
+
+SAMSUNG (005930) BACKTEST (Feb 18, 2026)
+-----------------------------------------
+Buy side — tested on 4h timeframe, 50 bar lookforward, 90 buy + 169 DCA ADD signals.
+
+Settings tested (Buy WR / Overall WR):
+  SL 40% / TP 15% → 100%  / 100%   (SL way too wide)
+  SL 13% / TP 4%  → 98.3% / 93.9%
+  SL 14% / TP 4%  → 98.3% / 96.6%
+  SL 14% / TP 5%  → 98.1% / 96.2%  *** BEST $ ***
+  SL 14% / TP 6%  → 97.7% / 94.7%
+
+Winner: SL 14% / TP 5% (halfTp 2.5%)
+  - Buy WR: 98.1% (52W/1L), DCA ADD WR: 95.2% (100W/5L), Overall: 96.2% (152W/6L)
+  - Dollar math ($30 trade): Win $1.50, Loss $4.20
+  - Per 158 trades: +$202.80 net (+$1.28/trade, ~4.3% edge)
+
+Sell side — tested on 4h timeframe, 50 bar lookforward, 16 sell + 3 BUY FB + 25 REDUCE signals.
+
+Settings tested (Sell WR / Overall WR):
+  SL 12% / TP 2%  → 71.4% / 78.6%
+  SL 14% / TP 2%  → 76.9% / 86.8%  (negative $ math)
+  SL 14% / TP 3%  → 76.9% / 86.5%  *** BEST $ ***
+  SL 14% / TP 4%  → 72.7% / 81.3%
+
+Winner: SL 14% / TP 3% (halfTp 1.5%)
+  - Sell WR: 76.9% (10W/3L), BUY FB: 100% (3W/0L), Reduce WR: 90.5% (19W/2L), Overall: 86.5% (32W/5L)
+  - Dollar math ($30 trade): Win $0.90, Loss $4.20
+  - Per 37 trades: +$7.80 net — thin edge, sell marginal
+
+FINAL SAMSUNG settings: Buy SL 14% TP 5% | Sell SL 14% TP 3%
+
+SK HYNIX (000660) BACKTEST (Feb 18, 2026)
+------------------------------------------
+Buy side — tested on 4h timeframe, 50 bar lookforward, 92 buy + 186 DCA ADD signals.
+
+Settings tested (Buy WR / Overall WR):
+  SL 14% / TP 4%  → 87.5% / 87.2%
+  SL 14% / TP 6%  → 83.1% / 83%
+  SL 14% / TP 8%  → 78.3% / 78.7%  *** BEST $ ***
+  SL 14% / TP 10% → 71.4% / 74.2%
+
+Winner: SL 14% / TP 8% (halfTp 4%)
+  - Buy WR: 78.3% (47W/13L), DCA ADD WR: 78.9% (97W/26L), Overall: 78.7% (144W/39L)
+  - Dollar math ($30 trade): Win $2.40, Loss $4.20
+  - Per 183 trades: +$181.80 net (+$0.99/trade, ~3.3% edge)
+
+Sell side — tested on 4h timeframe, 50 bar lookforward, 18 sell + 7 BUY FB + 20 REDUCE signals.
+
+Settings tested (Sell WR / Overall WR):
+  SL 14% / TP 3%  → 64.7% / 85.7%  *** BEST $ ***
+  SL 14% / TP 4%  → 53.3% / 77.5%  (negative $ math)
+
+Winner: SL 14% / TP 3% (halfTp 1.5%)
+  - Sell WR: 64.7% (11W/6L), BUY FB: 100% (7W/0L), Reduce WR: 100% (18W/0L), Overall: 85.7% (36W/6L)
+  - Dollar math ($30 trade): Win $0.90, Loss $4.20
+  - Per 42 trades: +$7.20 net — thin edge, sell marginal
+
+FINAL SK HYNIX settings: Buy SL 14% TP 8% | Sell SL 14% TP 3%
+
+HYUNDAI (011760) BACKTEST (Feb 18, 2026)
+-----------------------------------------
+Buy side — tested on 4h timeframe, 50 bar lookforward, 87 buy + 125 DCA ADD signals.
+
+Settings tested (Buy WR / Overall WR):
+  SL 14% / TP 5%  → 87.3% / 82.4%
+  SL 14% / TP 8%  → 76.9% / 74.3%
+  SL 14% / TP 9%  → 73.9% / 72%    *** BEST $ ***
+  SL 14% / TP 10% → 72.7% / 68.8%
+
+Winner: SL 14% / TP 9% (halfTp 4.5%)
+  - Buy WR: 73.9% (34W/12L), DCA ADD WR: 70.9% (61W/25L), Overall: 72% (95W/37L)
+  - Dollar math ($30 trade): Win $2.70, Loss $4.20
+  - Per 132 trades: +$101.10 net (+$0.77/trade, ~2.6% edge)
+
+Sell side — tested on 4h timeframe, 50 bar lookforward, 6 sell + 4 BUY FB + 10 REDUCE signals.
+
+Settings tested (Sell WR / Overall WR):
+  SL 14% / TP 3%  → 66.7% / 80%    (negative $ math)
+  SL 14% / TP 4%  → 66.7% / 75%    (negative $ math)
+  SL 14% / TP 8%  → 60%   / 70.6%  *** BEST $ ***
+
+Winner: SL 14% / TP 8% (halfTp 4%)
+  - Sell WR: 60% (3W/2L), BUY FB: 66.7% (2W/1L), Reduce WR: 77.8% (7W/2L), Overall: 70.6% (12W/5L)
+  - Dollar math ($30 trade): Win $2.40, Loss $4.20
+  - Per 17 trades: +$7.80 net — thin data, sell marginal
+
+FINAL HYUNDAI settings: Buy SL 14% TP 9% | Sell SL 14% TP 8%
+
+HANMI (HAFC) BACKTEST (Feb 18, 2026)
+--------------------------------------
+Buy side — tested on 4h timeframe, 50 bar lookforward, 120 buy + 210 DCA ADD signals.
+
+Settings tested (Buy WR / Overall WR):
+  SL 14% / TP 4%  → 79%   / 83.3%
+  SL 14% / TP 5%  → 75.8% / 80.6%  *** BEST $ ***
+  SL 14% / TP 6%  → 70.4% / 77.1%
+  SL 14% / TP 8%  → 63.4% / 70.4%
+  SL 14% / TP 9%  → 62.3% / 68.3%
+
+Winner: SL 14% / TP 5% (halfTp 2.5%)
+  - Buy WR: 75.8% (69W/22L), DCA ADD WR: 83.8% (114W/22L), Overall: 80.6% (183W/44L)
+  - Dollar math ($30 trade): Win $1.50, Loss $4.20
+  - Per 227 trades: +$89.70 net (+$0.40/trade, ~1.3% edge)
+
+Sell side — tested on 4h timeframe, 50 bar lookforward, 22 sell + 7 BUY FB + 28 REDUCE signals.
+
+Settings tested (Sell WR / Overall WR):
+  SL 14% / TP 4%  → 80%   / 88.9%
+  SL 14% / TP 5%  → 80%   / 88.6%  *** BEST $ ***
+  SL 14% / TP 6%  → 70%   / 79.4%
+  SL 14% / TP 8%  → 55.6% / 67.9%
+
+Winner: SL 14% / TP 5% (halfTp 2.5%)
+  - Sell WR: 80% (12W/3L), BUY FB: 100% (6W/0L), Reduce WR: 91.3% (21W/2L), Overall: 88.6% (39W/5L)
+  - Dollar math ($30 trade): Win $1.50, Loss $4.20
+  - Per 44 trades: +$37.50 net (+$0.85/trade, ~2.8% edge)
+
+FINAL HANMI settings: Buy SL 14% TP 5% | Sell SL 14% TP 5%
+
+AVGO BACKTEST (Feb 24, 2026)
+-----------------------------
+Buy side — tested on 4h timeframe, 50 bar lookforward, 71 buy + 204 DCA ADD signals.
+
+Settings tested (Buy WR / Overall WR):
+  SL 7%  / TP 10% → 64.3% / 53.1%  (baseline — DCA ADD 48.5%, terrible)
+  SL 10% / TP 8%  → 81.5% / 72.5%
+  SL 12% / TP 8%  → 86.3% / 79.2%
+  SL 14% / TP 8%  → 89.8% / 84%
+  SL 14% / TP 10% → 88.4% / 80.6%  *** BEST $ ***
+  SL 14% / TP 12% → 84.8% / 76.1%
+
+Winner: SL 14% / TP 10% (halfTp 5%)
+  - Buy WR: 88.4% (38W/5L), DCA ADD WR: 76.9% (70W/21L), Overall: 80.6% (108W/26L)
+  - Dollar math ($30 trade): Win $3.00, Loss $4.20
+  - Per 134 trades: +$214.80 net (+$1.60/trade, ~5.3% edge)
+
+Sell side — tested on 4h timeframe, 50 bar lookforward, 21 sell + 3 BUY FB + 19 REDUCE signals.
+
+Settings tested (Sell WR / Overall WR):
+  SL 7%  / TP 10% → 26.3% / 24.3%  (baseline — terrible)
+  SL 14% / TP 4%  → 75%   / 76.5%  (best WR but -$2.40 net)
+  SL 14% / TP 6%  → 64.3% / 62.1%  (-$13.80 net)
+  SL 12% / TP 4%  → 70.6% / 72.2%  (-$4.80 net)
+  SL 12% / TP 5%  → 64.7% / 65.7%  (-$8.70 net)
+
+No profitable sell configuration found. All combos negative dollar math.
+
+FINAL AVGO settings: Buy SL 14% TP 10% | Sell: NONE (buy-only)
+
+WMT BACKTEST (Feb 24, 2026)
+----------------------------
+Buy side — tested on 4h timeframe, 50 bar lookforward, 141 buy + 277 DCA ADD signals.
+
+Settings tested (Buy WR / Overall WR):
+  SL 14% / TP 12% → 61.1% / 60.5%  (baseline — SL/TP way too wide)
+  SL 5%  / TP 4%  → 66.3% / 60.6%
+  SL 7%  / TP 4%  → 79.8% / 76.9%
+  SL 7%  / TP 5%  → 68.7% / 67.6%
+  SL 8%  / TP 4%  → 79.8% / 79.3%
+  SL 9%  / TP 4%  → 87.5% / 85%
+  SL 10% / TP 4%  → 89.5% / 88.2%
+  SL 12% / TP 4%  → 92.9% / 92.5%
+  SL 14% / TP 4%  → 94%   / 95.1%  *** BEST $ ***
+
+Winner: SL 14% / TP 4% (halfTp 2%)
+  - Buy WR: 94% (78W/5L), DCA ADD WR: 95.7% (135W/6L), Overall: 95.1% (213W/11L)
+  - Dollar math ($30 trade): Win $1.20, Loss $4.20
+  - Per 224 trades: +$209.40 net (+$0.93/trade, ~3.1% edge)
+
+Sell side — tested on 4h timeframe, 50 bar lookforward, 24 sell + 6 BUY FB + 40 REDUCE signals.
+
+Settings tested (Sell WR / Overall WR):
+  SL 12% / TP 5%  → 100%  / 92.6%
+  SL 9%  / TP 5%  → 100%  / 80.6%  (REDUCE drops to 62.5%)
+  SL 12% / TP 4%  → 100%  / 94.4%  *** BEST $ ***
+  SL 14% / TP 4%  → 100%  / 94.4%  (same WR as 12%, more risk)
+
+Winner: SL 12% / TP 4% (halfTp 2%)
+  - Sell WR: 100% (16W/0L), BUY FB: 100% (3W/0L), Reduce WR: 88.2% (15W/2L), Overall: 94.4% (34W/2L)
+  - Dollar math ($30 trade): Win $1.20, Loss $3.60
+  - Per 36 trades: +$33.60 net (+$0.93/trade, ~3.1% edge)
+
+FINAL WMT settings: Buy SL 14% TP 4% | Sell SL 12% TP 4%
