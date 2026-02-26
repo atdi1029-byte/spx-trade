@@ -1660,7 +1660,7 @@
                     const tpPrice = isBuy ? p * (1 + bt.tp / 100) : p * (1 - bt.tp / 100);
                     const halfPrice = isBuy ? p * (1 + bt.halfTp / 100) : p * (1 - bt.halfTp / 100);
                     const fmt = v => v >= 100 ? v.toFixed(1) : v.toFixed(2);
-                    btHtml = `<span class="bt-levels" ${btDataAttr}><span style="color:var(--red-bright)">SL $<span class="bt-sl">${fmt(slPrice)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.sl}%)</span></span> &middot; <span style="color:var(--green-bright)">TP $<span class="bt-tp">${fmt(tpPrice)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.tp}%)</span></span> &middot; <span style="color:var(--text-dim)">Half TP 0x0 $<span class="bt-half">${fmt(halfPrice)}</span></span></span>`;
+                    btHtml = `<span class="bt-levels" ${btDataAttr}><span style="color:var(--red-bright)">SL $<span class="bt-sl" style="cursor:pointer" onclick="copyVal(this)">${fmt(slPrice)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.sl}%)</span></span> &middot; <span style="color:var(--green-bright)">TP $<span class="bt-tp" style="cursor:pointer" onclick="copyVal(this)">${fmt(tpPrice)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.tp}%)</span></span> &middot; <span style="color:var(--text-dim)">Half TP 0x0 $<span class="bt-half" style="cursor:pointer" onclick="copyVal(this)">${fmt(halfPrice)}</span></span></span>`;
                 } else {
                     btHtml = btNote ? '' : `@ $${a.price}`;
                 }
@@ -1843,6 +1843,21 @@
     }
 
     // ====== HELPERS ======
+    function copyVal(el) {
+        const v = el.textContent.trim();
+        navigator.clipboard.writeText(v).then(() => {
+            const orig = el.style.cssText;
+            el.style.cssText += 'background:var(--green-dim);border-radius:4px;transition:background 0.2s';
+            const lbl = el.parentElement;
+            const tag = document.createElement('span');
+            tag.textContent = ' Copied!';
+            tag.style.cssText = 'color:var(--green-bright);font-size:0.6rem;opacity:1;transition:opacity 0.3s';
+            lbl.appendChild(tag);
+            setTimeout(() => { tag.style.opacity = '0'; }, 600);
+            setTimeout(() => { el.style.cssText = orig; tag.remove(); }, 900);
+        });
+    }
+
     function esc(str) {
         const d = document.createElement('div');
         d.textContent = str || '';
