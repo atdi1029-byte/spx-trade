@@ -1940,16 +1940,19 @@
         const prevTotal = parseFloat(el.dataset.pnl) || 0;
 
         if (value === 'Won') {
-            // Close trade as TP Hit with profit
-            const grandTotal = prevTotal + inputVal;
-            el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
-            await fireGet(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: 'TP Hit', profitLocked: grandTotal.toFixed(2) }));
+            // Hit TP — add to running total, keep card open
+            const newTotal = prevTotal + inputVal;
+            el.dataset.pnl = newTotal;
+            el.dataset.status = 'tp';
+            el.style.borderLeftColor = 'var(--green-candle)';
             badge.style.display = 'inline-block';
             badge.className = 'pnl-badge positive';
-            badge.textContent = '+$' + grandTotal.toFixed(2);
-            el.style.opacity = '0';
-            setTimeout(() => el.remove(), 600);
-            setTimeout(fetchData, 3000);
+            badge.textContent = 'TP +$' + newTotal.toFixed(2);
+            // Show close button
+            if (closeBtn) closeBtn.style.display = 'inline-block';
+            // Save partial profit to sheet (doesn't close trade)
+            fireGet(buildUpdateUrl({ ticker, signal, price, field: 'partial_profit', value: newTotal.toFixed(2) }));
+            if (profitInput) profitInput.value = '';
             return;
         }
 
@@ -1979,16 +1982,21 @@
         setTimeout(fetchData, 3000);
     }
 
-    // Close trade — finalizes with accumulated profit, sends to sheet
+    // Close trade — adds any remaining input P&L to total, finalizes, sends to sheet
     async function closeTrade(ticker, signal, price, elemId) {
         const el = document.getElementById(elemId);
-        const grandTotal = parseFloat(el.dataset.pnl) || 0;
+        const profitInput = document.getElementById(elemId + '-profit');
+        const inputVal = profitInput ? parseFloat(profitInput.value) || 0 : 0;
+        const prevTotal = parseFloat(el.dataset.pnl) || 0;
+        const grandTotal = prevTotal + inputVal;
+        if (!confirm('Close ' + ticker + ' with total P&L ' + (grandTotal >= 0 ? '+$' : '-$') + Math.abs(grandTotal).toFixed(2) + '?')) return;
         const badge = document.getElementById(elemId + '-badge');
+        const outcomeValue = grandTotal >= 0 ? 'TP Hit' : 'Stopped Out';
         el.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
-        await fireGet(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: 'TP Hit', profitLocked: grandTotal.toFixed(2) }));
+        await fireGet(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: outcomeValue, profitLocked: grandTotal.toFixed(2) }));
         badge.style.display = 'inline-block';
-        badge.className = 'pnl-badge positive';
-        badge.textContent = '+$' + grandTotal.toFixed(2);
+        badge.className = grandTotal >= 0 ? 'pnl-badge positive' : 'pnl-badge negative';
+        badge.textContent = (grandTotal >= 0 ? '+$' : '-$') + Math.abs(grandTotal).toFixed(2);
         el.style.opacity = '0';
         setTimeout(() => el.remove(), 600);
         setTimeout(fetchData, 3000);
@@ -2193,7 +2201,6 @@
             const badgeDisplay = (outcome === '0x0' || pnl > 0) ? 'inline-block' : 'none';
             const badgeClass = outcome === '0x0' ? 'pnl-badge neutral' : (pnl > 0 ? 'pnl-badge positive' : 'pnl-badge neutral');
             const badgeText = outcome === '0x0' ? 'OxO' : (pnl > 0 ? 'TP +$' + pnl.toFixed(2) : '');
-            const closeDisplay = pnl > 0 ? 'inline-block' : 'none';
             return `
                 <div class="action-item" id="${id}" data-pnl="${pnl}" data-status="${initStatus}" style="${initBorder}">
                     <div>
@@ -2206,9 +2213,10 @@
                         </div>
                         <div class="action-buttons">
                             <input type="text" class="entry-input" placeholder="P&L $" id="${id}-profit">
-                            <button class="action-btn won" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'Won','${id}')">Won</button>
+                            <button class="action-btn won" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'Won','${id}')">Hit TP</button>
                             <button class="action-btn lost" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'Lost','${id}')">Lost</button>
                             <button class="action-btn zero" onclick="markOutcome('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'0x0','${id}')">OxO</button>
+                            <button class="action-btn won" id="${id}-close" onclick="closeTrade('${esc(t.ticker)}','${esc(t.lastSignal || '')}',${t.price || 0},'${id}')">Close</button>
                             <button class="action-btn four-day-btn" id="${id}-4day" onclick="toggle4DayCheck('${esc(t.ticker)}','${id}')">4 Day</button>
                         </div>
                     </div>
