@@ -1646,6 +1646,8 @@
                 const effSizeStr = effSize === 'SIT OUT' ? 'SIT OUT' : Number(effSize || 0).toFixed(2);
                 const badge = matchTicker ? (isBuy ? matchTicker.buyBadge : matchTicker.sellBadge) : null;
                 const badgeHtml = badge ? `<img src="${getBadgeInfo(badge.grade).icon}" class="badge-icon" style="margin-left:4px">` : '';
+                const stops = matchTicker ? (isBuy ? Number(matchTicker.buyStopouts || 0) : Number(matchTicker.sellStopouts || 0)) : 0;
+                const warnHtml = stops >= 2 ? `<div style="background:#c44b3f22;border:1px solid #c44b3f55;border-radius:4px;padding:4px 8px;margin:4px 0;font-size:0.65rem;color:var(--red-bright)">&#9888; ${stops} consecutive stop-outs on this ticker — be careful</div>` : '';
                 const btSide = isBuy ? 'buy' : 'sell';
                 const bt = getBacktest(a.ticker, btSide);
                 const btEntry = BACKTEST[a.ticker.toUpperCase()];
@@ -1676,6 +1678,7 @@
                             </div>
                         </div>
                         <div class="meta">${btHtml}${noteHtml}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}</div>
+                        ${warnHtml}
                     </div>`;
             }).join('');
         }
