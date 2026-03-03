@@ -3213,11 +3213,16 @@
         const plotW = w - pad.left - pad.right;
         const plotH = h - pad.top - pad.bottom;
 
-        // Compute rolling SMAs on FULL series, then trim to last 90 for display
-        const sma7 = calcSMA(series, 5).slice(Math.max(0, series.length - 90));
-        const sma30 = calcSMA(series, 22).slice(Math.max(0, series.length - 90));
+        // Compute rolling SMAs on FULL series, then trim so 30d SMA covers entire chart
+        const fullSma7 = calcSMA(series, 5);
+        const fullSma30 = calcSMA(series, 22);
         const fullSeries = series;
-        series = series.slice(Math.max(0, series.length - 90));
+        // Start display where 30d SMA first has a value
+        let trimStart = fullSma30.findIndex(v => v !== null);
+        if (trimStart < 0) trimStart = 0;
+        const sma7 = fullSma7.slice(trimStart);
+        const sma30 = fullSma30.slice(trimStart);
+        series = series.slice(trimStart);
 
         // Get all values for min/max (include SMAs)
         const allVals = [];
