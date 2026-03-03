@@ -1168,7 +1168,8 @@ function previewDCA() {
 
     // Guardrails
     const maxSingle = effectiveAmount * (cap > 0 ? 0.40 : 0.45);
-    const minAlloc = 10;
+    const etfCount = pDef.order.length;
+    const minAlloc = Math.min(10, Math.floor(effectiveAmount / etfCount));
     let overflow = 0;
 
     eligible.forEach(e => {
