@@ -3130,22 +3130,22 @@
             sigEl.className = 'liquidity-signal-badge';
         }
 
-        // 7d = red (matches chart line), 30d = green (matches chart line)
+        // Inverted colors: TGA down = green (bullish), TGA up = red (bearish)
         const c7 = document.getElementById('liqChange7d');
         c7.textContent = m.change7dFormatted || '--';
-        c7.style.color = '#e05545';
+        c7.className = 'value ' + (m.change7d <= 0 ? 'up' : 'down');
 
         const c30 = document.getElementById('liqChange30d');
         c30.textContent = m.change30dFormatted || '--';
-        c30.style.color = '#6aaa5a';
+        c30.className = 'value ' + (m.change30d <= 0 ? 'up' : 'down');
 
         const p7 = document.getElementById('liqPct7d');
         p7.textContent = m.pct7d || '--';
-        p7.style.color = '#e05545';
+        p7.className = 'value ' + (m.change7d <= 0 ? 'up' : 'down');
 
         const p30 = document.getElementById('liqPct30d');
         p30.textContent = m.pct30d || '--';
-        p30.style.color = '#6aaa5a';
+        p30.className = 'value ' + (m.change30d <= 0 ? 'up' : 'down');
 
         // Insight
         document.getElementById('liquidityInsight').textContent = m.insight || '';
