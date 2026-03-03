@@ -1711,28 +1711,7 @@ function switchPortfolio() {
 }
 
 // ====== INIT ======
-document.addEventListener('DOMContentLoaded', async () => {
-    // Check if localStorage has data
-    const localData = localStorage.getItem(STORAGE_KEY);
-    if (!localData) {
-        // No local data — try to restore from cloud
-        const cloudData = await loadFromCloud();
-        if (cloudData) {
-            // Merge cloud data with default structure (cloud may not have all portfolios)
-            const defaultData = createDefaultData();
-            if (cloudData.portfolios) {
-                for (const [key, pd] of Object.entries(cloudData.portfolios)) {
-                    if (defaultData.portfolios[key]) {
-                        defaultData.portfolios[key] = pd;
-                    }
-                }
-            }
-            if (cloudData.history) defaultData.history = cloudData.history;
-            if (cloudData.dividendHistory) defaultData.dividendHistory = cloudData.dividendHistory;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
-            console.log('Restored portfolio data from cloud backup');
-        }
-    }
+document.addEventListener('DOMContentLoaded', () => {
     refreshPrices();
 });
 </script>
