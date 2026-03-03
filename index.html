@@ -973,6 +973,128 @@
             margin-top: 0.3rem;
         }
 
+        /* ============ NET LIQUIDITY SECTION ============ */
+        .netliq-section { margin: 1rem 0; }
+        .netliq-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+        }
+        .netliq-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.8rem;
+        }
+        .netliq-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            color: var(--text-bright);
+        }
+        .netliq-value.up {
+            color: var(--green-bright);
+            text-shadow: 0 0 12px rgba(106,170,90,0.5), 0 0 4px rgba(106,170,90,0.3);
+        }
+        .netliq-value.down {
+            color: var(--red-bright);
+            text-shadow: 0 0 12px rgba(224,85,69,0.5), 0 0 4px rgba(224,85,69,0.3);
+        }
+        .netliq-components {
+            display: flex;
+            gap: 1.25rem;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .netliq-comp {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+        }
+        .netliq-comp .label { color: var(--text-dim); font-size: 0.55rem; letter-spacing: 1px; text-transform: uppercase; }
+        .netliq-comp .value { font-weight: 700; margin-top: 2px; color: var(--text); }
+        .netliq-changes {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .netliq-change {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+        }
+        .netliq-change .label { color: var(--text-dim); font-size: 0.6rem; letter-spacing: 1px; text-transform: uppercase; }
+        .netliq-change .value { font-weight: 700; margin-top: 2px; }
+        .netliq-change .value.up { color: var(--green-bright); }
+        .netliq-change .value.down { color: var(--red-bright); }
+        .netliq-chart-wrap {
+            position: relative;
+            width: 100%;
+            height: 160px;
+            margin: 0.8rem 0;
+            border-radius: 6px;
+            overflow: hidden;
+            background: rgba(18,16,14,0.5);
+            border: 1px solid var(--border);
+        }
+        .netliq-chart-wrap canvas { width: 100%; height: 100%; display: block; }
+        .netliq-legend {
+            display: flex;
+            gap: 1.25rem;
+            margin-top: 0.4rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+        }
+        .netliq-legend-item { display: flex; align-items: center; gap: 4px; }
+        .netliq-legend-swatch { width: 14px; height: 3px; border-radius: 2px; }
+        .netliq-correlation {
+            display: inline-block;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-left: 8px;
+            cursor: help;
+            position: relative;
+        }
+        .netliq-correlation.aligned { background: rgba(74,138,74,0.25); color: var(--green-bright); }
+        .netliq-correlation.divergent { background: rgba(196,75,63,0.25); color: var(--red-bright); }
+        .netliq-correlation .zone-tip {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: calc(100% + 8px);
+            width: 260px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.7rem;
+            font-weight: 400;
+            letter-spacing: 0;
+            color: var(--text);
+            line-height: 1.5;
+            z-index: 50;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            white-space: normal;
+        }
+        .netliq-correlation:hover .zone-tip,
+        .netliq-correlation.tip-open .zone-tip { display: block; }
+        .netliq-insight {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 0.75rem;
+            font-style: italic;
+            color: var(--cream);
+            opacity: 0.7;
+            margin-top: 0.6rem;
+            line-height: 1.4;
+        }
+
         @media (max-width: 900px) {
             .bottom-grid { grid-template-columns: 1fr; }
             .ticker-grid {
@@ -991,6 +1113,8 @@
             .need-4day-btn { display: none !important; }
             .liquidity-balance { font-size: 1.4rem; }
             .liquidity-chart-wrap { height: 100px; }
+            .netliq-value { font-size: 1.3rem; }
+            .netliq-chart-wrap { height: 130px; }
         }
 
         /* ============ SIGNALS TABLE ============ */
@@ -1406,6 +1530,7 @@
         <div class="header-right">
             <span><span class="status-dot loading" id="statusDot"></span><span id="statusText">Connecting...</span></span>
             <span id="lastUpdate"></span>
+            <a href="dca.html" class="portfolio-btn" style="text-decoration:none;">DCA</a>
             <button class="portfolio-btn" onclick="openPortfolioModal()">+ Portfolio</button>
             <button class="refresh-btn" onclick="fetchData()">Refresh</button>
         </div>
@@ -1515,6 +1640,63 @@
                 <canvas id="liquidityChart"></canvas>
             </div>
             <div class="liquidity-insight" id="liquidityInsight"></div>
+        </div>
+    </div>
+
+    <!-- Net Liquidity (WALCL - TGA - RRP) with SPX Overlay -->
+    <div class="netliq-section" id="netLiqSection">
+        <div class="section-header" style="margin-top:1.5rem">Net Liquidity
+            <span class="netliq-correlation" id="netLiqCorrelation" onclick="this.classList.toggle('tip-open')">--<span class="zone-tip" id="corrTip"></span></span>
+        </div>
+        <div class="netliq-box" id="netLiqBox">
+            <div class="netliq-top">
+                <div>
+                    <div class="netliq-value" id="netLiqValue">--</div>
+                    <div class="liquidity-date" id="netLiqDate"></div>
+                </div>
+                <div style="text-align:right;font-family:'Space Mono',monospace;font-size:0.75rem">
+                    <div style="color:var(--text-dim);font-size:0.55rem;letter-spacing:1px">S&amp;P 500</div>
+                    <div id="netLiqSpx" style="font-weight:700;color:var(--pumpkin-glow)">--</div>
+                </div>
+            </div>
+            <div class="netliq-components" id="netLiqComponents">
+                <div class="netliq-comp">
+                    <div class="label">Fed Balance Sheet</div>
+                    <div class="value" id="netLiqWalcl">--</div>
+                </div>
+                <div class="netliq-comp">
+                    <div class="label">- TGA</div>
+                    <div class="value" id="netLiqTga">--</div>
+                </div>
+                <div class="netliq-comp">
+                    <div class="label">- Reverse Repo</div>
+                    <div class="value" id="netLiqRrp">--</div>
+                </div>
+            </div>
+            <div class="netliq-changes">
+                <div class="netliq-change">
+                    <div class="label">30d Change</div>
+                    <div class="value" id="netLiqChange30d">--</div>
+                </div>
+                <div class="netliq-change">
+                    <div class="label">90d Change</div>
+                    <div class="value" id="netLiqChange90d">--</div>
+                </div>
+            </div>
+            <div class="netliq-chart-wrap">
+                <canvas id="netLiqChart"></canvas>
+            </div>
+            <div class="netliq-legend">
+                <div class="netliq-legend-item">
+                    <div class="netliq-legend-swatch" style="background:#d4843e"></div>
+                    <span style="color:var(--pumpkin)">Net Liquidity</span>
+                </div>
+                <div class="netliq-legend-item">
+                    <div class="netliq-legend-swatch" style="background:#6aaa5a"></div>
+                    <span style="color:var(--green-bright)">S&amp;P 500</span>
+                </div>
+            </div>
+            <div class="netliq-insight" id="netLiqInsight"></div>
         </div>
     </div>
 
@@ -3519,6 +3701,308 @@
     // Fetch liquidity on load and every 5 minutes
     fetchLiquidity();
     setInterval(fetchLiquidity, 300000);
+
+    // ====== NET LIQUIDITY (WALCL - TGA - RRP) + SPX OVERLAY ======
+    const NETLIQ_API = API_BASE + '?action=net_liquidity';
+    let netLiqCache = null;
+
+    async function fetchNetLiquidity() {
+        try {
+            const resp = await fetch(NETLIQ_API + '&t=' + Date.now());
+            const data = await resp.json();
+            if (data.status === 'ok' && data.metrics) {
+                netLiqCache = data;
+                localStorage.setItem('netLiqCache', JSON.stringify(data));
+                renderNetLiquidity(data);
+            }
+        } catch (err) {
+            console.error('Net Liquidity fetch error:', err);
+            try {
+                const cached = JSON.parse(localStorage.getItem('netLiqCache') || 'null');
+                if (cached) renderNetLiquidity(cached);
+            } catch(e) {}
+        }
+    }
+
+    function renderNetLiquidity(data) {
+        const m = data.metrics;
+        const series = data.series || [];
+        if (!m) return;
+
+        const valEl = document.getElementById('netLiqValue');
+        valEl.textContent = m.currentNetLiqFormatted || '--';
+        valEl.className = 'netliq-value ' + (m.change30d >= 0 ? 'up' : 'down');
+
+        document.getElementById('netLiqDate').textContent = m.currentDate ? 'As of ' + m.currentDate : '';
+        document.getElementById('netLiqSpx').textContent = m.currentSpx ? m.currentSpx.toLocaleString() : '--';
+
+        document.getElementById('netLiqWalcl').textContent = '$' + formatBillions(m.walcl || 0);
+        document.getElementById('netLiqTga').textContent = '$' + formatBillions(m.tga || 0);
+        document.getElementById('netLiqRrp').textContent = '$' + formatBillions(m.rrp || 0);
+
+        const c30 = document.getElementById('netLiqChange30d');
+        c30.textContent = m.change30dFormatted || '--';
+        c30.className = 'value ' + (m.change30d >= 0 ? 'up' : 'down');
+
+        const c90 = document.getElementById('netLiqChange90d');
+        c90.textContent = m.change90dFormatted || '--';
+        c90.className = 'value ' + (m.change90d >= 0 ? 'up' : 'down');
+
+        // Correlation badge + tooltip
+        const corrEl = document.getElementById('netLiqCorrelation');
+        const corrTip = document.getElementById('corrTip');
+        if (m.correlation === 'aligned') {
+            corrEl.textContent = 'ALIGNED';
+            corrEl.appendChild(corrTip);
+            corrEl.className = 'netliq-correlation aligned';
+            corrTip.textContent = 'Net Liquidity and SPX moving in the same direction over 30 days. Liquidity is driving the market as expected.';
+        } else {
+            corrEl.textContent = 'DIVERGENT';
+            corrEl.appendChild(corrTip);
+            corrEl.className = 'netliq-correlation divergent';
+            corrTip.textContent = 'Net Liquidity and SPX moving in opposite directions. Potential inflection point — watch for mean reversion.';
+        }
+
+        // Insight
+        const insightEl = document.getElementById('netLiqInsight');
+        let insight = '';
+        if (m.change30d > 0) {
+            insight = 'Net liquidity expanding — more dollars in the system chasing assets. Historically bullish for equities.';
+        } else {
+            insight = 'Net liquidity contracting — fewer dollars available. Watch for potential headwinds in risk assets.';
+        }
+        if (m.correlation === 'divergent') {
+            insight += ' SPX is diverging from liquidity trend — a potential inflection signal.';
+        }
+        insightEl.textContent = insight;
+
+        drawNetLiqChart(series, m);
+    }
+
+    let netLiqChartState = null;
+
+    function drawNetLiqChart(fullSeries, metrics, skipSave) {
+        const canvas = document.getElementById('netLiqChart');
+        if (!canvas || fullSeries.length < 2) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        const w = rect.width;
+        const h = rect.height;
+        const pad = { top: 10, right: 55, bottom: 20, left: 55 };
+        const plotW = w - pad.left - pad.right;
+        const plotH = h - pad.top - pad.bottom;
+
+        // Trim to last 180 days
+        const trimAt = Math.max(0, fullSeries.length - 180);
+        const series = fullSeries.slice(trimAt);
+
+        // Left axis: Net Liquidity
+        const liqVals = series.map(d => d.netLiq);
+        const liqMin = Math.min(...liqVals) * 0.999;
+        const liqMax = Math.max(...liqVals) * 1.001;
+        const liqRange = liqMax - liqMin || 1;
+
+        // Right axis: SPX
+        const spxVals = series.map(d => d.spx);
+        const spxMin = Math.min(...spxVals) * 0.998;
+        const spxMax = Math.max(...spxVals) * 1.002;
+        const spxRange = spxMax - spxMin || 1;
+
+        const toY_liq = v => pad.top + plotH * (1 - (v - liqMin) / liqRange);
+        const toY_spx = v => pad.top + plotH * (1 - (v - spxMin) / spxRange);
+        const toX = i => pad.left + (i / (series.length - 1)) * plotW;
+
+        if (!skipSave) {
+            netLiqChartState = { series, liqMin, liqRange, spxMin, spxRange, pad, w, h, plotW, plotH, rawSeries: fullSeries, metrics };
+        }
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Grid lines
+        ctx.strokeStyle = 'rgba(58,53,48,0.4)';
+        ctx.lineWidth = 0.5;
+        for (let g = 0; g <= 3; g++) {
+            const gy = pad.top + plotH * (1 - g / 3);
+            ctx.beginPath();
+            ctx.moveTo(pad.left, gy);
+            ctx.lineTo(w - pad.right, gy);
+            ctx.stroke();
+
+            // Left axis labels (Net Liquidity in trillions)
+            const lVal = liqMin + liqRange * (g / 3);
+            ctx.fillStyle = 'rgba(212,132,62,0.6)';
+            ctx.font = '9px "Space Mono", monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText((lVal / 1000000).toFixed(1) + 'T', pad.left - 4, gy + 3);
+
+            // Right axis labels (SPX)
+            const sVal = spxMin + spxRange * (g / 3);
+            ctx.fillStyle = 'rgba(106,170,90,0.6)';
+            ctx.textAlign = 'left';
+            ctx.fillText(Math.round(sVal).toLocaleString(), w - pad.right + 4, gy + 3);
+        }
+
+        // Net Liquidity area fill
+        const liqGrad = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
+        liqGrad.addColorStop(0, 'rgba(212,132,62,0.15)');
+        liqGrad.addColorStop(1, 'rgba(212,132,62,0.02)');
+        ctx.beginPath();
+        for (let i = 0; i < series.length; i++) {
+            const x = toX(i), y = toY_liq(series[i].netLiq);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.lineTo(toX(series.length - 1), h - pad.bottom);
+        ctx.lineTo(pad.left, h - pad.bottom);
+        ctx.closePath();
+        ctx.fillStyle = liqGrad;
+        ctx.fill();
+
+        // Net Liquidity line (pumpkin)
+        ctx.beginPath();
+        for (let i = 0; i < series.length; i++) {
+            const x = toX(i), y = toY_liq(series[i].netLiq);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = '#d4843e';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // SPX line (green)
+        ctx.beginPath();
+        for (let i = 0; i < series.length; i++) {
+            const x = toX(i), y = toY_spx(series[i].spx);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = '#6aaa5a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // End dots
+        const lastIdx = series.length - 1;
+        ctx.beginPath();
+        ctx.arc(toX(lastIdx), toY_liq(series[lastIdx].netLiq), 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#d4843e';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(toX(lastIdx), toY_spx(series[lastIdx].spx), 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#6aaa5a';
+        ctx.fill();
+
+        // X-axis date labels
+        ctx.fillStyle = 'rgba(138,126,106,0.6)';
+        ctx.font = '8px "Space Mono", monospace';
+        if (series.length > 0) {
+            const fmtDate = d => d.slice(5);
+            ctx.textAlign = 'left';
+            ctx.fillText(fmtDate(series[0].date), pad.left, h - 4);
+            ctx.textAlign = 'center';
+            ctx.fillText(fmtDate(series[Math.floor(series.length / 2)].date), pad.left + plotW / 2, h - 4);
+            ctx.textAlign = 'right';
+            ctx.fillText(fmtDate(series[lastIdx].date), w - pad.right, h - 4);
+        }
+    }
+
+    // Hover tooltip for Net Liquidity chart
+    const netLiqCanvas = document.getElementById('netLiqChart');
+    if (netLiqCanvas) {
+        netLiqCanvas.addEventListener('mousemove', function(e) {
+            if (!netLiqChartState) return;
+            const { series, liqMin, liqRange, spxMin, spxRange, pad, w, h, plotW, plotH } = netLiqChartState;
+            const rect = netLiqCanvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+
+            const idx = Math.round((mx - pad.left) / plotW * (series.length - 1));
+            if (idx < 0 || idx >= series.length) return;
+
+            drawNetLiqChart(netLiqChartState.rawSeries, netLiqChartState.metrics, true);
+
+            const ctx = netLiqCanvas.getContext('2d');
+            ctx.save();
+            const dpr = window.devicePixelRatio || 1;
+            ctx.scale(dpr, dpr);
+
+            const toX = i => pad.left + (i / (series.length - 1)) * plotW;
+            const toY_liq = v => pad.top + plotH * (1 - (v - liqMin) / liqRange);
+            const toY_spx = v => pad.top + plotH * (1 - (v - spxMin) / spxRange);
+            const x = toX(idx);
+            const yLiq = toY_liq(series[idx].netLiq);
+            const ySpx = toY_spx(series[idx].spx);
+
+            // Crosshair
+            ctx.strokeStyle = 'rgba(232,160,76,0.4)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(x, pad.top);
+            ctx.lineTo(x, h - pad.bottom);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Dots
+            ctx.beginPath();
+            ctx.arc(x, yLiq, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#d4843e';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(x, ySpx, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#6aaa5a';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Tooltip box
+            const date = series[idx].date;
+            const liqLabel = 'Net Liq: $' + (series[idx].netLiq / 1000000).toFixed(2) + 'T';
+            const spxLabel = 'SPX: ' + Math.round(series[idx].spx).toLocaleString();
+
+            ctx.font = '9px "Space Mono", monospace';
+            const tw = Math.max(ctx.measureText(date).width, ctx.measureText(liqLabel).width, ctx.measureText(spxLabel).width);
+            const boxW = tw + 16;
+            const boxH = 44;
+            let bx = x - boxW / 2;
+            if (bx < pad.left) bx = pad.left;
+            if (bx + boxW > w - pad.right) bx = w - pad.right - boxW;
+            let by = Math.min(yLiq, ySpx) - boxH - 10;
+            if (by < 2) by = Math.max(yLiq, ySpx) + 10;
+
+            ctx.fillStyle = 'rgba(18,16,14,0.92)';
+            ctx.strokeStyle = 'rgba(232,160,76,0.5)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(bx, by, boxW, boxH, 4);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#f0e6cc';
+            ctx.fillText(date, bx + 8, by + 13);
+            ctx.fillStyle = '#d4843e';
+            ctx.fillText(liqLabel, bx + 8, by + 26);
+            ctx.fillStyle = '#6aaa5a';
+            ctx.fillText(spxLabel, bx + 8, by + 39);
+
+            ctx.restore();
+        });
+
+        netLiqCanvas.addEventListener('mouseleave', function() {
+            if (netLiqChartState) drawNetLiqChart(netLiqChartState.rawSeries, netLiqChartState.metrics, true);
+        });
+    }
+
+    // Fetch net liquidity (staggered 2s after TGA)
+    setTimeout(fetchNetLiquidity, 2000);
+    setInterval(fetchNetLiquidity, 300000);
 
     function renderPokemon(stats) {
         const box = document.getElementById('pokemonBox');
