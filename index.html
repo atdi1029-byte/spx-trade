@@ -846,8 +846,14 @@
             font-size: 1.8rem;
             font-weight: 700;
             letter-spacing: -1px;
-            color: var(--text-bright);
-            text-shadow: 0 0 12px rgba(232,160,76,0.4), 0 0 4px rgba(232,160,76,0.2);
+        }
+        .liquidity-balance.bullish {
+            color: var(--green-bright);
+            text-shadow: 0 0 12px rgba(106,170,90,0.5), 0 0 4px rgba(106,170,90,0.3);
+        }
+        .liquidity-balance.bearish {
+            color: var(--red-bright);
+            text-shadow: 0 0 12px rgba(224,85,69,0.5), 0 0 4px rgba(224,85,69,0.3);
         }
         .liquidity-zone {
             display: inline-block;
@@ -3101,7 +3107,7 @@
         // Balance
         const balEl = document.getElementById('liquidityBalance');
         balEl.textContent = m.currentBalanceFormatted || '--';
-        balEl.className = 'liquidity-balance';
+        balEl.className = 'liquidity-balance ' + (m.signal || '');
 
         // Date
         document.getElementById('liquidityDate').textContent = m.currentDate ? 'As of ' + m.currentDate : '';
@@ -3124,22 +3130,22 @@
             sigEl.className = 'liquidity-signal-badge';
         }
 
-        // 7d/30d changes — conventional colors (positive = green, negative = red)
+        // 7d/30d changes — inverted: TGA up = red (bad for stocks), TGA down = green (good)
         const c7 = document.getElementById('liqChange7d');
         c7.textContent = m.change7dFormatted || '--';
-        c7.className = 'value ' + (m.change7d >= 0 ? 'up' : 'down');
+        c7.className = 'value ' + (m.change7d <= 0 ? 'up' : 'down');
 
         const c30 = document.getElementById('liqChange30d');
         c30.textContent = m.change30dFormatted || '--';
-        c30.className = 'value ' + (m.change30d >= 0 ? 'up' : 'down');
+        c30.className = 'value ' + (m.change30d <= 0 ? 'up' : 'down');
 
         const p7 = document.getElementById('liqPct7d');
         p7.textContent = m.pct7d || '--';
-        p7.className = 'value ' + (m.change7d >= 0 ? 'up' : 'down');
+        p7.className = 'value ' + (m.change7d <= 0 ? 'up' : 'down');
 
         const p30 = document.getElementById('liqPct30d');
         p30.textContent = m.pct30d || '--';
-        p30.className = 'value ' + (m.change30d >= 0 ? 'up' : 'down');
+        p30.className = 'value ' + (m.change30d <= 0 ? 'up' : 'down');
 
         // Insight
         document.getElementById('liquidityInsight').textContent = m.insight || '';
