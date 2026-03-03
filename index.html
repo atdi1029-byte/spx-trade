@@ -3147,8 +3147,39 @@
         p30.textContent = m.pct30d || '--';
         p30.className = 'value ' + (m.change30d <= 0 ? 'up' : 'down');
 
-        // Insight
-        document.getElementById('liquidityInsight').textContent = m.insight || '';
+        // Insight — build contextual note with magnitude
+        const insightEl = document.getElementById('liquidityInsight');
+        const abs7d = Math.abs(m.change7d || 0);
+        const abs30d = Math.abs(m.change30d || 0);
+        const bal = m.currentBalance || 0;
+
+        // Magnitude labels for weekly change
+        let mag = '';
+        if (abs7d < 10000) mag = 'Small move';
+        else if (abs7d < 30000) mag = 'Normal move';
+        else if (abs7d < 60000) mag = 'Large move';
+        else if (abs7d < 100000) mag = 'Very large move';
+        else mag = 'Massive move';
+
+        // Zone context
+        let zoneNote = '';
+        if (bal < 200000) zoneNote = 'Treasury nearly empty — max liquidity injection, historically very bullish.';
+        else if (bal < 400000) zoneNote = 'Treasury spending down — liquidity flowing into markets.';
+        else if (bal < 600000) zoneNote = 'Treasury at normal levels — neutral for markets.';
+        else if (bal < 800000) zoneNote = 'Treasury building reserves — mild liquidity drag on markets.';
+        else zoneNote = 'Treasury hoarding cash — significant liquidity drain, watch for market headwinds.';
+
+        // Direction context
+        let dirNote = '';
+        if (m.change7d <= -60000) dirNote = 'Rapid spending — strong tailwind. This pace usually doesn\'t last long.';
+        else if (m.change7d <= -30000) dirNote = 'Steady outflow — solid tailwind for risk assets.';
+        else if (m.change7d <= -10000) dirNote = 'Mild outflow — slight positive for markets.';
+        else if (m.change7d <= 10000) dirNote = 'Roughly flat — liquidity neutral this week.';
+        else if (m.change7d <= 30000) dirNote = 'Building up — mild headwind for risk assets.';
+        else if (m.change7d <= 60000) dirNote = 'Significant accumulation — notable drag on liquidity.';
+        else dirNote = 'Massive buildup — tax season or debt issuance likely. Strong headwind.';
+
+        insightEl.innerHTML = '<b>' + mag + ':</b> ' + dirNote + '<br>' + zoneNote;
 
         // Draw chart
         drawLiquidityChart(series, m);
