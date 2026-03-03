@@ -794,6 +794,36 @@ function loadData() {
 
 function saveData(data) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    syncToCloud(data);
+}
+
+// ====== CLOUD SYNC ======
+function syncToCloud(data) {
+    try {
+        const json = JSON.stringify(data);
+        const encoded = encodeURIComponent(json);
+        // URL length safety (~7000 chars for most browsers)
+        if (encoded.length < 7000) {
+            fireGet(API_BASE + '?action=save_dca_data&data=' + encoded);
+        } else {
+            // Fall back to saving just holdings (always small)
+            const holdingsOnly = JSON.stringify({ portfolios: data.portfolios });
+            fireGet(API_BASE + '?action=save_dca_data&data=' + encodeURIComponent(holdingsOnly));
+        }
+    } catch (e) { console.error('Cloud sync error:', e); }
+}
+
+async function loadFromCloud() {
+    try {
+        const resp = await fetch(API_BASE + '?action=load_dca_data');
+        if (!resp.ok) return null;
+        const result = await resp.json();
+        if (result.status === 'ok' && result.data) {
+            const cloudData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
+            return cloudData;
+        }
+    } catch (e) { console.error('Cloud load error:', e); }
+    return null;
 }
 
 function createDefaultData() {
@@ -1681,7 +1711,28 @@ function switchPortfolio() {
 }
 
 // ====== INIT ======
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check if localStorage has data
+    const localData = localStorage.getItem(STORAGE_KEY);
+    if (!localData) {
+        // No local data — try to restore from cloud
+        const cloudData = await loadFromCloud();
+        if (cloudData) {
+            // Merge cloud data with default structure (cloud may not have all portfolios)
+            const defaultData = createDefaultData();
+            if (cloudData.portfolios) {
+                for (const [key, pd] of Object.entries(cloudData.portfolios)) {
+                    if (defaultData.portfolios[key]) {
+                        defaultData.portfolios[key] = pd;
+                    }
+                }
+            }
+            if (cloudData.history) defaultData.history = cloudData.history;
+            if (cloudData.dividendHistory) defaultData.dividendHistory = cloudData.dividendHistory;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+            console.log('Restored portfolio data from cloud backup');
+        }
+    }
     refreshPrices();
 });
 </script>
