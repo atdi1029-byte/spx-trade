@@ -3130,22 +3130,22 @@
             sigEl.className = 'liquidity-signal-badge';
         }
 
-        // 7d/30d changes — inverted: TGA up = red (bad for stocks), TGA down = green (good)
+        // 7d = red (matches chart line), 30d = green (matches chart line)
         const c7 = document.getElementById('liqChange7d');
         c7.textContent = m.change7dFormatted || '--';
-        c7.className = 'value ' + (m.change7d <= 0 ? 'up' : 'down');
+        c7.style.color = '#e05545';
 
         const c30 = document.getElementById('liqChange30d');
         c30.textContent = m.change30dFormatted || '--';
-        c30.className = 'value ' + (m.change30d <= 0 ? 'up' : 'down');
+        c30.style.color = '#6aaa5a';
 
         const p7 = document.getElementById('liqPct7d');
         p7.textContent = m.pct7d || '--';
-        p7.className = 'value ' + (m.change7d <= 0 ? 'up' : 'down');
+        p7.style.color = '#e05545';
 
         const p30 = document.getElementById('liqPct30d');
         p30.textContent = m.pct30d || '--';
-        p30.className = 'value ' + (m.change30d <= 0 ? 'up' : 'down');
+        p30.style.color = '#6aaa5a';
 
         // Insight
         document.getElementById('liquidityInsight').textContent = m.insight || '';
