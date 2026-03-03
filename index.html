@@ -3242,7 +3242,7 @@
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // 7d SMA line (solid, bright)
+        // 7d SMA line (red = current pace, solid)
         ctx.beginPath();
         let started7 = false;
         for (let i = 0; i < sma7.length; i++) {
@@ -3251,11 +3251,11 @@
             if (!started7) { ctx.moveTo(x, y); started7 = true; }
             else ctx.lineTo(x, y);
         }
-        ctx.strokeStyle = '#4a9eff';
+        ctx.strokeStyle = '#e05545';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // 30d SMA line (dashed, warm)
+        // 30d SMA line (green = baseline, dashed)
         ctx.beginPath();
         let started30 = false;
         for (let i = 0; i < sma30.length; i++) {
@@ -3264,7 +3264,7 @@
             if (!started30) { ctx.moveTo(x, y); started30 = true; }
             else ctx.lineTo(x, y);
         }
-        ctx.strokeStyle = '#d4843e';
+        ctx.strokeStyle = '#6aaa5a';
         ctx.lineWidth = 2;
         ctx.setLineDash([6, 4]);
         ctx.stroke();
@@ -3276,13 +3276,13 @@
         if (last7 !== null) {
             ctx.beginPath();
             ctx.arc(toX(series.length - 1), toY(last7), 3, 0, Math.PI * 2);
-            ctx.fillStyle = '#4a9eff';
+            ctx.fillStyle = '#e05545';
             ctx.fill();
         }
         if (last30 !== null) {
             ctx.beginPath();
             ctx.arc(toX(series.length - 1), toY(last30), 3, 0, Math.PI * 2);
-            ctx.fillStyle = '#d4843e';
+            ctx.fillStyle = '#6aaa5a';
             ctx.fill();
         }
 
@@ -3291,11 +3291,11 @@
         ctx.textAlign = 'left';
         const legX = w - pad.right + 6;
         if (last7 !== null) {
-            ctx.fillStyle = '#4a9eff';
+            ctx.fillStyle = '#e05545';
             ctx.fillText('7d', legX, toY(last7) + 3);
         }
         if (last30 !== null) {
-            ctx.fillStyle = '#d4843e';
+            ctx.fillStyle = '#6aaa5a';
             ctx.fillText('30d', legX, toY(last30) + 3);
         }
 
