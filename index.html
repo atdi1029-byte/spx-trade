@@ -3703,7 +3703,7 @@
     setInterval(fetchLiquidity, 300000);
 
     // ====== NET LIQUIDITY (WALCL - TGA - RRP) + SPX OVERLAY ======
-    const NETLIQ_API = API_BASE + '?action=net_liquidity';
+    const NETLIQ_API = POST_URL + '?action=net_liquidity';
     let netLiqCache = null;
 
     async function fetchNetLiquidity() {
