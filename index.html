@@ -3165,7 +3165,7 @@
         return sma;
     }
 
-    function drawLiquidityChart(series, metrics) {
+    function drawLiquidityChart(series, metrics, skipSave) {
         const canvas = document.getElementById('liquidityChart');
         if (!canvas || series.length < 2) return;
 
@@ -3197,6 +3197,11 @@
 
         const toY = v => pad.top + plotH * (1 - (v - minVal) / range);
         const toX = i => pad.left + (i / (series.length - 1)) * plotW;
+
+        // Save state for hover tooltip
+        if (!skipSave) {
+            liqChartState = { series, sma7, sma30, minVal, range, pad, w, h, plotW, plotH, rawSeries: series, metrics };
+        }
 
         // Clear
         ctx.clearRect(0, 0, w, h);
@@ -3315,8 +3320,98 @@
     }
 
     function formatBillions(millions) {
-        if (Math.abs(millions) >= 1000) return (millions / 1000).toFixed(0) + 'B';
+        if (Math.abs(millions) >= 1000) return (millions / 1000).toFixed(1) + 'B';
         return millions.toFixed(0) + 'M';
+    }
+
+    // Store chart state for hover tooltip
+    let liqChartState = null;
+
+    // Crosshair tooltip on hover
+    const liqCanvas = document.getElementById('liquidityChart');
+    if (liqCanvas) {
+        liqCanvas.addEventListener('mousemove', function(e) {
+            if (!liqChartState) return;
+            const { series, sma7, sma30, minVal, range, pad, w, h, plotW, plotH } = liqChartState;
+            const rect = liqCanvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+
+            // Find nearest data index
+            const idx = Math.round((mx - pad.left) / plotW * (series.length - 1));
+            if (idx < 0 || idx >= series.length) return;
+
+            // Redraw chart then overlay crosshair
+            drawLiquidityChart(liqChartState.rawSeries, liqChartState.metrics, true);
+
+            const dpr = window.devicePixelRatio || 1;
+            const ctx = liqCanvas.getContext('2d');
+            ctx.save();
+            ctx.scale(dpr, dpr);
+
+            const x = pad.left + (idx / (series.length - 1)) * plotW;
+            const y = pad.top + plotH * (1 - (series[idx].balance - minVal) / range);
+
+            // Vertical crosshair line
+            ctx.strokeStyle = 'rgba(232,160,76,0.4)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(x, pad.top);
+            ctx.lineTo(x, h - pad.bottom);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Dot on the data point
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#e8a04c';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Tooltip box
+            const date = series[idx].date;
+            const bal = formatBillions(series[idx].balance);
+            const s7 = sma7[idx] !== null ? formatBillions(sma7[idx]) : '--';
+            const s30 = sma30[idx] !== null ? formatBillions(sma30[idx]) : '--';
+            const label = date + '  $' + bal;
+            const label2 = '7d: $' + s7 + '  30d: $' + s30;
+
+            ctx.font = '9px "Space Mono", monospace';
+            const tw1 = ctx.measureText(label).width;
+            const tw2 = ctx.measureText(label2).width;
+            const tw = Math.max(tw1, tw2);
+            const boxW = tw + 12;
+            const boxH = 32;
+            let bx = x - boxW / 2;
+            if (bx < pad.left) bx = pad.left;
+            if (bx + boxW > w - pad.right) bx = w - pad.right - boxW;
+            const by = y - boxH - 10;
+
+            ctx.fillStyle = 'rgba(18,16,14,0.9)';
+            ctx.strokeStyle = 'rgba(232,160,76,0.5)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(bx, by, boxW, boxH, 4);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#f0e6cc';
+            ctx.textAlign = 'left';
+            ctx.fillText(label, bx + 6, by + 13);
+            ctx.fillStyle = '#e05545';
+            ctx.fillText('7d: $' + s7, bx + 6, by + 25);
+            ctx.fillStyle = '#6aaa5a';
+            const s7w = ctx.measureText('7d: $' + s7 + '  ').width;
+            ctx.fillText('30d: $' + s30, bx + 6 + s7w, by + 25);
+
+            ctx.restore();
+        });
+
+        liqCanvas.addEventListener('mouseleave', function() {
+            if (liqChartState) drawLiquidityChart(liqChartState.rawSeries, liqChartState.metrics, true);
+        });
     }
 
     // Fetch liquidity on load and every 5 minutes
