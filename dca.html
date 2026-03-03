@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#12100e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>DCA Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nosifer&family=Noto+Serif+JP:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-deep: #12100e;
+            --bg-dark: #1a1815;
+            --bg-card: #221f1a;
+            --bg-card-hover: #2a2620;
+            --border: #3a3530;
+            --border-light: #4a4238;
+            --text: #d4c8b0;
+            --text-dim: #8a7e6a;
+            --text-bright: #f0e6cc;
+            --pumpkin: #d4843e;
+            --pumpkin-glow: #e8a04c;
+            --pumpkin-deep: #b8602a;
+            --green-candle: #4a8a4a;
+            --green-bright: #6aaa5a;
+            --green-dim: #3d5c3d;
+            --red-candle: #c44b3f;
+            --red-bright: #e05545;
+            --cream: #e8d5a8;
+            --moon: #f5ecd0;
+            --navy: #2d3040;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--bg-deep);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .bg-watermark {
+            position: fixed;
+            top: -15vh; left: 0;
+            width: 100vw; height: 115vh;
+            object-fit: cover;
+            object-position: center top;
+            opacity: 0.55;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            padding: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ============ HEADER ============ */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+            border-image: linear-gradient(90deg, transparent, var(--pumpkin-deep), var(--border), transparent) 1;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .header h1 {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--cream);
+            letter-spacing: 2px;
+            line-height: 1;
+        }
+        .header h1 span {
+            font-family: 'Nosifer', cursive;
+            font-size: 2.2rem;
+            color: var(--pumpkin);
+            text-shadow: 0 0 25px #d4843e44, 0 3px 6px #00000066;
+            letter-spacing: 4px;
+        }
+        .header-sub {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            flex-wrap: wrap;
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--pumpkin-glow);
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover { background: var(--border); border-color: var(--pumpkin-deep); box-shadow: 0 0 10px #d4843e22; }
+        .btn-primary { border-color: var(--pumpkin-deep); font-weight: 700; }
+        .btn-primary:hover { background: var(--pumpkin-deep); color: var(--cream); }
+        .btn-green { border-color: var(--green-candle); color: var(--green-bright); }
+        .btn-green:hover { background: var(--green-dim); color: var(--cream); }
+        .btn-red { border-color: var(--red-candle); color: var(--red-bright); }
+        .btn-red:hover { background: var(--red-candle); color: var(--cream); }
+
+        .portfolio-select {
+            background: var(--bg-card);
+            border: 1px solid var(--pumpkin-deep);
+            color: var(--cream);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+        .portfolio-select option { background: var(--bg-dark); color: var(--text); }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        .status-dot.ok { background: var(--green-candle); }
+        .status-dot.loading { background: var(--pumpkin); animation: pulse 1s infinite; }
+        .status-dot.error { background: var(--red-candle); }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* ============ PROGRESS BAR ============ */
+        .progress-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.75rem;
+        }
+        .progress-title { font-size: 1rem; color: var(--cream); font-weight: 700; }
+        .progress-amount { font-size: 1.5rem; color: var(--pumpkin-glow); font-weight: 700; }
+        .progress-remaining { font-size: 0.75rem; color: var(--text-dim); }
+        .progress-bar-outer {
+            width: 100%; height: 18px;
+            background: var(--bg-deep);
+            border-radius: 9px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .progress-bar-inner {
+            height: 100%;
+            background: linear-gradient(90deg, var(--pumpkin-deep), var(--pumpkin-glow), var(--green-candle));
+            border-radius: 9px;
+            transition: width 0.6s ease;
+            min-width: 0;
+        }
+        .progress-pct {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+        .funded-banner {
+            text-align: center;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--green-dim), var(--green-candle));
+            border-radius: 8px;
+            color: var(--cream);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 1.25rem;
+            display: none;
+        }
+
+        /* ============ STATS BAR ============ */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .stat-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .stat-value { font-size: 1.2rem; color: var(--cream); font-weight: 700; }
+        .stat-value.green { color: var(--green-bright); }
+        .stat-value.red { color: var(--red-bright); }
+
+        /* ============ SMART DCA SECTION ============ */
+        .dca-section {
+            background: var(--bg-card);
+            border: 1px solid var(--pumpkin-deep);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        .dca-title { font-size: 0.9rem; color: var(--pumpkin-glow); font-weight: 700; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 2px; }
+        .dca-input-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .dca-input {
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            color: var(--cream);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem;
+            width: 160px;
+        }
+        .dca-input:focus { outline: none; border-color: var(--pumpkin); }
+
+        .alloc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.7rem;
+            margin-top: 0.75rem;
+        }
+        .alloc-table th {
+            text-align: left;
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.6rem;
+        }
+        .alloc-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+        .alloc-table tr:hover td { background: var(--bg-card-hover); }
+        .alloc-amount { color: var(--pumpkin-glow); font-weight: 700; }
+        .alloc-bar-cell { width: 100px; }
+        .alloc-bar-outer { width: 100%; height: 6px; background: var(--bg-deep); border-radius: 3px; overflow: hidden; }
+        .alloc-bar-inner { height: 100%; border-radius: 3px; background: var(--pumpkin); transition: width 0.4s; }
+
+        .dca-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            justify-content: flex-end;
+        }
+
+        /* ============ ETF GRID ============ */
+        .etf-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .etf-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.2s;
+        }
+        .etf-card:hover { border-color: var(--pumpkin-deep); box-shadow: 0 0 15px #d4843e11; }
+        .etf-ticker {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--pumpkin-glow);
+            margin-bottom: 2px;
+        }
+        .etf-purpose {
+            font-size: 0.55rem;
+            color: var(--text-dim);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .etf-price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.5rem;
+        }
+        .etf-price { font-size: 1.2rem; color: var(--cream); font-weight: 700; }
+        .etf-change { font-size: 0.7rem; font-weight: 700; }
+        .etf-change.up { color: var(--green-bright); }
+        .etf-change.down { color: var(--red-bright); }
+        .etf-change.flat { color: var(--text-dim); }
+
+        .etf-alloc-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            margin-bottom: 4px;
+        }
+        .etf-alloc-label { color: var(--text-dim); }
+        .etf-alloc-value { color: var(--text); }
+        .etf-bar-outer {
+            width: 100%; height: 6px;
+            background: var(--bg-deep);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        .etf-bar-inner {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s;
+        }
+        .etf-bar-inner.under { background: var(--pumpkin); }
+        .etf-bar-inner.on { background: var(--green-candle); }
+        .etf-bar-inner.over { background: var(--red-candle); }
+
+        .etf-score {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .score-good { background: #2a4a2a; color: var(--green-bright); }
+        .score-ok { background: #4a3a1a; color: var(--pumpkin-glow); }
+        .score-bad { background: #4a2a2a; color: var(--red-bright); }
+
+        .etf-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px 8px;
+            font-size: 0.6rem;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border);
+        }
+        .etf-detail-label { color: var(--text-dim); }
+        .etf-detail-value { color: var(--text); text-align: right; }
+        .etf-div-btn {
+            margin-top: 0.5rem;
+            width: 100%;
+            font-size: 0.6rem;
+            padding: 4px 8px;
+        }
+
+        /* ============ CHARTS SECTION ============ */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .chart-title {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.75rem;
+        }
+        .pie-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+        .pie-legend {
+            font-size: 0.6rem;
+        }
+        .pie-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .pie-legend-dot {
+            width: 10px; height: 10px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        canvas.chart-canvas {
+            display: block;
+        }
+
+        /* ============ REBALANCE ALERTS ============ */
+        .alert-section {
+            background: var(--bg-card);
+            border: 1px solid var(--pumpkin-deep);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+            display: none;
+        }
+        .alert-title { font-size: 0.8rem; color: var(--red-bright); font-weight: 700; margin-bottom: 0.5rem; }
+        .alert-item {
+            font-size: 0.7rem;
+            padding: 4px 0;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+        }
+        .alert-item:last-child { border: none; }
+
+        /* ============ HISTORY LOG ============ */
+        .history-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .history-title { font-size: 0.8rem; color: var(--cream); font-weight: 700; }
+        .history-toggle { color: var(--text-dim); font-size: 0.8rem; }
+        .history-body { display: none; margin-top: 0.75rem; }
+        .history-body.open { display: block; }
+        .history-item {
+            font-size: 0.65rem;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-item:last-child { border: none; }
+        .history-date { color: var(--text-dim); }
+        .history-detail { color: var(--text); }
+        .history-amount { color: var(--pumpkin-glow); font-weight: 700; }
+        .history-type { font-size: 0.55rem; padding: 1px 6px; border-radius: 2px; }
+        .history-type.dca { background: var(--navy); color: var(--pumpkin-glow); }
+        .history-type.div { background: #2a4a2a; color: var(--green-bright); }
+
+        /* ============ EDIT HOLDINGS MODAL ============ */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); z-index: 9998; display: none;
+            justify-content: center; align-items: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--bg-dark);
+            border: 1px solid var(--pumpkin-deep);
+            border-radius: 8px;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-title { font-size: 1rem; color: var(--cream); font-weight: 700; margin-bottom: 1rem; }
+        .modal-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .modal-row label {
+            width: 60px;
+            font-size: 0.75rem;
+            color: var(--pumpkin-glow);
+            font-weight: 700;
+        }
+        .modal-input {
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            color: var(--cream);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            width: 100px;
+        }
+        .modal-input:focus { outline: none; border-color: var(--pumpkin); }
+        .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1rem; }
+
+        /* ============ DIVIDEND LOG MODAL ============ */
+        .div-modal-info {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-bottom: 1rem;
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 768px) {
+            .content { padding: 1rem; }
+            .header h1 { font-size: 1.5rem; }
+            .header h1 span { font-size: 1.6rem; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+            .etf-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-section { grid-template-columns: 1fr; }
+            .dca-input { width: 120px; }
+            .header-right { justify-content: flex-start; width: 100%; }
+        }
+        @media (max-width: 480px) {
+            .stats-bar { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+            .etf-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<img src="bg.png" class="bg-watermark" alt="">
+
+<div class="content">
+    <div class="error-banner" id="errorBanner" style="display:none; background:var(--red-candle); color:var(--cream); padding:8px 12px; border-radius:4px; margin-bottom:1rem; font-size:0.75rem;"></div>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-left">
+            <div>
+                <h1><span>DCA</span> Portfolio</h1>
+                <div class="header-sub">Smart ETF Allocation</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <a href="index.html" class="btn">&larr; Dashboard</a>
+            <select class="portfolio-select" id="portfolioSelect" onchange="switchPortfolio()">
+                <option value="cushion">4-Year Cushion</option>
+                <option value="growth">Lifetime Growth</option>
+                <option value="ira">IRA Retirement</option>
+            </select>
+            <span><span class="status-dot loading" id="statusDot"></span><span id="statusText">Loading...</span></span>
+            <button class="btn" onclick="refreshPrices()">Refresh</button>
+            <button class="btn btn-primary" onclick="openEditModal()">Edit Holdings</button>
+        </div>
+    </div>
+
+    <!-- FUNDED BANNER -->
+    <div class="funded-banner" id="fundedBanner">Portfolio Fully Funded! Consider turning off DRIP on bond ETFs and taking dividends as income.</div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-section">
+        <div class="progress-header">
+            <div>
+                <div class="progress-title" id="progressTitle">4-Year Cushion</div>
+                <div class="progress-remaining" id="progressRemaining">$108,000 remaining</div>
+            </div>
+            <div class="progress-amount" id="progressAmount">$0</div>
+        </div>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar" style="width: 0%"></div>
+        </div>
+        <div class="progress-pct" id="progressPct">0.0% funded</div>
+    </div>
+
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-label">Total Value</div>
+            <div class="stat-value" id="statTotalValue">$0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Invested</div>
+            <div class="stat-value" id="statTotalInvested">$0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Return</div>
+            <div class="stat-value" id="statTotalReturn">$0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Dividends Earned</div>
+            <div class="stat-value" id="statDividends">$0</div>
+        </div>
+    </div>
+
+    <!-- SMART DCA SECTION -->
+    <div class="dca-section">
+        <div class="dca-title">Smart DCA</div>
+        <div class="dca-input-row">
+            <span style="color:var(--text-dim); font-size:0.75rem;">Invest $</span>
+            <input type="text" class="dca-input" id="dcaAmount" placeholder="500" inputmode="decimal">
+            <button class="btn btn-primary" onclick="previewDCA()">Preview Allocation</button>
+        </div>
+        <div id="dcaPreview" style="display:none;">
+            <table class="alloc-table">
+                <thead>
+                    <tr>
+                        <th>ETF</th>
+                        <th>Gap Score</th>
+                        <th>Val Score</th>
+                        <th>Composite</th>
+                        <th>Allocation</th>
+                        <th class="alloc-bar-cell">Weight</th>
+                    </tr>
+                </thead>
+                <tbody id="dcaTableBody"></tbody>
+            </table>
+            <div style="margin-top:0.75rem; font-size:0.7rem; color:var(--text-dim);" id="dcaSummary"></div>
+            <div class="dca-actions">
+                <button class="btn btn-red" onclick="cancelDCA()">Cancel</button>
+                <button class="btn btn-green" onclick="confirmDCA()">Confirm DCA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="charts-section">
+        <div class="chart-card">
+            <div class="chart-title">Allocation Pie</div>
+            <div class="pie-container">
+                <canvas id="pieChart" width="180" height="180" class="chart-canvas"></canvas>
+                <div class="pie-legend" id="pieLegend"></div>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">Growth Over Time</div>
+            <canvas id="growthChart" width="400" height="200" class="chart-canvas"></canvas>
+            <div style="font-size:0.55rem; color:var(--text-dim); margin-top:4px; text-align:center;" id="growthLabel">Based on DCA history</div>
+        </div>
+    </div>
+
+    <!-- ETF GRID -->
+    <div class="etf-grid" id="etfGrid"></div>
+
+    <!-- REBALANCE ALERTS -->
+    <div class="alert-section" id="alertSection">
+        <div class="alert-title">Drift Alerts</div>
+        <div id="alertList"></div>
+    </div>
+
+    <!-- HISTORY LOG -->
+    <div class="history-section">
+        <div class="history-header" onclick="toggleHistory()">
+            <div class="history-title">Transaction History</div>
+            <div class="history-toggle" id="historyToggle">+ Show</div>
+        </div>
+        <div class="history-body" id="historyBody"></div>
+    </div>
+</div>
+
+<!-- EDIT HOLDINGS MODAL -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <div class="modal-title">Edit Holdings</div>
+        <div id="editModalBody"></div>
+        <div class="modal-actions">
+            <button class="btn btn-red" onclick="closeEditModal()">Cancel</button>
+            <button class="btn btn-green" onclick="saveHoldings()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- DIVIDEND LOG MODAL -->
+<div class="modal-overlay" id="divModal">
+    <div class="modal">
+        <div class="modal-title" id="divModalTitle">Log Dividend</div>
+        <div class="div-modal-info">Enter the dividend amount received. Shares will be calculated from current price.</div>
+        <div class="modal-row">
+            <label>Amount $</label>
+            <input type="text" class="modal-input" id="divAmount" placeholder="45.00" inputmode="decimal">
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-red" onclick="closeDivModal()">Cancel</button>
+            <button class="btn btn-green" onclick="confirmDividend()">Log Dividend</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ====== CONFIG ======
+const API_BASE = 'https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec';
+const STORAGE_KEY = 'dca_portfolio_v1';
+
+// ====== PORTFOLIO DEFINITIONS ======
+const PORTFOLIOS = {
+    cushion: {
+        name: '4-Year Cushion',
+        hardCap: 108000,
+        yearlyExpense: 27000,
+        targets: {
+            JPST: { pct: 20, purpose: 'Ultra-short income' },
+            VTIP: { pct: 17, purpose: 'Inflation hedge (TIPS)' },
+            SPSB: { pct: 13, purpose: 'Short-term corporate bonds' },
+            DGRO: { pct: 13, purpose: 'Dividend growth' },
+            SCHD: { pct: 12, purpose: 'Quality dividends' },
+            SGOV: { pct: 10, purpose: 'T-bills (safest)' },
+            GLD:  { pct: 8,  purpose: 'Gold' },
+            VOO:  { pct: 7,  purpose: 'S&P 500' }
+        },
+        dividendReinvest: ['SCHD', 'DGRO', 'VOO'],
+        order: ['JPST', 'VTIP', 'SPSB', 'DGRO', 'SCHD', 'SGOV', 'GLD', 'VOO']
+    },
+    growth: {
+        name: 'Lifetime Growth',
+        hardCap: 0,
+        targets: {
+            VTI:  { pct: 30, purpose: 'Total US market core' },
+            SCHG: { pct: 20, purpose: 'Large-cap growth' },
+            VXUS: { pct: 15, purpose: 'International diversification' },
+            AVUV: { pct: 12, purpose: 'Small-cap value premium' },
+            SCHD: { pct: 12, purpose: 'Dividend compounder' },
+            GDX:  { pct: 5,  purpose: 'Gold miners' },
+            SMH:  { pct: 4,  purpose: 'Semiconductors / AI' },
+            VO:   { pct: 2,  purpose: 'Mid-cap stocks' },
+            IBIT: { pct: 2,  purpose: 'Bitcoin long-term hold' }
+        },
+        dividendReinvest: ['VTI', 'SCHG', 'VXUS', 'AVUV', 'SCHD', 'GDX', 'SMH', 'VO'],
+        order: ['VTI', 'SCHG', 'VXUS', 'AVUV', 'SCHD', 'GDX', 'SMH', 'VO', 'IBIT']
+    },
+    ira: {
+        name: 'IRA Retirement',
+        hardCap: 0,
+        targets: {
+            SCHD: { pct: 20, purpose: 'Quality dividends' },
+            JEPI: { pct: 18, purpose: 'S&P covered calls income' },
+            JEPQ: { pct: 15, purpose: 'Nasdaq covered calls income' },
+            VNQ:  { pct: 15, purpose: 'US REITs' },
+            GLDM: { pct: 12, purpose: 'Physical gold (tax-sheltered)' },
+            BND:  { pct: 10, purpose: 'Total bond market' },
+            VTIP: { pct: 10, purpose: 'Inflation-protected bonds' }
+        },
+        dividendReinvest: ['SCHD', 'JEPI', 'JEPQ', 'VNQ', 'BND', 'VTIP'],
+        order: ['SCHD', 'JEPI', 'JEPQ', 'VNQ', 'GLDM', 'BND', 'VTIP']
+    }
+};
+
+// ETF colors for charts
+const ETF_COLORS = {
+    // Cushion
+    JPST: '#5b9bd5', VTIP: '#70ad47', SPSB: '#ffc000',
+    DGRO: '#ed7d31', SCHD: '#d4843e', SGOV: '#a5a5a5',
+    GLD:  '#f0d890', VOO:  '#7030a0',
+    // Growth
+    VTI:  '#4472c4', SCHG: '#44c47a', VXUS: '#c44472',
+    AVUV: '#ff6b35', GDX:  '#f0d890', SMH:  '#00b4d8',
+    VO:   '#9b59b6', IBIT: '#f7931a',
+    // IRA
+    JEPI: '#2ecc71', JEPQ: '#1abc9c', VNQ:  '#e67e22',
+    GLDM: '#f1c40f', BND:  '#95a5a6'
+};
+
+// ====== STATE ======
+let currentPortfolio = 'cushion';
+let livePrices = {};
+let pendingDCA = null;
+let divLogTicker = '';
+
+// ====== STORAGE ======
+function loadData() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || createDefaultData();
+    } catch { return createDefaultData(); }
+}
+
+function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function createDefaultData() {
+    const data = {
+        portfolios: {},
+        history: [],
+        dividendHistory: []
+    };
+    // Initialize all portfolio holdings
+    for (const [key, pDef] of Object.entries(PORTFOLIOS)) {
+        data.portfolios[key] = { holdings: {} };
+        for (const ticker of pDef.order) {
+            data.portfolios[key].holdings[ticker] = { shares: 0, costBasis: 0 };
+        }
+    }
+    return data;
+}
+
+// ====== PRICE FETCHING ======
+async function refreshPrices() {
+    const dot = document.getElementById('statusDot');
+    const txt = document.getElementById('statusText');
+    dot.className = 'status-dot loading';
+    txt.textContent = 'Fetching...';
+
+    try {
+        const resp = await fetch(API_BASE + '?action=dca_prices');
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+
+        if (data.status === 'ok' && data.etfs) {
+            data.etfs.forEach(e => {
+                livePrices[e.ticker] = e;
+            });
+            dot.className = 'status-dot ok';
+            txt.textContent = 'Live';
+            localStorage.setItem('dca_prices_cache', JSON.stringify({ ts: Date.now(), prices: livePrices }));
+        } else {
+            throw new Error(data.message || 'Bad response');
+        }
+    } catch (err) {
+        console.error('Price fetch error:', err);
+        // Try cache
+        try {
+            const cache = JSON.parse(localStorage.getItem('dca_prices_cache'));
+            if (cache && cache.prices) {
+                livePrices = cache.prices;
+                dot.className = 'status-dot ok';
+                const age = Math.round((Date.now() - cache.ts) / 60000);
+                txt.textContent = 'Cached (' + age + 'm ago)';
+            } else {
+                throw new Error('No cache');
+            }
+        } catch {
+            dot.className = 'status-dot error';
+            txt.textContent = 'Offline';
+            document.getElementById('errorBanner').style.display = 'block';
+            document.getElementById('errorBanner').textContent = 'Could not fetch prices. Using placeholder data.';
+            // Fallback placeholder prices for all portfolios
+            Object.values(PORTFOLIOS).forEach(p => {
+                p.order.forEach(t => {
+                    if (!livePrices[t]) livePrices[t] = { ticker: t, price: 0, high52: 0, low52: 0, changePct: 0, rsi14: 50, sma50: 0, sma200: 0 };
+                });
+            });
+        }
+    }
+
+    renderAll();
+}
+
+// ====== IMG-BASED GET (for mobile CORS bypass) ======
+function fireGet(url) {
+    const img = new Image();
+    img.src = url;
+}
+
+// ====== GETTERS ======
+function getPortfolioDef() { return PORTFOLIOS[currentPortfolio]; }
+function getPortfolioData() {
+    const data = loadData();
+    if (!data.portfolios[currentPortfolio]) {
+        data.portfolios[currentPortfolio] = { holdings: {} };
+        const pDef = getPortfolioDef();
+        pDef.order.forEach(t => { data.portfolios[currentPortfolio].holdings[t] = { shares: 0, costBasis: 0 }; });
+        saveData(data);
+    }
+    return data.portfolios[currentPortfolio];
+}
+
+function getPrice(ticker) {
+    return livePrices[ticker] ? livePrices[ticker].price : 0;
+}
+
+function getTotalValue() {
+    const pd = getPortfolioData();
+    let total = 0;
+    for (const [ticker, h] of Object.entries(pd.holdings)) {
+        total += h.shares * getPrice(ticker);
+    }
+    return total;
+}
+
+function getTotalInvested() {
+    const pd = getPortfolioData();
+    let total = 0;
+    for (const h of Object.values(pd.holdings)) {
+        total += h.costBasis;
+    }
+    return total;
+}
+
+function getTotalDividends() {
+    const data = loadData();
+    let total = 0;
+    data.dividendHistory.filter(d => d.portfolio === currentPortfolio).forEach(d => { total += d.amount; });
+    return total;
+}
+
+function fmt(n) {
+    return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtPct(n) {
+    return n.toFixed(1) + '%';
+}
+
+// ====== RENDER ALL ======
+function renderAll() {
+    renderProgress();
+    renderStats();
+    renderETFGrid();
+    renderAlerts();
+    renderHistory();
+    renderPieChart();
+    renderGrowthChart();
+}
+
+// ====== PROGRESS BAR ======
+function renderProgress() {
+    const pDef = getPortfolioDef();
+    const totalVal = getTotalValue();
+    const cap = pDef.hardCap;
+
+    document.getElementById('progressTitle').textContent = pDef.name;
+    document.getElementById('progressAmount').textContent = fmt(totalVal);
+
+    if (cap > 0) {
+        // Capped portfolio — show progress toward cap
+        const pct = Math.min(100, totalVal / cap * 100);
+        const remaining = Math.max(0, cap - totalVal);
+        document.getElementById('progressRemaining').textContent = fmt(remaining) + ' remaining';
+        document.getElementById('progressBar').style.width = pct + '%';
+        document.getElementById('progressPct').textContent = fmtPct(pct) + ' funded';
+        document.getElementById('progressBar').parentElement.style.display = '';
+        document.getElementById('progressPct').style.display = '';
+        const funded = totalVal >= cap;
+        document.getElementById('fundedBanner').style.display = funded ? 'block' : 'none';
+    } else {
+        // No-cap portfolio — show milestone progress
+        const milestones = [1000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
+        const nextMilestone = milestones.find(m => m > totalVal) || totalVal * 2;
+        const prevMilestone = milestones.filter(m => m <= totalVal).pop() || 0;
+        const pct = nextMilestone > 0 ? Math.min(100, ((totalVal - prevMilestone) / (nextMilestone - prevMilestone)) * 100) : 0;
+        document.getElementById('progressRemaining').textContent = fmt(nextMilestone - totalVal) + ' to next milestone (' + fmt(nextMilestone) + ')';
+        document.getElementById('progressBar').style.width = pct + '%';
+        document.getElementById('progressPct').textContent = 'No cap — continuous growth';
+        document.getElementById('progressBar').parentElement.style.display = '';
+        document.getElementById('progressPct').style.display = '';
+        document.getElementById('fundedBanner').style.display = 'none';
+    }
+}
+
+// ====== STATS BAR ======
+function renderStats() {
+    const totalVal = getTotalValue();
+    const totalInv = getTotalInvested();
+    const totalRet = totalVal - totalInv;
+    const divs = getTotalDividends();
+
+    document.getElementById('statTotalValue').textContent = fmt(totalVal);
+    document.getElementById('statTotalInvested').textContent = fmt(totalInv);
+
+    const retEl = document.getElementById('statTotalReturn');
+    retEl.textContent = (totalRet >= 0 ? '+' : '') + fmt(totalRet);
+    retEl.className = 'stat-value ' + (totalRet >= 0 ? 'green' : 'red');
+
+    document.getElementById('statDividends').textContent = fmt(divs);
+}
+
+// ====== ETF GRID ======
+function renderETFGrid() {
+    const pDef = getPortfolioDef();
+    const pd = getPortfolioData();
+    const totalVal = getTotalValue();
+    const grid = document.getElementById('etfGrid');
+    grid.innerHTML = '';
+
+    pDef.order.forEach(ticker => {
+        const target = pDef.targets[ticker];
+        const h = pd.holdings[ticker] || { shares: 0, costBasis: 0 };
+        const price = getPrice(ticker);
+        const value = h.shares * price;
+        const currentPct = totalVal > 0 ? (value / totalVal * 100) : 0;
+        const targetPct = target.pct;
+        const pInfo = livePrices[ticker] || {};
+        const changePct = pInfo.changePct || 0;
+        const rsi = pInfo.rsi14 || 50;
+        const costBasis = h.costBasis || 0;
+        const unrealizedPnL = value - costBasis;
+        const targetDollar = pDef.hardCap > 0 ? pDef.hardCap * targetPct / 100 : totalVal * targetPct / 100;
+        const barPct = targetDollar > 0 ? Math.min(100, value / targetDollar * 100) : 0;
+
+        // Valuation score
+        const valScore = calcValuationScore(ticker);
+        const scoreClass = valScore > 0.6 ? 'score-good' : valScore > 0.3 ? 'score-ok' : 'score-bad';
+        const scoreLabel = valScore > 0.6 ? 'Undervalued' : valScore > 0.3 ? 'Fair' : 'Overvalued';
+
+        // Bar class
+        const drift = currentPct - targetPct;
+        const barClass = Math.abs(drift) < 3 ? 'on' : drift > 0 ? 'over' : 'under';
+
+        const changeClass = changePct > 0 ? 'up' : changePct < 0 ? 'down' : 'flat';
+        const changeStr = (changePct >= 0 ? '+' : '') + changePct.toFixed(2) + '%';
+
+        const isDivETF = pDef.dividendReinvest.includes(ticker);
+
+        const card = document.createElement('div');
+        card.className = 'etf-card';
+        card.innerHTML = `
+            <div class="etf-ticker">${ticker}</div>
+            <div class="etf-purpose">${target.purpose}</div>
+            <div class="etf-price-row">
+                <div class="etf-price">${price > 0 ? fmt(price) : '--'}</div>
+                <div class="etf-change ${changeClass}">${price > 0 ? changeStr : '--'}</div>
+            </div>
+            <div class="etf-alloc-row">
+                <span class="etf-alloc-label">Target: ${targetPct}%${pDef.hardCap > 0 ? ' (' + fmt(targetDollar) + ')' : ''}</span>
+                <span class="etf-alloc-value">Actual: ${fmtPct(currentPct)}</span>
+            </div>
+            <div class="etf-bar-outer">
+                <div class="etf-bar-inner ${barClass}" style="width:${barPct}%"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="etf-score ${scoreClass}">${scoreLabel} (${(valScore * 100).toFixed(0)})</span>
+                <span style="font-size:0.6rem; color:var(--text-dim);">RSI ${rsi.toFixed(0)}</span>
+            </div>
+            <div class="etf-details">
+                <span class="etf-detail-label">Shares</span>
+                <span class="etf-detail-value">${h.shares.toFixed(4)}</span>
+                <span class="etf-detail-label">Value</span>
+                <span class="etf-detail-value">${fmt(value)}</span>
+                <span class="etf-detail-label">Cost Basis</span>
+                <span class="etf-detail-value">${fmt(costBasis)}</span>
+                <span class="etf-detail-label">P&L</span>
+                <span class="etf-detail-value" style="color:${unrealizedPnL >= 0 ? 'var(--green-bright)' : 'var(--red-bright)'}">${(unrealizedPnL >= 0 ? '+' : '') + fmt(unrealizedPnL)}</span>
+            </div>
+            ${isDivETF ? `<button class="btn btn-green etf-div-btn" onclick="openDivModal('${ticker}')">Log Dividend</button>` : ''}
+        `;
+        grid.appendChild(card);
+    });
+}
+
+// ====== VALUATION SCORING ======
+function calcValuationScore(ticker) {
+    const p = livePrices[ticker];
+    if (!p || !p.price) return 0.5;
+
+    // RSI Score (35%): RSI 30 = 1.0, RSI 50 = 0.5, RSI 70+ = 0.0
+    const rsi = p.rsi14 || 50;
+    const rsiScore = Math.max(0, Math.min(1, (70 - rsi) / 40));
+
+    // MA Distance Score (35%): further below SMA = higher score
+    let maScore = 0.5;
+    if (p.sma50 > 0 && p.sma200 > 0) {
+        const distFromSma50 = (p.sma50 - p.price) / p.sma50;
+        const distFromSma200 = (p.sma200 - p.price) / p.sma200;
+        const avgDist = (distFromSma50 + distFromSma200) / 2;
+        maScore = Math.max(0, Math.min(1, 0.5 + avgDist * 10));
+    }
+
+    // Drawdown Score (30%): bigger dip from 52-week high = higher score
+    let drawdownScore = 0.5;
+    if (p.high52 > 0) {
+        const drawdown = (p.high52 - p.price) / p.high52;
+        drawdownScore = Math.max(0, Math.min(1, drawdown * 5));
+    }
+
+    return rsiScore * 0.35 + maScore * 0.35 + drawdownScore * 0.30;
+}
+
+// ====== SMART DCA ALGORITHM ======
+function previewDCA() {
+    const amountStr = document.getElementById('dcaAmount').value.replace(/,/g, '');
+    const investAmount = parseFloat(amountStr);
+    if (!investAmount || investAmount <= 0) return;
+
+    const pDef = getPortfolioDef();
+    const pd = getPortfolioData();
+    const totalVal = getTotalValue();
+    const cap = pDef.hardCap;
+
+    // Hard cap check (skip for no-cap portfolios)
+    let effectiveAmount = investAmount;
+    if (cap > 0) {
+        effectiveAmount = Math.min(investAmount, Math.max(0, cap - totalVal));
+        if (effectiveAmount <= 0) {
+            document.getElementById('dcaSummary').textContent = 'Portfolio is at or above $' + cap.toLocaleString() + ' cap. No more DCA needed.';
+            document.getElementById('dcaPreview').style.display = 'block';
+            document.getElementById('dcaTableBody').innerHTML = '';
+            return;
+        }
+    }
+
+    // Calculate scores for each ETF
+    const etfScores = [];
+    pDef.order.forEach(ticker => {
+        const target = pDef.targets[ticker];
+        const h = pd.holdings[ticker] || { shares: 0, costBasis: 0 };
+        const value = h.shares * getPrice(ticker);
+        const currentPct = totalVal > 0 ? (value / totalVal * 100) : 0;
+
+        // Force 1: Target Gap (55% weight)
+        const gapPct = Math.max(0, target.pct - currentPct);
+        const gapScore = gapPct / 100; // rough normalization
+
+        // Force 2: Valuation Score (45% weight)
+        const valScore = calcValuationScore(ticker);
+
+        const composite = gapScore * 0.55 + valScore * 0.45;
+
+        etfScores.push({ ticker, gapScore, valScore, composite, currentPct, targetPct: target.pct, aboveTarget: currentPct >= target.pct + 1 });
+    });
+
+    // ETFs above target get $0
+    const eligible = etfScores.filter(e => !e.aboveTarget);
+    const totalComposite = eligible.reduce((s, e) => s + e.composite, 0);
+
+    // Allocate
+    eligible.forEach(e => {
+        e.rawAlloc = totalComposite > 0 ? effectiveAmount * (e.composite / totalComposite) : effectiveAmount / eligible.length;
+    });
+
+    // Guardrails
+    const maxSingle = effectiveAmount * (cap > 0 ? 0.40 : 0.45);
+    const minAlloc = 10;
+    let overflow = 0;
+
+    eligible.forEach(e => {
+        if (e.rawAlloc > maxSingle) { overflow += e.rawAlloc - maxSingle; e.rawAlloc = maxSingle; e.capped = true; }
+    });
+    // Redistribute overflow
+    if (overflow > 0) {
+        const uncapped = eligible.filter(e => !e.capped);
+        const uncTotal = uncapped.reduce((s, e) => s + e.composite, 0);
+        uncapped.forEach(e => {
+            e.rawAlloc += uncTotal > 0 ? overflow * (e.composite / uncTotal) : overflow / uncapped.length;
+        });
+    }
+
+    // Remove dust (<$10) and redistribute
+    let dust = 0;
+    eligible.forEach(e => {
+        if (e.rawAlloc < minAlloc && e.rawAlloc > 0) { dust += e.rawAlloc; e.rawAlloc = 0; }
+    });
+    if (dust > 0) {
+        const active = eligible.filter(e => e.rawAlloc >= minAlloc);
+        const actTotal = active.reduce((s, e) => s + e.composite, 0);
+        active.forEach(e => {
+            e.rawAlloc += actTotal > 0 ? dust * (e.composite / actTotal) : dust / active.length;
+        });
+    }
+
+    // Round to 2 decimals
+    eligible.forEach(e => { e.rawAlloc = Math.round(e.rawAlloc * 100) / 100; });
+
+    // Build allocation data (including zero-alloc ETFs)
+    const allAlloc = etfScores.map(e => {
+        const found = eligible.find(x => x.ticker === e.ticker);
+        return {
+            ticker: e.ticker,
+            gapScore: e.gapScore,
+            valScore: e.valScore,
+            composite: e.composite,
+            amount: found ? found.rawAlloc : 0,
+            shares: getPrice(e.ticker) > 0 ? ((found ? found.rawAlloc : 0) / getPrice(e.ticker)) : 0,
+            price: getPrice(e.ticker)
+        };
+    });
+
+    pendingDCA = { totalAmount: effectiveAmount, allocations: allAlloc };
+
+    // Render preview table
+    const maxComp = Math.max(...etfScores.map(e => e.composite), 0.01);
+    const tbody = document.getElementById('dcaTableBody');
+    tbody.innerHTML = '';
+    allAlloc.forEach(a => {
+        const tr = document.createElement('tr');
+        const barW = (a.composite / maxComp * 100).toFixed(0);
+        tr.innerHTML = `
+            <td style="color:var(--pumpkin-glow); font-weight:700;">${a.ticker}</td>
+            <td>${(a.gapScore * 100).toFixed(0)}</td>
+            <td>${(a.valScore * 100).toFixed(0)}</td>
+            <td>${(a.composite * 100).toFixed(0)}</td>
+            <td class="alloc-amount">${a.amount > 0 ? fmt(a.amount) : '--'}</td>
+            <td class="alloc-bar-cell"><div class="alloc-bar-outer"><div class="alloc-bar-inner" style="width:${barW}%"></div></div></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    const totalAlloc = allAlloc.reduce((s, a) => s + a.amount, 0);
+    document.getElementById('dcaSummary').textContent =
+        `Total: ${fmt(totalAlloc)} of ${fmt(investAmount)}` +
+        (effectiveAmount < investAmount ? ` (capped to ${fmt(effectiveAmount)} — ${fmt(investAmount - effectiveAmount)} over cap limit)` : '');
+
+    document.getElementById('dcaPreview').style.display = 'block';
+}
+
+function cancelDCA() {
+    pendingDCA = null;
+    document.getElementById('dcaPreview').style.display = 'none';
+}
+
+function confirmDCA() {
+    if (!pendingDCA) return;
+
+    const data = loadData();
+    const pd = data.portfolios[currentPortfolio];
+    if (!pd.holdings) pd.holdings = {};
+
+    // Update holdings
+    pendingDCA.allocations.forEach(a => {
+        if (a.amount <= 0) return;
+        if (!pd.holdings[a.ticker]) pd.holdings[a.ticker] = { shares: 0, costBasis: 0 };
+        pd.holdings[a.ticker].shares += a.shares;
+        pd.holdings[a.ticker].costBasis += a.amount;
+    });
+
+    // Add to history
+    data.history.push({
+        id: 'dca_' + Date.now(),
+        date: new Date().toISOString(),
+        portfolio: currentPortfolio,
+        totalAmount: pendingDCA.totalAmount,
+        type: 'dca',
+        allocations: pendingDCA.allocations.filter(a => a.amount > 0).map(a => ({
+            ticker: a.ticker,
+            amount: a.amount,
+            shares: a.shares,
+            price: a.price
+        }))
+    });
+
+    saveData(data);
+    pendingDCA = null;
+    document.getElementById('dcaPreview').style.display = 'none';
+    document.getElementById('dcaAmount').value = '';
+    renderAll();
+}
+
+// ====== DIVIDEND LOGGING ======
+function openDivModal(ticker) {
+    divLogTicker = ticker;
+    document.getElementById('divModalTitle').textContent = 'Log Dividend — ' + ticker;
+    document.getElementById('divAmount').value = '';
+    document.getElementById('divModal').classList.add('show');
+}
+
+function closeDivModal() {
+    document.getElementById('divModal').classList.remove('show');
+    divLogTicker = '';
+}
+
+function confirmDividend() {
+    const amountStr = document.getElementById('divAmount').value.replace(/,/g, '');
+    const amount = parseFloat(amountStr);
+    if (!amount || amount <= 0 || !divLogTicker) return;
+
+    const price = getPrice(divLogTicker);
+    const shares = price > 0 ? amount / price : 0;
+
+    const data = loadData();
+    const pd = data.portfolios[currentPortfolio];
+    if (!pd.holdings[divLogTicker]) pd.holdings[divLogTicker] = { shares: 0, costBasis: 0 };
+    pd.holdings[divLogTicker].shares += shares;
+    pd.holdings[divLogTicker].costBasis += amount;
+
+    data.dividendHistory.push({
+        id: 'div_' + Date.now(),
+        date: new Date().toISOString(),
+        portfolio: currentPortfolio,
+        ticker: divLogTicker,
+        amount: amount,
+        shares: shares,
+        price: price
+    });
+
+    saveData(data);
+    closeDivModal();
+    renderAll();
+}
+
+// ====== EDIT HOLDINGS MODAL ======
+function openEditModal() {
+    const pDef = getPortfolioDef();
+    const pd = getPortfolioData();
+    const body = document.getElementById('editModalBody');
+    body.innerHTML = '';
+
+    pDef.order.forEach(ticker => {
+        const h = pd.holdings[ticker] || { shares: 0, costBasis: 0 };
+        const row = document.createElement('div');
+        row.className = 'modal-row';
+        row.innerHTML = `
+            <label>${ticker}</label>
+            <input type="text" class="modal-input" id="edit_shares_${ticker}" value="${h.shares.toFixed(4)}" placeholder="Shares" inputmode="decimal">
+            <span style="font-size:0.65rem; color:var(--text-dim);">shares</span>
+            <input type="text" class="modal-input" id="edit_cost_${ticker}" value="${h.costBasis.toFixed(2)}" placeholder="Cost $" inputmode="decimal">
+            <span style="font-size:0.65rem; color:var(--text-dim);">cost $</span>
+        `;
+        body.appendChild(row);
+    });
+
+    document.getElementById('editModal').classList.add('show');
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('show');
+}
+
+function saveHoldings() {
+    const pDef = getPortfolioDef();
+    const data = loadData();
+    if (!data.portfolios[currentPortfolio]) {
+        data.portfolios[currentPortfolio] = { holdings: {} };
+    }
+    const pd = data.portfolios[currentPortfolio];
+
+    pDef.order.forEach(ticker => {
+        const shares = parseFloat(document.getElementById('edit_shares_' + ticker).value.replace(/,/g, '')) || 0;
+        const costBasis = parseFloat(document.getElementById('edit_cost_' + ticker).value.replace(/,/g, '')) || 0;
+        pd.holdings[ticker] = { shares, costBasis };
+    });
+
+    saveData(data);
+    closeEditModal();
+    renderAll();
+}
+
+// ====== REBALANCE ALERTS ======
+function renderAlerts() {
+    const pDef = getPortfolioDef();
+    const pd = getPortfolioData();
+    const totalVal = getTotalValue();
+    const alerts = [];
+
+    if (pDef.hardCap > 0 && totalVal >= pDef.hardCap) {
+        alerts.push('Portfolio is fully funded at ' + fmt(totalVal) + '. Consider turning off DRIP on bond ETFs.');
+    }
+
+    pDef.order.forEach(ticker => {
+        const h = pd.holdings[ticker] || { shares: 0, costBasis: 0 };
+        const value = h.shares * getPrice(ticker);
+        const currentPct = totalVal > 0 ? (value / totalVal * 100) : 0;
+        const targetPct = pDef.targets[ticker].pct;
+        const drift = Math.abs(currentPct - targetPct);
+        if (drift > 10 && totalVal > 1000) {
+            alerts.push(`${ticker}: ${fmtPct(currentPct)} actual vs ${targetPct}% target (${fmtPct(drift)} drift)`);
+        }
+    });
+
+    const section = document.getElementById('alertSection');
+    const list = document.getElementById('alertList');
+    if (alerts.length > 0) {
+        section.style.display = 'block';
+        list.innerHTML = alerts.map(a => `<div class="alert-item">${a}</div>`).join('');
+    } else {
+        section.style.display = 'none';
+    }
+}
+
+// ====== HISTORY LOG ======
+function toggleHistory() {
+    const body = document.getElementById('historyBody');
+    const toggle = document.getElementById('historyToggle');
+    body.classList.toggle('open');
+    toggle.textContent = body.classList.contains('open') ? '- Hide' : '+ Show';
+}
+
+function renderHistory() {
+    const data = loadData();
+    const body = document.getElementById('historyBody');
+
+    // Combine DCA and dividend entries, sort newest first
+    const entries = [];
+
+    data.history.filter(h => h.portfolio === currentPortfolio).forEach(h => {
+        const dateStr = new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+        const detail = h.allocations ? h.allocations.map(a => a.ticker + ' ' + fmt(a.amount)).join(', ') : '';
+        entries.push({
+            date: new Date(h.date),
+            dateStr,
+            detail: detail || 'DCA Contribution',
+            amount: fmt(h.totalAmount),
+            type: 'dca'
+        });
+    });
+
+    data.dividendHistory.filter(d => d.portfolio === currentPortfolio).forEach(d => {
+        const dateStr = new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+        entries.push({
+            date: new Date(d.date),
+            dateStr,
+            detail: d.ticker + ' dividend (' + d.shares.toFixed(4) + ' shares @ ' + fmt(d.price) + ')',
+            amount: fmt(d.amount),
+            type: 'div'
+        });
+    });
+
+    entries.sort((a, b) => b.date - a.date);
+
+    if (entries.length === 0) {
+        body.innerHTML = '<div style="font-size:0.7rem; color:var(--text-dim); padding:0.5rem 0;">No transactions yet. Use Smart DCA above to make your first contribution.</div>';
+        return;
+    }
+
+    body.innerHTML = entries.map(e => `
+        <div class="history-item">
+            <div>
+                <span class="history-date">${e.dateStr}</span>
+                <span class="history-type ${e.type}">${e.type === 'dca' ? 'DCA' : 'DIV'}</span>
+            </div>
+            <div class="history-detail">${e.detail}</div>
+            <div class="history-amount">${e.amount}</div>
+        </div>
+    `).join('');
+}
+
+// ====== PIE CHART ======
+function renderPieChart() {
+    const canvas = document.getElementById('pieChart');
+    const ctx = canvas.getContext('2d');
+    const pDef = getPortfolioDef();
+    const pd = getPortfolioData();
+    const totalVal = getTotalValue();
+
+    // Clear
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const r = Math.min(cx, cy) - 10;
+
+    // Build slices
+    const slices = [];
+    pDef.order.forEach(ticker => {
+        const h = pd.holdings[ticker] || { shares: 0, costBasis: 0 };
+        const value = h.shares * getPrice(ticker);
+        slices.push({ ticker, value, color: ETF_COLORS[ticker] || '#888' });
+    });
+
+    const total = slices.reduce((s, sl) => s + sl.value, 0);
+
+    if (total <= 0) {
+        // Draw empty circle with target allocation
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#2a2620';
+        ctx.fill();
+        ctx.fillStyle = '#8a7e6a';
+        ctx.font = '11px Space Mono';
+        ctx.textAlign = 'center';
+        ctx.fillText('No holdings yet', cx, cy + 4);
+
+        // Show target allocation in legend
+        const legend = document.getElementById('pieLegend');
+        legend.innerHTML = pDef.order.map(t => `
+            <div class="pie-legend-item">
+                <div class="pie-legend-dot" style="background:${ETF_COLORS[t]}"></div>
+                <span style="color:var(--text);">${t}</span>
+                <span style="color:var(--text-dim);">${pDef.targets[t].pct}%</span>
+            </div>
+        `).join('');
+        return;
+    }
+
+    // Draw pie
+    let startAngle = -Math.PI / 2;
+    slices.forEach(sl => {
+        if (sl.value <= 0) return;
+        const sliceAngle = (sl.value / total) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, startAngle, startAngle + sliceAngle);
+        ctx.closePath();
+        ctx.fillStyle = sl.color;
+        ctx.fill();
+        ctx.strokeStyle = '#12100e';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        startAngle += sliceAngle;
+    });
+
+    // Center hole (donut)
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#221f1a';
+    ctx.fill();
+    ctx.strokeStyle = '#12100e';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Center text
+    ctx.fillStyle = '#f0e6cc';
+    ctx.font = 'bold 14px Space Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText(fmt(total), cx, cy + 5);
+
+    // Legend
+    const legend = document.getElementById('pieLegend');
+    legend.innerHTML = slices.map(sl => {
+        const pct = total > 0 ? (sl.value / total * 100) : 0;
+        return `
+            <div class="pie-legend-item">
+                <div class="pie-legend-dot" style="background:${sl.color}"></div>
+                <span style="color:var(--text);">${sl.ticker}</span>
+                <span style="color:var(--text-dim);">${fmtPct(pct)}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// ====== GROWTH CHART ======
+function renderGrowthChart() {
+    const canvas = document.getElementById('growthChart');
+    const ctx = canvas.getContext('2d');
+    const data = loadData();
+
+    // Build cumulative data from history
+    const dcaEntries = data.history.filter(h => h.portfolio === currentPortfolio).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const divEntries = data.dividendHistory.filter(d => d.portfolio === currentPortfolio).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Merge into timeline
+    const timeline = [];
+    let runningInvested = 0;
+    let runningDivs = 0;
+
+    dcaEntries.forEach(e => {
+        runningInvested += e.totalAmount;
+        timeline.push({
+            date: new Date(e.date),
+            invested: runningInvested,
+            divs: runningDivs,
+            total: runningInvested + runningDivs
+        });
+    });
+
+    divEntries.forEach(e => {
+        runningDivs += e.amount;
+        // Find where this fits in timeline
+        const existing = timeline.find(t => t.date.getTime() === new Date(e.date).getTime());
+        if (existing) {
+            existing.divs = runningDivs;
+            existing.total = existing.invested + runningDivs;
+        } else {
+            timeline.push({
+                date: new Date(e.date),
+                invested: runningInvested,
+                divs: runningDivs,
+                total: runningInvested + runningDivs
+            });
+        }
+    });
+
+    // Add current point
+    const currentVal = getTotalValue();
+    if (timeline.length > 0 || currentVal > 0) {
+        timeline.push({
+            date: new Date(),
+            invested: runningInvested,
+            divs: runningDivs,
+            total: currentVal
+        });
+    }
+
+    timeline.sort((a, b) => a.date - b.date);
+
+    // Clear
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const w = canvas.width;
+    const h = canvas.height;
+    const pad = { top: 10, right: 10, bottom: 25, left: 50 };
+    const plotW = w - pad.left - pad.right;
+    const plotH = h - pad.top - pad.bottom;
+
+    if (timeline.length < 2) {
+        ctx.fillStyle = '#8a7e6a';
+        ctx.font = '11px Space Mono';
+        ctx.textAlign = 'center';
+        ctx.fillText('Make 2+ DCA contributions to see growth', w / 2, h / 2);
+        return;
+    }
+
+    const maxVal = Math.max(...timeline.map(t => Math.max(t.total, t.invested)));
+    const minDate = timeline[0].date.getTime();
+    const maxDate = timeline[timeline.length - 1].date.getTime();
+    const dateRange = maxDate - minDate || 1;
+
+    function x(date) { return pad.left + ((date.getTime() - minDate) / dateRange) * plotW; }
+    function y(val) { return pad.top + plotH - (maxVal > 0 ? (val / maxVal) * plotH : 0); }
+
+    // Grid lines
+    ctx.strokeStyle = '#3a3530';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= 4; i++) {
+        const yy = pad.top + (plotH / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, yy);
+        ctx.lineTo(w - pad.right, yy);
+        ctx.stroke();
+
+        const val = maxVal * (1 - i / 4);
+        ctx.fillStyle = '#8a7e6a';
+        ctx.font = '9px Space Mono';
+        ctx.textAlign = 'right';
+        ctx.fillText('$' + (val / 1000).toFixed(1) + 'k', pad.left - 4, yy + 3);
+    }
+
+    // Invested line (dashed)
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = '#8a7e6a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    timeline.forEach((t, i) => {
+        const px = x(t.date);
+        const py = y(t.invested);
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Total value line (solid)
+    ctx.strokeStyle = '#d4843e';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    timeline.forEach((t, i) => {
+        const px = x(t.date);
+        const py = y(t.total);
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+
+    // Fill under total value line
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = '#d4843e';
+    ctx.beginPath();
+    timeline.forEach((t, i) => {
+        const px = x(t.date);
+        const py = y(t.total);
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.lineTo(x(timeline[timeline.length - 1].date), y(0));
+    ctx.lineTo(x(timeline[0].date), y(0));
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Date labels
+    ctx.fillStyle = '#8a7e6a';
+    ctx.font = '8px Space Mono';
+    ctx.textAlign = 'center';
+    const firstDate = timeline[0].date;
+    const lastDate = timeline[timeline.length - 1].date;
+    ctx.fillText(firstDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), x(firstDate), h - 4);
+    ctx.fillText(lastDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), x(lastDate), h - 4);
+
+    // Legend
+    document.getElementById('growthLabel').innerHTML =
+        '<span style="color:#d4843e;">&#x25CF;</span> Portfolio Value &nbsp; ' +
+        '<span style="color:#8a7e6a;">- - -</span> Cost Basis';
+}
+
+// ====== PORTFOLIO SWITCHING ======
+function switchPortfolio() {
+    currentPortfolio = document.getElementById('portfolioSelect').value;
+    renderAll();
+}
+
+// ====== INIT ======
+document.addEventListener('DOMContentLoaded', () => {
+    refreshPrices();
+});
+</script>
+</body>
+</html>
