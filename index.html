@@ -864,7 +864,31 @@
             padding: 3px 10px;
             border-radius: 4px;
             text-transform: uppercase;
+            position: relative;
+            cursor: help;
         }
+        .liquidity-zone .zone-tip {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 8px);
+            width: 260px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.7rem;
+            font-weight: 400;
+            letter-spacing: 0;
+            text-transform: none;
+            color: var(--text);
+            line-height: 1.5;
+            z-index: 50;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            white-space: normal;
+        }
+        .liquidity-zone:hover .zone-tip,
+        .liquidity-zone.tip-open .zone-tip { display: block; }
         .liquidity-zone.green { background: rgba(74,138,74,0.2); color: var(--green-bright); border: 1px solid var(--green-candle); }
         .liquidity-zone.red { background: rgba(196,75,63,0.2); color: var(--red-bright); border: 1px solid var(--red-candle); }
         .liquidity-zone.orange { background: rgba(212,132,62,0.2); color: var(--pumpkin-glow); border: 1px solid var(--pumpkin); }
@@ -916,7 +940,30 @@
             padding: 2px 8px;
             border-radius: 3px;
             margin-left: 8px;
+            position: relative;
+            cursor: help;
         }
+        .liquidity-signal-badge .zone-tip {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: calc(100% + 8px);
+            width: 260px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.7rem;
+            font-weight: 400;
+            letter-spacing: 0;
+            color: var(--text);
+            line-height: 1.5;
+            z-index: 50;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            white-space: normal;
+        }
+        .liquidity-signal-badge:hover .zone-tip,
+        .liquidity-signal-badge.tip-open .zone-tip { display: block; }
         .liquidity-signal-badge.bullish { background: rgba(74,138,74,0.25); color: var(--green-bright); }
         .liquidity-signal-badge.bearish { background: rgba(196,75,63,0.25); color: var(--red-bright); }
         .liquidity-date {
@@ -1434,7 +1481,7 @@
     <!-- TGA Liquidity Indicator -->
     <div class="liquidity-section" id="liquiditySection">
         <div class="section-header" style="margin-top:2rem">Treasury Liquidity
-            <span class="liquidity-signal-badge" id="liquiditySignalBadge"></span>
+            <span class="liquidity-signal-badge" id="liquiditySignalBadge" onclick="this.classList.toggle('tip-open')"><span class="zone-tip" id="signalTip"></span></span>
         </div>
         <div class="liquidity-box" id="liquidityBox">
             <div class="liquidity-top">
@@ -1443,7 +1490,7 @@
                     <div class="liquidity-date" id="liquidityDate"></div>
                 </div>
                 <div>
-                    <span class="liquidity-zone" id="liquidityZone">--</span>
+                    <span class="liquidity-zone" id="liquidityZone" onclick="this.classList.toggle('tip-open')">--<span class="zone-tip" id="zoneTip"></span></span>
                 </div>
             </div>
             <div class="liquidity-changes" id="liquidityChanges">
@@ -1499,9 +1546,9 @@
         </div>
     </div>
 
-    <!-- Graveyard Of Wins -->
-    <div class="section-header" style="justify-content: center; border-left: none; padding-left: 0;">Graveyard Of Wins <span class="count" id="graveyardCount">0</span></div>
-    <div class="graveyard" id="graveyard"></div>
+    <!-- Graveyard Of Wins (hidden) -->
+    <div class="section-header" id="graveyardHeader" style="justify-content: center; border-left: none; padding-left: 0; display: none;">Graveyard Of Wins <span class="count" id="graveyardCount">0</span></div>
+    <div class="graveyard" id="graveyard" style="display: none;"></div>
 
     <!-- Omikuji Fortune -->
     <div class="omikuji-section">
@@ -3112,22 +3159,39 @@
         // Date
         document.getElementById('liquidityDate').textContent = m.currentDate ? 'As of ' + m.currentDate : '';
 
-        // Zone badge
+        // Zone badge + tooltip
+        const ZONE_TIPS = {
+            'FLOOD':  'TGA nearly empty (<$200B). Treasury is spending heavily — max liquidity flowing into markets. Historically very bullish for stocks.',
+            'LOW':    'TGA below average ($200-400B). Treasury spending down reserves — liquidity entering the system. Generally bullish.',
+            'NORMAL': 'TGA at typical levels ($400-600B). Neutral — neither adding nor draining significant liquidity.',
+            'HIGH':   'TGA above average ($600-800B). Treasury building reserves — absorbing cash from markets. Mild headwind for stocks.',
+            'DRAIN':  'TGA very high (>$800B). Treasury hoarding cash — major liquidity drain from markets. Historically bearish for stocks. Watch for reversals when spending resumes.'
+        };
         const zoneEl = document.getElementById('liquidityZone');
+        const tipEl = document.getElementById('zoneTip');
         zoneEl.textContent = m.zone || '--';
+        zoneEl.appendChild(tipEl);
         zoneEl.className = 'liquidity-zone ' + (m.zoneColor || 'gray');
+        tipEl.textContent = ZONE_TIPS[m.zone] || '';
 
-        // Signal badge
+        // Signal badge + tooltip
         const sigEl = document.getElementById('liquiditySignalBadge');
+        const sigTip = document.getElementById('signalTip');
         if (m.signal === 'bullish') {
             sigEl.textContent = 'TAILWIND';
+            sigEl.appendChild(sigTip);
             sigEl.className = 'liquidity-signal-badge bullish';
+            sigTip.textContent = '7d SMA below 30d SMA — TGA trending down. Money leaving Treasury and entering the economy. Bullish for stocks.';
         } else if (m.signal === 'bearish') {
             sigEl.textContent = 'HEADWIND';
+            sigEl.appendChild(sigTip);
             sigEl.className = 'liquidity-signal-badge bearish';
+            sigTip.textContent = '7d SMA above 30d SMA — TGA trending up. Money leaving markets and entering Treasury. Bearish for stocks.';
         } else {
             sigEl.textContent = '';
+            sigEl.appendChild(sigTip);
             sigEl.className = 'liquidity-signal-badge';
+            sigTip.textContent = '';
         }
 
         // Inverted colors: TGA down = green (bullish), TGA up = red (bearish)
