@@ -3377,7 +3377,7 @@
             const dpr = window.devicePixelRatio || 1;
             const ctx = liqCanvas.getContext('2d');
             ctx.save();
-            ctx.scale(dpr, dpr);
+            // No ctx.scale here — drawLiquidityChart already set the scale
 
             const x = pad.left + (idx / (series.length - 1)) * plotW;
             const y = pad.top + plotH * (1 - (series[idx].balance - minVal) / range);
