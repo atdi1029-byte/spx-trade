@@ -3154,6 +3154,17 @@
         drawLiquidityChart(series, m);
     }
 
+    function calcSMA(series, period) {
+        const sma = [];
+        for (let i = 0; i < series.length; i++) {
+            if (i < period - 1) { sma.push(null); continue; }
+            let sum = 0;
+            for (let j = i - period + 1; j <= i; j++) sum += series[j].balance;
+            sma.push(sum / period);
+        }
+        return sma;
+    }
+
     function drawLiquidityChart(series, metrics) {
         const canvas = document.getElementById('liquidityChart');
         if (!canvas || series.length < 2) return;
@@ -3167,15 +3178,25 @@
 
         const w = rect.width;
         const h = rect.height;
-        const pad = { top: 10, right: 10, bottom: 20, left: 50 };
+        const pad = { top: 10, right: 50, bottom: 20, left: 50 };
         const plotW = w - pad.left - pad.right;
         const plotH = h - pad.top - pad.bottom;
 
-        // Get balance values
-        const vals = series.map(d => d.balance);
-        const minVal = Math.min.apply(null, vals) * 0.98;
-        const maxVal = Math.max.apply(null, vals) * 1.02;
+        // Compute rolling SMAs
+        const sma7 = calcSMA(series, 5);   // 5 business days = 1 week
+        const sma30 = calcSMA(series, 22);  // 22 business days = 1 month
+
+        // Get all values for min/max (include SMAs)
+        const allVals = [];
+        series.forEach(d => allVals.push(d.balance));
+        sma7.forEach(v => { if (v !== null) allVals.push(v); });
+        sma30.forEach(v => { if (v !== null) allVals.push(v); });
+        const minVal = Math.min.apply(null, allVals) * 0.98;
+        const maxVal = Math.max.apply(null, allVals) * 1.02;
         const range = maxVal - minVal || 1;
+
+        const toY = v => pad.top + plotH * (1 - (v - minVal) / range);
+        const toX = i => pad.left + (i / (series.length - 1)) * plotW;
 
         // Clear
         ctx.clearRect(0, 0, w, h);
@@ -3189,8 +3210,6 @@
             ctx.moveTo(pad.left, gy);
             ctx.lineTo(w - pad.right, gy);
             ctx.stroke();
-
-            // Y-axis labels
             const gVal = minVal + range * (g / 3);
             ctx.fillStyle = 'rgba(138,126,106,0.6)';
             ctx.font = '9px "Space Mono", monospace';
@@ -3198,73 +3217,91 @@
             ctx.fillText(formatBillions(gVal), pad.left - 4, gy + 3);
         }
 
-        // SMA30 line (dashed)
-        if (metrics.sma30) {
-            const smaY = pad.top + plotH * (1 - (metrics.sma30 - minVal) / range);
-            ctx.strokeStyle = 'rgba(212,132,62,0.4)';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([4, 4]);
-            ctx.beginPath();
-            ctx.moveTo(pad.left, smaY);
-            ctx.lineTo(w - pad.right, smaY);
-            ctx.stroke();
-            ctx.setLineDash([]);
-
-            ctx.fillStyle = 'rgba(212,132,62,0.5)';
-            ctx.font = '8px "Space Mono", monospace';
-            ctx.textAlign = 'left';
-            ctx.fillText('30d avg', w - pad.right - 40, smaY - 4);
-        }
-
-        // Area fill gradient
+        // Raw data as subtle area fill
         const gradient = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
-        const isBullish = metrics.signal === 'bullish';
-        if (isBullish) {
-            gradient.addColorStop(0, 'rgba(74,138,74,0.25)');
-            gradient.addColorStop(1, 'rgba(74,138,74,0.02)');
-        } else {
-            gradient.addColorStop(0, 'rgba(196,75,63,0.25)');
-            gradient.addColorStop(1, 'rgba(196,75,63,0.02)');
-        }
-
-        // Draw area
+        gradient.addColorStop(0, 'rgba(138,126,106,0.12)');
+        gradient.addColorStop(1, 'rgba(138,126,106,0.02)');
         ctx.beginPath();
         for (let i = 0; i < series.length; i++) {
-            const x = pad.left + (i / (series.length - 1)) * plotW;
-            const y = pad.top + plotH * (1 - (series[i].balance - minVal) / range);
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
+            const x = toX(i), y = toY(series[i].balance);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
-        ctx.lineTo(pad.left + plotW, h - pad.bottom);
+        ctx.lineTo(toX(series.length - 1), h - pad.bottom);
         ctx.lineTo(pad.left, h - pad.bottom);
         ctx.closePath();
         ctx.fillStyle = gradient;
         ctx.fill();
 
-        // Draw line
+        // Raw data as thin line
         ctx.beginPath();
         for (let i = 0; i < series.length; i++) {
-            const x = pad.left + (i / (series.length - 1)) * plotW;
-            const y = pad.top + plotH * (1 - (series[i].balance - minVal) / range);
-            if (i === 0) ctx.moveTo(x, y);
+            const x = toX(i), y = toY(series[i].balance);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = 'rgba(138,126,106,0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 7d SMA line (solid, bright)
+        ctx.beginPath();
+        let started7 = false;
+        for (let i = 0; i < sma7.length; i++) {
+            if (sma7[i] === null) continue;
+            const x = toX(i), y = toY(sma7[i]);
+            if (!started7) { ctx.moveTo(x, y); started7 = true; }
             else ctx.lineTo(x, y);
         }
-        ctx.strokeStyle = isBullish ? 'rgba(106,170,90,0.9)' : 'rgba(224,85,69,0.9)';
+        ctx.strokeStyle = '#4a9eff';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // End dot
-        const lastX = pad.left + plotW;
-        const lastY = pad.top + plotH * (1 - (series[series.length - 1].balance - minVal) / range);
+        // 30d SMA line (dashed, warm)
         ctx.beginPath();
-        ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
-        ctx.fillStyle = isBullish ? '#6aaa5a' : '#e05545';
-        ctx.fill();
+        let started30 = false;
+        for (let i = 0; i < sma30.length; i++) {
+            if (sma30[i] === null) continue;
+            const x = toX(i), y = toY(sma30[i]);
+            if (!started30) { ctx.moveTo(x, y); started30 = true; }
+            else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = '#d4843e';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // End dots
+        const last7 = sma7[sma7.length - 1];
+        const last30 = sma30[sma30.length - 1];
+        if (last7 !== null) {
+            ctx.beginPath();
+            ctx.arc(toX(series.length - 1), toY(last7), 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#4a9eff';
+            ctx.fill();
+        }
+        if (last30 !== null) {
+            ctx.beginPath();
+            ctx.arc(toX(series.length - 1), toY(last30), 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#d4843e';
+            ctx.fill();
+        }
+
+        // Legend (right side)
+        ctx.font = '8px "Space Mono", monospace';
+        ctx.textAlign = 'left';
+        const legX = w - pad.right + 6;
+        if (last7 !== null) {
+            ctx.fillStyle = '#4a9eff';
+            ctx.fillText('7d', legX, toY(last7) + 3);
+        }
+        if (last30 !== null) {
+            ctx.fillStyle = '#d4843e';
+            ctx.fillText('30d', legX, toY(last30) + 3);
+        }
 
         // X-axis date labels (first, middle, last)
         ctx.fillStyle = 'rgba(138,126,106,0.6)';
         ctx.font = '8px "Space Mono", monospace';
-        ctx.textAlign = 'center';
         if (series.length > 0) {
             const fmtDate = d => d.slice(5); // MM-DD
             ctx.textAlign = 'left';
