@@ -3798,8 +3798,8 @@
         const plotW = w - pad.left - pad.right;
         const plotH = h - pad.top - pad.bottom;
 
-        // Trim to last 180 days
-        const trimAt = Math.max(0, fullSeries.length - 180);
+        // Trim to last 90 days
+        const trimAt = Math.max(0, fullSeries.length - 90);
         const series = fullSeries.slice(trimAt);
 
         // Left axis: Net Liquidity
