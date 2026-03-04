@@ -427,6 +427,79 @@
             display: block;
         }
 
+        /* ============ BUY OPPORTUNITIES ============ */
+        .buy-opps {
+            background: linear-gradient(135deg, #1a2e1a, #1a3520);
+            border: 1px solid var(--green-candle);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            display: none;
+        }
+        .buy-opps.show { display: block; }
+        .buy-opps-title {
+            font-size: 0.9rem;
+            color: var(--green-bright);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+            animation: flashTitle 2s infinite;
+        }
+        @keyframes flashTitle { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .buy-opps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+        .buy-opp-card {
+            background: var(--bg-card);
+            border: 2px solid var(--green-candle);
+            border-radius: 8px;
+            padding: 0.75rem;
+            animation: pulseGreen 2s infinite;
+        }
+        @keyframes pulseGreen {
+            0%,100% { box-shadow: 0 0 5px #4a8a4a33; }
+            50% { box-shadow: 0 0 20px #4a8a4a66; }
+        }
+        .buy-opp-ticker { font-size: 1.1rem; font-weight: 700; color: var(--green-bright); }
+        .buy-opp-price { font-size: 0.9rem; color: var(--cream); margin: 4px 0; }
+        .buy-opp-stats { font-size: 0.6rem; color: var(--text-dim); }
+        .buy-opp-stats span { color: var(--green-bright); }
+
+        /* ============ TAKE PROFIT / SELL BADGES ============ */
+        .badge-take-profit {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #4a3a1a;
+            color: #f0d890;
+            animation: flashTitle 2s infinite;
+        }
+        .badge-buy-opp {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #2a4a2a;
+            color: var(--green-bright);
+            animation: pulseGreen 2s infinite;
+        }
+        .etf-sell-btn {
+            margin-top: 0.5rem;
+            width: 100%;
+            font-size: 0.6rem;
+            padding: 4px 8px;
+        }
+
         /* ============ REBALANCE ALERTS ============ */
         .alert-section {
             background: var(--bg-card);
@@ -479,6 +552,7 @@
         .history-type { font-size: 0.55rem; padding: 1px 6px; border-radius: 2px; }
         .history-type.dca { background: var(--navy); color: var(--pumpkin-glow); }
         .history-type.div { background: #2a4a2a; color: var(--green-bright); }
+        .history-type.sell { background: #4a2a2a; color: var(--red-bright); }
 
         /* ============ EDIT HOLDINGS MODAL ============ */
         .modal-overlay {
@@ -574,6 +648,12 @@
             <button class="btn" onclick="refreshPrices()">Refresh</button>
             <button class="btn btn-primary" onclick="openEditModal()">Edit Holdings</button>
         </div>
+    </div>
+
+    <!-- BUY OPPORTUNITIES -->
+    <div class="buy-opps" id="buyOpps">
+        <div class="buy-opps-title">Buy Opportunities</div>
+        <div class="buy-opps-grid" id="buyOppsGrid"></div>
     </div>
 
     <!-- FUNDED BANNER -->
@@ -687,6 +767,23 @@
         <div class="modal-actions">
             <button class="btn btn-red" onclick="closeEditModal()">Cancel</button>
             <button class="btn btn-green" onclick="saveHoldings()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- SELL MODAL -->
+<div class="modal-overlay" id="sellModal">
+    <div class="modal">
+        <div class="modal-title" id="sellModalTitle">Sell Shares</div>
+        <div class="div-modal-info" id="sellModalInfo">Enter dollar amount to sell.</div>
+        <div class="modal-row">
+            <label>Amount $</label>
+            <input type="text" class="modal-input" id="sellAmount" placeholder="100.00" inputmode="decimal">
+        </div>
+        <div id="sellPreview" style="font-size:0.7rem; color:var(--text-dim); margin-top:0.5rem;"></div>
+        <div class="modal-actions">
+            <button class="btn btn-red" onclick="closeSellModal()">Cancel</button>
+            <button class="btn btn-green" onclick="confirmSell()">Confirm Sell</button>
         </div>
     </div>
 </div>
@@ -980,6 +1077,7 @@ function fmtPct(n) {
 
 // ====== RENDER ALL ======
 function renderAll() {
+    renderBuyOpps();
     renderProgress();
     renderStats();
     renderETFGrid();
@@ -987,6 +1085,50 @@ function renderAll() {
     renderHistory();
     renderPieChart();
     renderGrowthChart();
+}
+
+// ====== BUY OPPORTUNITIES ======
+function renderBuyOpps() {
+    const pDef = getPortfolioDef();
+    const section = document.getElementById('buyOpps');
+    const grid = document.getElementById('buyOppsGrid');
+
+    // Only show for stocks portfolio (or any portfolio — can enable for all later)
+    const opps = [];
+    pDef.order.forEach(ticker => {
+        const valScore = calcValuationScore(ticker);
+        const p = livePrices[ticker] || {};
+        const rsi = p.rsi14 || 50;
+        const price = p.price || 0;
+        const sma50 = p.sma50 || 0;
+        const sma200 = p.sma200 || 0;
+        const high52 = p.high52 || 0;
+
+        if (valScore >= 0.70 && price > 0) {
+            const drawdown = high52 > 0 ? ((high52 - price) / high52 * 100).toFixed(1) : 0;
+            const belowSma50 = sma50 > 0 ? ((sma50 - price) / sma50 * 100).toFixed(1) : 0;
+            opps.push({ ticker, valScore, rsi, price, drawdown, belowSma50, purpose: pDef.targets[ticker].purpose });
+        }
+    });
+
+    if (opps.length === 0) {
+        section.classList.remove('show');
+        return;
+    }
+
+    section.classList.add('show');
+    grid.innerHTML = opps.sort((a, b) => b.valScore - a.valScore).map(o => `
+        <div class="buy-opp-card">
+            <div class="buy-opp-ticker">${o.ticker}</div>
+            <div style="font-size:0.55rem; color:var(--text-dim); text-transform:uppercase;">${o.purpose}</div>
+            <div class="buy-opp-price">${fmt(o.price)}</div>
+            <div class="buy-opp-stats">
+                RSI <span>${o.rsi.toFixed(0)}</span> &bull;
+                ${o.drawdown > 0 ? o.drawdown + '% off high' : ''} &bull;
+                Score <span>${(o.valScore * 100).toFixed(0)}</span>
+            </div>
+        </div>
+    `).join('');
 }
 
 // ====== PROGRESS BAR ======
@@ -1078,11 +1220,24 @@ function renderETFGrid() {
 
         const isDivETF = pDef.dividendReinvest.includes(ticker);
 
+        // Badges
+        const isBuyOpp = valScore >= 0.70 && price > 0;
+        const pnlPct = costBasis > 0 ? ((value - costBasis) / costBasis * 100) : 0;
+        const isTakeProfit = pnlPct >= 50 && valScore < 0.30;
+        const isDriftHigh = currentPct >= targetPct * 2 && totalVal > 1000;
+        const trimAmount = isDriftHigh ? value - (totalVal * targetPct / 100) : 0;
+
+        let badgesHtml = '';
+        if (isBuyOpp) badgesHtml += '<span class="badge-buy-opp">Buy Opportunity</span> ';
+        if (isTakeProfit) badgesHtml += '<span class="badge-take-profit">Take Profit (' + pnlPct.toFixed(0) + '%)</span> ';
+        if (isDriftHigh) badgesHtml += '<span class="badge-take-profit">Trim ' + fmt(trimAmount) + '</span> ';
+
         const card = document.createElement('div');
         card.className = 'etf-card';
         card.innerHTML = `
             <div class="etf-ticker">${ticker}</div>
             <div class="etf-purpose">${target.purpose}</div>
+            ${badgesHtml ? '<div style="margin-bottom:0.5rem;">' + badgesHtml + '</div>' : ''}
             <div class="etf-price-row">
                 <div class="etf-price">${price > 0 ? fmt(price) : '--'}</div>
                 <div class="etf-change ${changeClass}">${price > 0 ? changeStr : '--'}</div>
@@ -1108,7 +1263,10 @@ function renderETFGrid() {
                 <span class="etf-detail-label">P&L</span>
                 <span class="etf-detail-value" style="color:${unrealizedPnL >= 0 ? 'var(--green-bright)' : 'var(--red-bright)'}">${(unrealizedPnL >= 0 ? '+' : '') + fmt(unrealizedPnL)}</span>
             </div>
-            ${isDivETF ? `<button class="btn btn-green etf-div-btn" onclick="openDivModal('${ticker}')">Log Dividend</button>` : ''}
+            <div style="display:flex; gap:0.5rem;">
+                ${isDivETF ? `<button class="btn btn-green etf-div-btn" onclick="openDivModal('${ticker}')">Log Dividend</button>` : ''}
+                ${h.shares > 0 ? `<button class="btn btn-red etf-sell-btn" onclick="openSellModal('${ticker}')">Sell</button>` : ''}
+            </div>
         `;
         grid.appendChild(card);
     });
@@ -1368,6 +1526,87 @@ function confirmDividend() {
     renderAll();
 }
 
+// ====== SELL MODAL ======
+let sellTicker = '';
+
+function openSellModal(ticker) {
+    sellTicker = ticker;
+    const pd = getPortfolioData();
+    const h = pd.holdings[ticker] || { shares: 0, costBasis: 0 };
+    const price = getPrice(ticker);
+    const value = h.shares * price;
+    const avgCost = h.shares > 0 ? h.costBasis / h.shares : 0;
+
+    document.getElementById('sellModalTitle').textContent = 'Sell ' + ticker;
+    document.getElementById('sellModalInfo').textContent =
+        'You own ' + h.shares.toFixed(4) + ' shares (' + fmt(value) + ') at avg cost ' + fmt(avgCost) + '/share.';
+    document.getElementById('sellAmount').value = '';
+    document.getElementById('sellPreview').textContent = '';
+    document.getElementById('sellModal').classList.add('show');
+
+    // Live preview
+    document.getElementById('sellAmount').oninput = function() {
+        const amt = parseFloat(this.value.replace(/,/g, '')) || 0;
+        if (amt <= 0 || price <= 0) { document.getElementById('sellPreview').textContent = ''; return; }
+        const sharesToSell = amt / price;
+        const costOfShares = sharesToSell * avgCost;
+        const profit = amt - costOfShares;
+        document.getElementById('sellPreview').innerHTML =
+            'Selling ' + sharesToSell.toFixed(4) + ' shares @ ' + fmt(price) +
+            ' — Profit: <span style="color:' + (profit >= 0 ? 'var(--green-bright)' : 'var(--red-bright)') + ';">' +
+            (profit >= 0 ? '+' : '') + fmt(profit) + '</span>';
+    };
+}
+
+function closeSellModal() {
+    document.getElementById('sellModal').classList.remove('show');
+    sellTicker = '';
+}
+
+function confirmSell() {
+    const amountStr = document.getElementById('sellAmount').value.replace(/,/g, '');
+    const amount = parseFloat(amountStr);
+    if (!amount || amount <= 0 || !sellTicker) return;
+
+    const price = getPrice(sellTicker);
+    if (price <= 0) return;
+
+    const sharesToSell = amount / price;
+    const data = loadData();
+    const pd = data.portfolios[currentPortfolio];
+    const h = pd.holdings[sellTicker];
+    if (!h || h.shares < sharesToSell) {
+        alert('Not enough shares to sell');
+        return;
+    }
+
+    const avgCost = h.shares > 0 ? h.costBasis / h.shares : 0;
+    const costOfShares = sharesToSell * avgCost;
+    const profit = amount - costOfShares;
+
+    // Update holdings
+    h.shares -= sharesToSell;
+    h.costBasis -= costOfShares;
+    if (h.shares < 0.0001) { h.shares = 0; h.costBasis = 0; }
+
+    // Log the sale
+    data.history.push({
+        id: 'sell_' + Date.now(),
+        date: new Date().toISOString(),
+        portfolio: currentPortfolio,
+        totalAmount: amount,
+        type: 'sell',
+        ticker: sellTicker,
+        shares: sharesToSell,
+        price: price,
+        profit: profit
+    });
+
+    saveData(data);
+    closeSellModal();
+    renderAll();
+}
+
 // ====== EDIT HOLDINGS MODAL ======
 function openEditModal() {
     const pDef = getPortfolioDef();
@@ -1428,12 +1667,29 @@ function renderAlerts() {
 
     pDef.order.forEach(ticker => {
         const h = pd.holdings[ticker] || { shares: 0, costBasis: 0 };
-        const value = h.shares * getPrice(ticker);
+        const price = getPrice(ticker);
+        const value = h.shares * price;
         const currentPct = totalVal > 0 ? (value / totalVal * 100) : 0;
         const targetPct = pDef.targets[ticker].pct;
         const drift = Math.abs(currentPct - targetPct);
+        const costBasis = h.costBasis || 0;
+        const pnlPct = costBasis > 0 ? ((value - costBasis) / costBasis * 100) : 0;
+
+        // Drift alert (>10% off target)
         if (drift > 10 && totalVal > 1000) {
-            alerts.push(`${ticker}: ${fmtPct(currentPct)} actual vs ${targetPct}% target (${fmtPct(drift)} drift)`);
+            if (currentPct >= targetPct * 2) {
+                // Rebalance trim alert
+                const trimAmt = value - (totalVal * targetPct / 100);
+                const trimShares = price > 0 ? (trimAmt / price).toFixed(2) : '?';
+                alerts.push(`<strong style="color:var(--pumpkin-glow);">${ticker}</strong>: ${fmtPct(currentPct)} actual vs ${targetPct}% target — <strong style="color:var(--red-bright);">Trim ${fmt(trimAmt)}</strong> (${trimShares} shares) to rebalance`);
+            } else {
+                alerts.push(`${ticker}: ${fmtPct(currentPct)} actual vs ${targetPct}% target (${fmtPct(drift)} drift)`);
+            }
+        }
+
+        // Take profit alert (up 50%+ and overvalued)
+        if (pnlPct >= 50 && calcValuationScore(ticker) < 0.30 && value > 100) {
+            alerts.push(`<strong style="color:var(--pumpkin-glow);">${ticker}</strong>: Up <strong style="color:var(--green-bright);">${pnlPct.toFixed(0)}%</strong> from cost basis and overvalued — consider taking profits`);
         }
     });
 
@@ -1464,14 +1720,25 @@ function renderHistory() {
 
     data.history.filter(h => h.portfolio === currentPortfolio).forEach(h => {
         const dateStr = new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
-        const detail = h.allocations ? h.allocations.map(a => a.ticker + ' ' + fmt(a.amount)).join(', ') : '';
-        entries.push({
-            date: new Date(h.date),
-            dateStr,
-            detail: detail || 'DCA Contribution',
-            amount: fmt(h.totalAmount),
-            type: 'dca'
-        });
+        if (h.type === 'sell') {
+            const profitStr = h.profit >= 0 ? '+' + fmt(h.profit) : fmt(h.profit);
+            entries.push({
+                date: new Date(h.date),
+                dateStr,
+                detail: 'Sold ' + h.ticker + ' (' + h.shares.toFixed(4) + ' shares @ ' + fmt(h.price) + ') P&L: ' + profitStr,
+                amount: fmt(h.totalAmount),
+                type: 'sell'
+            });
+        } else {
+            const detail = h.allocations ? h.allocations.map(a => a.ticker + ' ' + fmt(a.amount)).join(', ') : '';
+            entries.push({
+                date: new Date(h.date),
+                dateStr,
+                detail: detail || 'DCA Contribution',
+                amount: fmt(h.totalAmount),
+                type: 'dca'
+            });
+        }
     });
 
     data.dividendHistory.filter(d => d.portfolio === currentPortfolio).forEach(d => {
@@ -1496,7 +1763,7 @@ function renderHistory() {
         <div class="history-item">
             <div>
                 <span class="history-date">${e.dateStr}</span>
-                <span class="history-type ${e.type}">${e.type === 'dca' ? 'DCA' : 'DIV'}</span>
+                <span class="history-type ${e.type}">${e.type === 'dca' ? 'DCA' : e.type === 'sell' ? 'SELL' : 'DIV'}</span>
             </div>
             <div class="history-detail">${e.detail}</div>
             <div class="history-amount">${e.amount}</div>
