@@ -3961,36 +3961,33 @@
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            // Tooltip box
-            const date = series[idx].date;
-            const liqLabel = 'Net Liq: $' + (series[idx].netLiq / 1000000).toFixed(2) + 'T';
-            const spxLabel = 'SPX: ' + Math.round(series[idx].spx).toLocaleString();
+            // Tooltip box (compact)
+            const date = series[idx].date.slice(5);
+            const liqVal = '$' + (series[idx].netLiq / 1000000).toFixed(2) + 'T';
+            const spxVal = Math.round(series[idx].spx).toLocaleString();
+            const tipText = date + '  ' + liqVal + '  ' + spxVal;
 
-            ctx.font = '9px "Space Mono", monospace';
-            const tw = Math.max(ctx.measureText(date).width, ctx.measureText(liqLabel).width, ctx.measureText(spxLabel).width);
-            const boxW = tw + 16;
-            const boxH = 44;
+            ctx.font = '8px "Space Mono", monospace';
+            const tw = ctx.measureText(tipText).width;
+            const boxW = tw + 12;
+            const boxH = 18;
             let bx = x - boxW / 2;
             if (bx < pad.left) bx = pad.left;
             if (bx + boxW > w - pad.right) bx = w - pad.right - boxW;
-            let by = Math.min(yLiq, ySpx) - boxH - 10;
-            if (by < 2) by = Math.max(yLiq, ySpx) + 10;
+            let by = Math.min(yLiq, ySpx) - boxH - 8;
+            if (by < 2) by = Math.max(yLiq, ySpx) + 8;
 
             ctx.fillStyle = 'rgba(18,16,14,0.92)';
             ctx.strokeStyle = 'rgba(232,160,76,0.5)';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.roundRect(bx, by, boxW, boxH, 4);
+            ctx.roundRect(bx, by, boxW, boxH, 3);
             ctx.fill();
             ctx.stroke();
 
             ctx.textAlign = 'left';
             ctx.fillStyle = '#f0e6cc';
-            ctx.fillText(date, bx + 8, by + 13);
-            ctx.fillStyle = '#d4843e';
-            ctx.fillText(liqLabel, bx + 8, by + 26);
-            ctx.fillStyle = '#6aaa5a';
-            ctx.fillText(spxLabel, bx + 8, by + 39);
+            ctx.fillText(tipText, bx + 6, by + 12);
 
             ctx.restore();
         });
