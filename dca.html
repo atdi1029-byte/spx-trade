@@ -211,7 +211,7 @@
         /* ============ STATS BAR ============ */
         .stats-bar {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 0.75rem;
             margin-bottom: 1.25rem;
         }
@@ -692,15 +692,23 @@
             <div class="stat-label">Dividends Earned</div>
             <div class="stat-value" id="statDividends">$0</div>
         </div>
+        <div class="stat-card">
+            <div class="stat-label">Cash Available</div>
+            <div class="stat-value" id="statCash" style="color:var(--pumpkin-glow);">$0</div>
+        </div>
     </div>
 
     <!-- SMART DCA SECTION -->
     <div class="dca-section">
         <div class="dca-title">Smart DCA</div>
         <div class="dca-input-row">
-            <span style="color:var(--text-dim); font-size:0.75rem;">Invest $</span>
+            <span style="color:var(--text-dim); font-size:0.75rem;">New $ </span>
             <input type="text" class="dca-input" id="dcaAmount" placeholder="500" inputmode="decimal">
+            <span style="color:var(--text-dim); font-size:0.65rem;" id="dcaCashInfo"></span>
             <button class="btn btn-primary" onclick="previewDCA()">Preview Allocation</button>
+            <label style="font-size:0.65rem; color:var(--text-dim); display:flex; align-items:center; gap:4px;">
+                <input type="checkbox" id="dcaUseCash" checked> Use cash
+            </label>
         </div>
         <div id="dcaPreview" style="display:none;">
             <table class="alloc-table">
@@ -1060,6 +1068,29 @@ function getTotalInvested() {
     return total;
 }
 
+function getCash() {
+    const data = loadData();
+    if (!data.cash) data.cash = {};
+    return data.cash[currentPortfolio] || 0;
+}
+
+function addCash(amount) {
+    const data = loadData();
+    if (!data.cash) data.cash = {};
+    data.cash[currentPortfolio] = (data.cash[currentPortfolio] || 0) + amount;
+    saveData(data);
+}
+
+function spendCash(amount) {
+    const data = loadData();
+    if (!data.cash) data.cash = {};
+    const available = data.cash[currentPortfolio] || 0;
+    const spent = Math.min(amount, available);
+    data.cash[currentPortfolio] = available - spent;
+    saveData(data);
+    return spent;
+}
+
 function getTotalDividends() {
     const data = loadData();
     let total = 0;
@@ -1181,6 +1212,24 @@ function renderStats() {
     retEl.className = 'stat-value ' + (totalRet >= 0 ? 'green' : 'red');
 
     document.getElementById('statDividends').textContent = fmt(divs);
+
+    const cash = getCash();
+    const isStocks = currentPortfolio === 'stocks';
+    document.getElementById('statCash').textContent = fmt(cash);
+    document.getElementById('statCash').parentElement.style.display = isStocks ? '' : 'none';
+
+    // Update DCA cash info (only for stocks portfolio)
+    const cashInfo = document.getElementById('dcaCashInfo');
+    const cashCheckbox = document.getElementById('dcaUseCash').parentElement;
+    if (isStocks && cash > 0) {
+        cashInfo.textContent = 'Cash: ' + fmt(cash);
+        cashInfo.style.color = 'var(--pumpkin-glow)';
+        cashCheckbox.style.display = '';
+    } else {
+        cashInfo.textContent = '';
+        cashCheckbox.style.display = 'none';
+        document.getElementById('dcaUseCash').checked = false;
+    }
 }
 
 // ====== ETF GRID ======
@@ -1303,8 +1352,12 @@ function calcValuationScore(ticker) {
 // ====== SMART DCA ALGORITHM ======
 function previewDCA() {
     const amountStr = document.getElementById('dcaAmount').value.replace(/,/g, '');
-    const investAmount = parseFloat(amountStr);
-    if (!investAmount || investAmount <= 0) return;
+    const newMoney = parseFloat(amountStr) || 0;
+    const useCash = document.getElementById('dcaUseCash').checked;
+    const cashAvailable = getCash();
+    const cashToUse = useCash ? cashAvailable : 0;
+    const investAmount = newMoney + cashToUse;
+    if (investAmount <= 0) return;
 
     const pDef = getPortfolioDef();
     const pd = getPortfolioData();
@@ -1414,7 +1467,7 @@ function previewDCA() {
         };
     });
 
-    pendingDCA = { totalAmount: effectiveAmount, allocations: allAlloc };
+    pendingDCA = { totalAmount: effectiveAmount, allocations: allAlloc, cashUsed: cashToUse };
 
     // Render preview table
     const maxComp = Math.max(...etfScores.map(e => e.composite), 0.01);
@@ -1435,9 +1488,16 @@ function previewDCA() {
     });
 
     const totalAlloc = allAlloc.reduce((s, a) => s + a.amount, 0);
-    document.getElementById('dcaSummary').textContent =
-        `Total: ${fmt(totalAlloc)} of ${fmt(investAmount)}` +
-        (effectiveAmount < investAmount ? ` (capped to ${fmt(effectiveAmount)} — ${fmt(investAmount - effectiveAmount)} over cap limit)` : '');
+    let summaryText = `Total: ${fmt(totalAlloc)}`;
+    if (cashToUse > 0 && newMoney > 0) {
+        summaryText += ` (${fmt(newMoney)} new + ${fmt(cashToUse)} cash)`;
+    } else if (cashToUse > 0) {
+        summaryText += ` (from cash)`;
+    }
+    if (effectiveAmount < investAmount) {
+        summaryText += ` — capped to ${fmt(effectiveAmount)}`;
+    }
+    document.getElementById('dcaSummary').textContent = summaryText;
 
     document.getElementById('dcaPreview').style.display = 'block';
 }
@@ -1476,6 +1536,12 @@ function confirmDCA() {
             price: a.price
         }))
     });
+
+    // Spend cash if used
+    if (pendingDCA.cashUsed > 0) {
+        if (!data.cash) data.cash = {};
+        data.cash[currentPortfolio] = Math.max(0, (data.cash[currentPortfolio] || 0) - pendingDCA.cashUsed);
+    }
 
     saveData(data);
     pendingDCA = null;
@@ -1601,6 +1667,10 @@ function confirmSell() {
         price: price,
         profit: profit
     });
+
+    // Add proceeds to cash
+    if (!data.cash) data.cash = {};
+    data.cash[currentPortfolio] = (data.cash[currentPortfolio] || 0) + amount;
 
     saveData(data);
     closeSellModal();
