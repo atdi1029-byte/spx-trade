@@ -568,6 +568,7 @@
                 <option value="cushion">4-Year Cushion</option>
                 <option value="growth">Lifetime Growth</option>
                 <option value="ira">IRA Retirement</option>
+                <option value="stocks">Stock Picks</option>
             </select>
             <span><span class="status-dot loading" id="statusDot"></span><span id="statusText">Loading...</span></span>
             <button class="btn" onclick="refreshPrices()">Refresh</button>
@@ -761,6 +762,27 @@ const PORTFOLIOS = {
         },
         dividendReinvest: ['SCHD', 'JEPI', 'JEPQ', 'VNQ', 'BND', 'VTIP'],
         order: ['SCHD', 'JEPI', 'JEPQ', 'VNQ', 'GLDM', 'BND', 'VTIP']
+    },
+    stocks: {
+        name: 'Stock Picks',
+        hardCap: 0,
+        targets: {
+            NVDA: { pct: 12, purpose: 'AI / GPU leader' },
+            MSFT: { pct: 10, purpose: 'Cloud + AI platform' },
+            AAPL: { pct: 10, purpose: 'Consumer tech moat' },
+            AMZN: { pct: 10, purpose: 'AWS + e-commerce' },
+            GOOG: { pct: 8,  purpose: 'Search + Cloud + YouTube' },
+            META: { pct: 8,  purpose: 'Social monopoly + AI' },
+            'BRK.B': { pct: 8, purpose: 'Berkshire Hathaway' },
+            JPM:  { pct: 6,  purpose: 'Largest US bank' },
+            UNH:  { pct: 6,  purpose: 'Healthcare giant' },
+            LLY:  { pct: 6,  purpose: 'Pharma / weight loss drugs' },
+            COST: { pct: 6,  purpose: 'Membership retail moat' },
+            NFLX: { pct: 5,  purpose: 'Streaming winner' },
+            PG:   { pct: 5,  purpose: 'Consumer staples dividend king' }
+        },
+        dividendReinvest: ['MSFT', 'AAPL', 'GOOG', 'META', 'JPM', 'UNH', 'COST', 'PG'],
+        order: ['NVDA', 'MSFT', 'AAPL', 'AMZN', 'GOOG', 'META', 'BRK.B', 'JPM', 'UNH', 'LLY', 'COST', 'NFLX', 'PG']
     }
 };
 
@@ -776,7 +798,13 @@ const ETF_COLORS = {
     VO:   '#9b59b6', IBIT: '#f7931a',
     // IRA
     JEPI: '#2ecc71', JEPQ: '#1abc9c', VNQ:  '#e67e22',
-    GLDM: '#f1c40f', BND:  '#95a5a6'
+    GLDM: '#f1c40f', BND:  '#95a5a6',
+    // Stock Picks
+    NVDA: '#76b900', MSFT: '#00a4ef', AAPL: '#a2aaad',
+    AMZN: '#ff9900', GOOG: '#4285f4', META: '#0668e1',
+    'BRK.B': '#2d1e5b', JPM: '#003a70', UNH: '#002855',
+    LLY:  '#d52b1e', COST: '#e31837', NFLX: '#e50914',
+    PG:   '#003cae'
 };
 
 // ====== STATE ======
