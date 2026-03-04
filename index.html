@@ -3796,8 +3796,8 @@
         const plotW = w - pad.left - pad.right;
         const plotH = h - pad.top - pad.bottom;
 
-        // Trim to last 105 business days (~5 months)
-        const trimAt = Math.max(0, fullSeries.length - 105);
+        // Trim to last 85 business days (~4 months)
+        const trimAt = Math.max(0, fullSeries.length - 85);
         const series = fullSeries.slice(trimAt);
 
         // Left axis: Net Liquidity
