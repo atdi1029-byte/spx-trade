@@ -6,6 +6,9 @@
     <meta name="theme-color" content="#12100e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DCA">
+    <link rel="manifest" href="manifest-dca.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <title>DCA Portfolio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -206,6 +209,26 @@
             font-size: 1.1rem;
             margin-bottom: 1.25rem;
             display: none;
+        }
+
+        /* Stock Picks buy alert banner */
+        .stock-opps-banner {
+            display: none;
+            text-align: center;
+            padding: 0.6rem 1rem;
+            background: linear-gradient(135deg, var(--pumpkin-deep), var(--pumpkin));
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            animation: oppsPulse 2s ease-in-out infinite;
+        }
+        .stock-opps-banner.show { display: block; }
+        @keyframes oppsPulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 8px #d4843e44; }
+            50% { opacity: 0.7; box-shadow: 0 0 20px #d4843e88; }
         }
 
         /* ============ STATS BAR ============ */
@@ -604,6 +627,122 @@
             margin-bottom: 1rem;
         }
 
+        /* ============ WEEKLY SPLITTER ============ */
+        .splitter-section {
+            background: linear-gradient(135deg, #1a1a2e, #1a2035);
+            border: 1px solid #3a4a6a;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        .splitter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .splitter-title {
+            font-size: 0.9rem;
+            color: #7aa2f7;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .splitter-toggle { color: var(--text-dim); font-size: 0.8rem; }
+        .splitter-body { display: none; margin-top: 1rem; }
+        .splitter-body.open { display: block; }
+        .splitter-total-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .splitter-total-label { font-size: 0.75rem; color: var(--text-dim); }
+        .splitter-total-input {
+            background: var(--bg-deep);
+            border: 1px solid #3a4a6a;
+            color: var(--cream);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem;
+            width: 120px;
+        }
+        .splitter-total-input:focus { outline: none; border-color: #7aa2f7; }
+        .splitter-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .splitter-row:last-of-type { border-bottom: none; }
+        .splitter-port-name {
+            width: 140px;
+            font-size: 0.75rem;
+            color: var(--cream);
+            font-weight: 700;
+        }
+        .splitter-pct-input {
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            color: var(--cream);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            width: 50px;
+            text-align: center;
+        }
+        .splitter-pct-input:focus { outline: none; border-color: #7aa2f7; }
+        .splitter-dollar {
+            font-size: 0.85rem;
+            color: #ff8c00;
+            font-weight: 700;
+            width: 80px;
+            text-align: right;
+        }
+        .splitter-note {
+            font-size: 0.55rem;
+            color: var(--text-dim);
+            flex: 1;
+        }
+        .splitter-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+        .splitter-total-pct {
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .splitter-total-pct.ok { color: var(--green-bright); }
+        .splitter-total-pct.bad { color: var(--red-bright); }
+        .splitter-result {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-deep);
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: var(--text);
+            display: none;
+        }
+        .splitter-result.show { display: block; }
+        .splitter-result-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .splitter-result-line:last-child { border: none; }
+        .splitter-result-port { color: var(--cream); font-weight: 700; }
+        .splitter-result-detail { color: var(--text-dim); }
+        .splitter-result-amt { color: #ff8c00; font-weight: 700; }
+
         /* ============ RESPONSIVE ============ */
         @media (max-width: 768px) {
             .content { padding: 1rem; }
@@ -614,6 +753,9 @@
             .charts-section { grid-template-columns: 1fr; }
             .dca-input { width: 120px; }
             .header-right { justify-content: flex-start; width: 100%; }
+            .splitter-port-name { width: 100px; font-size: 0.65rem; }
+            .splitter-dollar { width: 65px; font-size: 0.75rem; }
+            .splitter-note { display: none; }
         }
         @media (max-width: 480px) {
             .stats-bar { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
@@ -649,6 +791,38 @@
             <button class="btn btn-primary" onclick="openEditModal()">Edit Holdings</button>
         </div>
     </div>
+
+    <!-- WEEKLY DCA SPLITTER -->
+    <div class="splitter-section">
+        <div class="splitter-header" onclick="toggleSplitter()">
+            <div class="splitter-title">Weekly DCA Splitter</div>
+            <div class="splitter-toggle" id="splitterToggle">+ Show</div>
+        </div>
+        <div class="splitter-body" id="splitterBody">
+            <div class="splitter-total-row">
+                <span class="splitter-total-label">Total $</span>
+                <input type="text" class="splitter-total-input" id="splitterTotal" placeholder="200" inputmode="decimal" oninput="updateSplitterPreview()">
+            </div>
+            <div id="splitterRows"></div>
+            <div class="splitter-footer">
+                <div class="splitter-total-pct" id="splitterTotalPct">Total: 0%</div>
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="btn" onclick="resetSplitterRatios()">Reset</button>
+                    <button class="btn btn-primary" onclick="previewSplitter()" id="splitterRunBtn">Preview Split</button>
+                </div>
+            </div>
+            <div class="splitter-result" id="splitterResult">
+                <div id="splitterResultBody"></div>
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:0.75rem;">
+                    <button class="btn btn-red" onclick="cancelSplitter()">Cancel</button>
+                    <button class="btn btn-green" onclick="confirmSplitter()">Confirm All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STOCK PICKS BUY ALERT (visible on all tabs) -->
+    <div class="stock-opps-banner" id="stockOppsBanner" onclick="document.getElementById('portfolioSelect').value='stocks'; switchPortfolio();"></div>
 
     <!-- BUY OPPORTUNITIES -->
     <div class="buy-opps" id="buyOpps">
@@ -1108,6 +1282,7 @@ function fmtPct(n) {
 
 // ====== RENDER ALL ======
 function renderAll() {
+    renderStockOppsBanner();
     renderBuyOpps();
     renderProgress();
     renderStats();
@@ -1118,13 +1293,39 @@ function renderAll() {
     renderGrowthChart();
 }
 
+// ====== STOCK PICKS BUY ALERT (visible on every tab) ======
+function renderStockOppsBanner() {
+    const banner = document.getElementById('stockOppsBanner');
+    const pDef = PORTFOLIOS.stocks;
+    let count = 0;
+    const tickers = [];
+    pDef.order.forEach(ticker => {
+        const valScore = calcValuationScore(ticker);
+        const price = getPrice(ticker);
+        if (valScore >= 0.70 && price > 0) {
+            count++;
+            tickers.push(ticker);
+        }
+    });
+    if (count > 0) {
+        banner.textContent = 'Stock Picks: ' + count + ' buy opportunit' + (count === 1 ? 'y' : 'ies') + ' — ' + tickers.join(', ');
+        banner.classList.add('show');
+    } else {
+        banner.classList.remove('show');
+    }
+}
+
 // ====== BUY OPPORTUNITIES ======
 function renderBuyOpps() {
     const pDef = getPortfolioDef();
     const section = document.getElementById('buyOpps');
     const grid = document.getElementById('buyOppsGrid');
 
-    // Only show for stocks portfolio (or any portfolio — can enable for all later)
+    // Only show for stocks portfolio
+    if (currentPortfolio !== 'stocks') {
+        section.classList.remove('show');
+        return;
+    }
     const opps = [];
     pDef.order.forEach(ticker => {
         const valScore = calcValuationScore(ticker);
@@ -2135,6 +2336,339 @@ function renderGrowthChart() {
         '<span style="color:#8a7e6a;">- - -</span> Cost Basis';
 }
 
+// ====== WEEKLY DCA SPLITTER ======
+const SPLITTER_KEY = 'dca_splitter_ratios';
+const DEFAULT_RATIOS = { cushion: 50, growth: 40, ira: 0, stocks: 10 };
+let pendingSplitter = null;
+
+function loadSplitterRatios() {
+    try {
+        return JSON.parse(localStorage.getItem(SPLITTER_KEY)) || { ...DEFAULT_RATIOS };
+    } catch { return { ...DEFAULT_RATIOS }; }
+}
+
+function saveSplitterRatios(ratios) {
+    localStorage.setItem(SPLITTER_KEY, JSON.stringify(ratios));
+}
+
+function toggleSplitter() {
+    const body = document.getElementById('splitterBody');
+    const toggle = document.getElementById('splitterToggle');
+    body.classList.toggle('open');
+    toggle.textContent = body.classList.contains('open') ? '- Hide' : '+ Show';
+    if (body.classList.contains('open')) renderSplitterRows();
+}
+
+function renderSplitterRows() {
+    const ratios = loadSplitterRatios();
+    const container = document.getElementById('splitterRows');
+    const portKeys = ['cushion', 'growth', 'ira', 'stocks'];
+    const notes = {
+        cushion: '$108K cap, safety net',
+        growth: 'Long-term compounding',
+        ira: 'Max $7K/yr ($135/wk)',
+        stocks: 'Opportunity-based picks'
+    };
+    container.innerHTML = portKeys.map(key => {
+        const pDef = PORTFOLIOS[key];
+        const pct = ratios[key] || 0;
+        return `
+            <div class="splitter-row">
+                <div class="splitter-port-name">${pDef.name}</div>
+                <input type="text" class="splitter-pct-input" id="splitter_pct_${key}"
+                    value="${pct}" inputmode="numeric" maxlength="3"
+                    oninput="onSplitterPctChange()">
+                <span style="font-size:0.7rem; color:var(--text-dim);">%</span>
+                <div class="splitter-dollar" id="splitter_dollar_${key}">$0.00</div>
+                <div class="splitter-note">${notes[key]}</div>
+            </div>
+        `;
+    }).join('');
+    updateSplitterPreview();
+}
+
+function getSplitterInputRatios() {
+    const keys = ['cushion', 'growth', 'ira', 'stocks'];
+    const ratios = {};
+    keys.forEach(key => {
+        const el = document.getElementById('splitter_pct_' + key);
+        ratios[key] = el ? (parseInt(el.value) || 0) : 0;
+    });
+    return ratios;
+}
+
+function onSplitterPctChange() {
+    const ratios = getSplitterInputRatios();
+    saveSplitterRatios(ratios);
+    updateSplitterPreview();
+}
+
+function updateSplitterPreview() {
+    const totalStr = document.getElementById('splitterTotal').value.replace(/,/g, '');
+    const total = parseFloat(totalStr) || 0;
+    const ratios = getSplitterInputRatios();
+    const totalPct = Object.values(ratios).reduce((s, v) => s + v, 0);
+
+    ['cushion', 'growth', 'ira', 'stocks'].forEach(key => {
+        const el = document.getElementById('splitter_dollar_' + key);
+        if (el) {
+            const amount = total * (ratios[key] || 0) / 100;
+            el.textContent = fmt(amount);
+        }
+    });
+
+    const pctEl = document.getElementById('splitterTotalPct');
+    pctEl.textContent = 'Total: ' + totalPct + '%';
+    pctEl.className = 'splitter-total-pct ' + (totalPct === 100 ? 'ok' : 'bad');
+
+    // Enable/disable run button
+    const btn = document.getElementById('splitterRunBtn');
+    btn.disabled = totalPct !== 100 || total <= 0;
+    btn.style.opacity = (totalPct === 100 && total > 0) ? '1' : '0.4';
+}
+
+function resetSplitterRatios() {
+    saveSplitterRatios(DEFAULT_RATIOS);
+    renderSplitterRows();
+}
+
+// Run DCA algorithm for a specific portfolio without modifying state
+function calcDCAForPortfolio(portfolioKey, investAmount, onlyOpps) {
+    const pDef = PORTFOLIOS[portfolioKey];
+    const data = loadData();
+    if (!data.portfolios[portfolioKey]) {
+        data.portfolios[portfolioKey] = { holdings: {} };
+        pDef.order.forEach(t => { data.portfolios[portfolioKey].holdings[t] = { shares: 0, costBasis: 0 }; });
+    }
+    const pd = data.portfolios[portfolioKey];
+
+    // Which tickers to consider
+    let tickers = pDef.order;
+    if (onlyOpps) {
+        tickers = tickers.filter(t => getPrice(t) > 0 && calcValuationScore(t) >= 0.70);
+        if (tickers.length === 0) return { portfolioKey, capped: false, allocations: [], totalAmount: 0, noOpps: true };
+    }
+
+    // Total value for this portfolio
+    let totalVal = 0;
+    pDef.order.forEach(t => {
+        const h = pd.holdings[t] || { shares: 0, costBasis: 0 };
+        totalVal += h.shares * getPrice(t);
+    });
+
+    const cap = pDef.hardCap;
+    let effectiveAmount = investAmount;
+    if (cap > 0) {
+        effectiveAmount = Math.min(investAmount, Math.max(0, cap - totalVal));
+        if (effectiveAmount <= 0) return { portfolioKey, capped: true, allocations: [], totalAmount: 0 };
+    }
+
+    // Scores
+    const etfScores = [];
+    tickers.forEach(ticker => {
+        const target = pDef.targets[ticker];
+        const h = pd.holdings[ticker] || { shares: 0, costBasis: 0 };
+        const value = h.shares * getPrice(ticker);
+        const currentPct = totalVal > 0 ? (value / totalVal * 100) : 0;
+        const gapPct = Math.max(0, target.pct - currentPct);
+        const gapScore = gapPct / 100;
+        const valScore = calcValuationScore(ticker);
+        const composite = gapScore * 0.55 + valScore * 0.45;
+        etfScores.push({ ticker, gapScore, valScore, composite, currentPct, targetPct: target.pct, aboveTarget: currentPct >= target.pct + 1 });
+    });
+
+    const eligible = etfScores.filter(e => !e.aboveTarget);
+    const totalComposite = eligible.reduce((s, e) => s + e.composite, 0);
+    eligible.forEach(e => {
+        e.rawAlloc = totalComposite > 0 ? effectiveAmount * (e.composite / totalComposite) : effectiveAmount / eligible.length;
+    });
+
+    // Guardrails
+    const maxSingle = effectiveAmount * (cap > 0 ? 0.40 : 0.45);
+    let overflow = 0;
+    eligible.forEach(e => {
+        if (e.rawAlloc > maxSingle) { overflow += e.rawAlloc - maxSingle; e.rawAlloc = maxSingle; e.capped = true; }
+    });
+    if (overflow > 0) {
+        const uncapped = eligible.filter(e => !e.capped);
+        const uncTotal = uncapped.reduce((s, e) => s + e.composite, 0);
+        uncapped.forEach(e => {
+            e.rawAlloc += uncTotal > 0 ? overflow * (e.composite / uncTotal) : overflow / uncapped.length;
+        });
+    }
+
+    // Dust removal ($1 min)
+    let dust = 0;
+    eligible.forEach(e => {
+        if (e.rawAlloc < 1 && e.rawAlloc > 0) { dust += e.rawAlloc; e.rawAlloc = 0; }
+    });
+    let safety = 0;
+    while (dust > 0 && safety < 20) {
+        safety++;
+        const active = eligible.filter(e => e.rawAlloc >= 1);
+        if (active.length === 0) {
+            const best = eligible.reduce((a, b) => a.composite > b.composite ? a : b);
+            best.rawAlloc = effectiveAmount;
+            dust = 0;
+            break;
+        }
+        const actTotal = active.reduce((s, e) => s + e.composite, 0);
+        active.forEach(e => {
+            e.rawAlloc += actTotal > 0 ? dust * (e.composite / actTotal) : dust / active.length;
+        });
+        dust = 0;
+        eligible.forEach(e => {
+            if (e.rawAlloc > 0 && e.rawAlloc < 1) { dust += e.rawAlloc; e.rawAlloc = 0; }
+        });
+    }
+
+    eligible.forEach(e => { e.rawAlloc = Math.round(e.rawAlloc * 100) / 100; });
+
+    const allocations = etfScores.map(e => {
+        const found = eligible.find(x => x.ticker === e.ticker);
+        const amount = found ? found.rawAlloc : 0;
+        return {
+            ticker: e.ticker,
+            amount,
+            shares: getPrice(e.ticker) > 0 ? amount / getPrice(e.ticker) : 0,
+            price: getPrice(e.ticker)
+        };
+    }).filter(a => a.amount > 0);
+
+    return { portfolioKey, capped: false, allocations, totalAmount: effectiveAmount };
+}
+
+function previewSplitter() {
+    const totalStr = document.getElementById('splitterTotal').value.replace(/,/g, '');
+    const total = parseFloat(totalStr) || 0;
+    const ratios = getSplitterInputRatios();
+    const totalPct = Object.values(ratios).reduce((s, v) => s + v, 0);
+    if (total <= 0 || totalPct !== 100) return;
+
+    // Calculate initial amounts
+    const amounts = {};
+    ['cushion', 'growth', 'ira', 'stocks'].forEach(key => {
+        amounts[key] = total * (ratios[key] || 0) / 100;
+    });
+
+    // Stocks: only buy undervalued (val score >= 0.70)
+    // If no opportunities, redirect to cushion + growth proportionally
+    let redirectMsg = '';
+    if (amounts.stocks > 0) {
+        const stockResult = calcDCAForPortfolio('stocks', amounts.stocks, true);
+        if (stockResult.noOpps || stockResult.allocations.length === 0) {
+            redirectMsg = `No undervalued stocks this week — ${fmt(amounts.stocks)} redirected to Cushion + Growth`;
+            const cPct = ratios.cushion || 0;
+            const gPct = ratios.growth || 0;
+            const sum = cPct + gPct;
+            if (sum > 0) {
+                amounts.cushion += amounts.stocks * (cPct / sum);
+                amounts.growth += amounts.stocks * (gPct / sum);
+            }
+            amounts.stocks = 0;
+        }
+    }
+
+    const results = [];
+    ['cushion', 'growth', 'ira', 'stocks'].forEach(key => {
+        if (amounts[key] <= 0) return;
+        const isStocks = key === 'stocks';
+        results.push(calcDCAForPortfolio(key, amounts[key], isStocks));
+    });
+
+    pendingSplitter = results;
+
+    // Render preview
+    const body = document.getElementById('splitterResultBody');
+    let html = '';
+
+    if (redirectMsg) {
+        html += `<div style="font-size:0.65rem; color:#7aa2f7; padding:6px 8px; background:#1a1a2e; border-radius:4px; margin-bottom:8px;">
+            ${redirectMsg}
+        </div>`;
+    }
+
+    html += results.map(r => {
+        const pDef = PORTFOLIOS[r.portfolioKey];
+        if (r.capped) {
+            return `<div class="splitter-result-line">
+                <span class="splitter-result-port">${pDef.name}</span>
+                <span class="splitter-result-detail">Capped — no DCA needed</span>
+            </div>`;
+        }
+        const tickers = r.allocations.map(a => a.ticker + ' ' + fmt(a.amount)).join(', ');
+        return `<div class="splitter-result-line">
+            <span class="splitter-result-port">${pDef.name}</span>
+            <span class="splitter-result-amt">${fmt(r.totalAmount)}</span>
+        </div>
+        <div style="font-size:0.6rem; color:var(--text-dim); padding:2px 0 6px 0;">${tickers}</div>`;
+    }).join('');
+
+    const totalAllocated = results.reduce((s, r) => s + r.totalAmount, 0);
+    html += `<div class="splitter-result-line" style="border-top:1px solid var(--border); margin-top:4px; padding-top:6px;">
+        <span class="splitter-result-port">Total Allocated</span>
+        <span class="splitter-result-amt">${fmt(totalAllocated)}</span>
+    </div>`;
+
+    if (totalAllocated < total) {
+        const unallocated = total - totalAllocated;
+        html += `<div style="font-size:0.6rem; color:var(--text-dim); margin-top:4px;">
+            ${fmt(unallocated)} unallocated (capped portfolios or no stock opportunities)
+        </div>`;
+    }
+
+    body.innerHTML = html;
+    document.getElementById('splitterResult').classList.add('show');
+}
+
+function cancelSplitter() {
+    pendingSplitter = null;
+    document.getElementById('splitterResult').classList.remove('show');
+}
+
+function confirmSplitter() {
+    if (!pendingSplitter) return;
+
+    const data = loadData();
+    pendingSplitter.forEach(result => {
+        if (result.capped || result.allocations.length === 0) return;
+
+        const key = result.portfolioKey;
+        if (!data.portfolios[key]) {
+            data.portfolios[key] = { holdings: {} };
+            PORTFOLIOS[key].order.forEach(t => { data.portfolios[key].holdings[t] = { shares: 0, costBasis: 0 }; });
+        }
+        const pd = data.portfolios[key];
+
+        result.allocations.forEach(a => {
+            if (!pd.holdings[a.ticker]) pd.holdings[a.ticker] = { shares: 0, costBasis: 0 };
+            pd.holdings[a.ticker].shares += a.shares;
+            pd.holdings[a.ticker].costBasis += a.amount;
+        });
+
+        data.history.push({
+            id: 'split_' + Date.now() + '_' + key,
+            date: new Date().toISOString(),
+            portfolio: key,
+            totalAmount: result.totalAmount,
+            type: 'dca',
+            allocations: result.allocations.map(a => ({
+                ticker: a.ticker,
+                amount: a.amount,
+                shares: a.shares,
+                price: a.price
+            }))
+        });
+    });
+
+    saveData(data);
+    pendingSplitter = null;
+    document.getElementById('splitterResult').classList.remove('show');
+    document.getElementById('splitterTotal').value = '';
+    updateSplitterPreview();
+    renderAll();
+}
+
 // ====== PORTFOLIO SWITCHING ======
 function switchPortfolio() {
     currentPortfolio = document.getElementById('portfolioSelect').value;
@@ -2145,6 +2679,11 @@ function switchPortfolio() {
 document.addEventListener('DOMContentLoaded', () => {
     refreshPrices();
 });
+
+// Register service worker for standalone PWA
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js');
+}
 </script>
 </body>
 </html>

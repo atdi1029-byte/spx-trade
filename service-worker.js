@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spx-trade-v65';
+const CACHE_NAME = 'spx-trade-v68';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './manifest.json',
+  './manifest-dca.json',
   'https://fonts.googleapis.com/css2?family=Nosifer&family=Noto+Serif+JP:wght@400;700&family=Space+Mono:wght@400;700&display=swap'
 ];
 
