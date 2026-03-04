@@ -1196,8 +1196,7 @@ function previewDCA() {
 
     // Guardrails
     const maxSingle = effectiveAmount * (cap > 0 ? 0.40 : 0.45);
-    const etfCount = pDef.order.length;
-    const minAlloc = Math.min(10, Math.floor(effectiveAmount / etfCount));
+    const minAlloc = 1; // Robinhood minimum $1
     let overflow = 0;
 
     eligible.forEach(e => {
@@ -1212,16 +1211,31 @@ function previewDCA() {
         });
     }
 
-    // Remove dust (<$10) and redistribute
+    // Remove allocations under $1 and concentrate into top scorers
     let dust = 0;
     eligible.forEach(e => {
         if (e.rawAlloc < minAlloc && e.rawAlloc > 0) { dust += e.rawAlloc; e.rawAlloc = 0; }
     });
-    if (dust > 0) {
+    // Keep removing until all remaining are >= $1
+    let safety = 0;
+    while (dust > 0 && safety < 20) {
+        safety++;
         const active = eligible.filter(e => e.rawAlloc >= minAlloc);
+        if (active.length === 0) {
+            // Not enough for even $1 — give it all to the top scorer
+            const best = eligible.reduce((a, b) => a.composite > b.composite ? a : b);
+            best.rawAlloc = effectiveAmount;
+            dust = 0;
+            break;
+        }
         const actTotal = active.reduce((s, e) => s + e.composite, 0);
         active.forEach(e => {
             e.rawAlloc += actTotal > 0 ? dust * (e.composite / actTotal) : dust / active.length;
+        });
+        // Check if redistribution created new entries under $1
+        dust = 0;
+        eligible.forEach(e => {
+            if (e.rawAlloc > 0 && e.rawAlloc < minAlloc) { dust += e.rawAlloc; e.rawAlloc = 0; }
         });
     }
 
