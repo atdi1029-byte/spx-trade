@@ -3763,18 +3763,16 @@
             corrTip.textContent = 'Net Liquidity and SPX moving in opposite directions. Potential inflection point — watch for mean reversion.';
         }
 
-        // Insight
+        // Insight — dynamic context + cheat sheet
         const insightEl = document.getElementById('netLiqInsight');
-        let insight = '';
-        if (m.change30d > 0) {
-            insight = 'Net liquidity expanding — more dollars in the system chasing assets. Historically bullish for equities.';
-        } else {
-            insight = 'Net liquidity contracting — fewer dollars available. Watch for potential headwinds in risk assets.';
-        }
-        if (m.correlation === 'divergent') {
-            insight += ' SPX is diverging from liquidity trend — a potential inflection signal.';
-        }
-        insightEl.textContent = insight;
+        const liqDir = m.change30d >= 0 ? 'rising' : 'falling';
+        const spxDir = (m.currentSpx - (netLiqCache && netLiqCache.series ? netLiqCache.series[Math.max(0, netLiqCache.series.length - 22)] : {}).spx || 0) >= 0 ? 'rising' : 'falling';
+        let regime = '';
+        if (liqDir === 'rising' && m.correlation === 'aligned') regime = 'Both rising + ALIGNED = full bull mode.';
+        else if (liqDir === 'rising' && m.correlation === 'divergent') regime = 'Liquidity rising + SPX falling = potential buying opportunity.';
+        else if (liqDir === 'falling' && m.correlation === 'aligned') regime = 'Both falling + ALIGNED = risk-off, be cautious.';
+        else regime = 'Liquidity falling + SPX rising = rally may not be sustainable.';
+        insightEl.textContent = regime;
 
         drawNetLiqChart(series, m);
     }
