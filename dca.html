@@ -1148,6 +1148,7 @@ function renderBuyOpps() {
     }
 
     section.classList.add('show');
+    const isStocks = currentPortfolio === 'stocks';
     grid.innerHTML = opps.sort((a, b) => b.valScore - a.valScore).map(o => `
         <div class="buy-opp-card">
             <div class="buy-opp-ticker">${o.ticker}</div>
@@ -1158,8 +1159,58 @@ function renderBuyOpps() {
                 ${o.drawdown > 0 ? o.drawdown + '% off high' : ''} &bull;
                 Score <span>${(o.valScore * 100).toFixed(0)}</span>
             </div>
+            ${isStocks ? `
+                <div style="display:flex; gap:4px; margin-top:0.5rem;">
+                    <button class="btn btn-green" style="flex:1; font-size:0.6rem; padding:4px;" onclick="quickBuy('${o.ticker}', 10)">$10</button>
+                    <button class="btn btn-green" style="flex:1; font-size:0.6rem; padding:4px;" onclick="quickBuy('${o.ticker}', 20)">$20</button>
+                    <button class="btn btn-green" style="flex:1; font-size:0.6rem; padding:4px;" onclick="quickBuy('${o.ticker}', 50)">$50</button>
+                    <button class="btn btn-green" style="flex:1; font-size:0.6rem; padding:4px;" onclick="quickBuyCustom('${o.ticker}')">$?</button>
+                </div>
+            ` : ''}
         </div>
     `).join('');
+}
+
+// ====== QUICK BUY (for Stock Picks opportunities) ======
+function quickBuy(ticker, amount) {
+    const price = getPrice(ticker);
+    if (price <= 0) return;
+
+    const shares = amount / price;
+    const data = loadData();
+    const pd = data.portfolios[currentPortfolio];
+    if (!pd.holdings) pd.holdings = {};
+    if (!pd.holdings[ticker]) pd.holdings[ticker] = { shares: 0, costBasis: 0 };
+
+    pd.holdings[ticker].shares += shares;
+    pd.holdings[ticker].costBasis += amount;
+
+    // Use cash first if available
+    if (!data.cash) data.cash = {};
+    const cashAvail = data.cash[currentPortfolio] || 0;
+    const fromCash = Math.min(amount, cashAvail);
+    if (fromCash > 0) {
+        data.cash[currentPortfolio] = cashAvail - fromCash;
+    }
+
+    data.history.push({
+        id: 'buy_' + Date.now(),
+        date: new Date().toISOString(),
+        portfolio: currentPortfolio,
+        totalAmount: amount,
+        type: 'dca',
+        allocations: [{ ticker, amount, shares, price }]
+    });
+
+    saveData(data);
+    renderAll();
+}
+
+function quickBuyCustom(ticker) {
+    const amount = prompt('Buy ' + ticker + ' — Enter dollar amount:');
+    if (!amount) return;
+    const val = parseFloat(amount.replace(/,/g, ''));
+    if (val > 0) quickBuy(ticker, val);
 }
 
 // ====== PROGRESS BAR ======
