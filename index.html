@@ -127,6 +127,7 @@
             border-radius: 18px;
             border: 2px solid var(--pumpkin-deep);
             box-shadow: 0 0 25px #d4843e44;
+            object-fit: cover;
         }
         .header h1 {
             font-family: 'Noto Serif JP', serif;
@@ -1096,6 +1097,13 @@
         }
 
         @media (max-width: 900px) {
+            .header { flex-direction: column; text-align: center; gap: 0.75rem; }
+            .header-left { flex-direction: column; }
+            .header-logo { width: 100%; max-width: 340px; height: auto; aspect-ratio: 1; border-radius: 14px; background: var(--bg-dark); }
+            .header h1 { font-size: 2.2rem; }
+            .header h1 span { font-size: 2.4rem; }
+            .header-sub { font-size: 0.65rem; letter-spacing: 3px; }
+            .header-right { flex-wrap: wrap; justify-content: center; }
             .bottom-grid { grid-template-columns: 1fr; }
             .ticker-grid {
                 grid-template-columns: 1fr;
@@ -2020,6 +2028,20 @@
                 const badgeHtml = badge ? `<img src="${getBadgeInfo(badge.grade).icon}" class="badge-icon" style="margin-left:4px">` : '';
                 const stops = matchTicker ? (isBuy ? Number(matchTicker.buyStopouts || 0) : Number(matchTicker.sellStopouts || 0)) : 0;
                 const warnHtml = stops >= 3 ? `<div style="background:#c44b3f22;border:1px solid #c44b3f55;border-radius:4px;padding:4px 8px;margin:4px 0;font-size:0.65rem;color:var(--red-bright)">&#9888; ${stops} consecutive stop-outs on this ticker — be careful</div>` : '';
+                // Earnings warning
+                const earnDate = matchTicker ? matchTicker.earningsDate : null;
+                const earnDays = matchTicker ? matchTicker.earningsDaysAway : null;
+                let earnHtml = '';
+                if (earnDate != null && earnDays != null && earnDays <= 7) {
+                    const earnLabel = new Date(earnDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    if (earnDays === 0) {
+                        earnHtml = `<div style="background:#c44b3f22;border:1px solid #c44b3f55;border-radius:4px;padding:4px 8px;margin:4px 0;font-size:0.65rem;color:var(--red-bright);font-weight:700">&#9888; EARNINGS TODAY — HIGH RISK</div>`;
+                    } else if (earnDays <= 3) {
+                        earnHtml = `<div style="background:#d4843e33;border:1px solid #d4843e88;border-radius:4px;padding:4px 8px;margin:4px 0;font-size:0.65rem;color:var(--pumpkin-glow);font-weight:700">&#9888; CAUTION: EARNINGS ${earnLabel} (${earnDays}d)</div>`;
+                    } else {
+                        earnHtml = `<div style="background:#d4843e22;border:1px solid #d4843e55;border-radius:4px;padding:4px 8px;margin:4px 0;font-size:0.65rem;color:var(--pumpkin)">&#9888; EARNINGS ${earnLabel} (${earnDays}d)</div>`;
+                    }
+                }
                 const btSide = isBuy ? 'buy' : 'sell';
                 const bt = getBacktest(a.ticker, btSide);
                 const btEntry = BACKTEST[a.ticker.toUpperCase()];
@@ -2050,7 +2072,7 @@
                             </div>
                         </div>
                         <div class="meta">${btHtml}${noteHtml}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}</div>
-                        ${warnHtml}
+                        ${warnHtml}${earnHtml}
                     </div>`;
             }).join('');
         }
