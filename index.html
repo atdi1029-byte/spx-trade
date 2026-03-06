@@ -3012,14 +3012,16 @@
     }
     function renderWeeklyTasks(tasks) {
         const checked = getCheckedTasks();
-        // Auto-check parents whose children are all checked
+        // Auto-check parents whose children are all checked, and build hidden set
+        const hiddenSet = new Set();
         for (let i = 0; i < tasks.length; i++) {
             if (tasks[i].startsWith('>')) continue;
             const children = [];
             for (let j = i + 1; j < tasks.length && tasks[j].startsWith('>'); j++) children.push(j);
-            if (children.length > 0 && children.every(c => checked.includes(c)) && !checked.includes(i)) {
-                checked.push(i);
-                setCheckedTasks(checked);
+            if (children.length > 0 && children.every(c => checked.includes(c))) {
+                if (!checked.includes(i)) { checked.push(i); setCheckedTasks(checked); }
+                hiddenSet.add(i);
+                children.forEach(c => hiddenSet.add(c));
             }
         }
         const allDone = tasks.every((_, i) => checked.includes(i));
@@ -3027,6 +3029,7 @@
         if (allDone) { container.style.display = 'none'; return; }
         container.style.display = '';
         document.getElementById('weeklyTasksList').innerHTML = tasks.map((task, i) => {
+            if (hiddenSet.has(i)) return ''; // hide completed groups
             const isDone = checked.includes(i);
             const isSub = task.startsWith('>');
             const displayText = isSub ? task.slice(1).trim() : task;
