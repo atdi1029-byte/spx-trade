@@ -1575,8 +1575,8 @@
 
     <!-- Weekly Tasks -->
     <div class="weekly-tasks" id="weeklyTasks" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem">
-            <span style="font-size:0.75rem;color:var(--text-dim)" id="weeklyTasksCount"></span>
+        <div class="section-header" style="display:flex;justify-content:space-between;align-items:center">
+            <span>Weekly Tasks <span class="count" id="weeklyTasksCount">0</span></span>
             <span id="weeklyReset" style="font-size:0.6rem;font-family:'Space Mono',monospace;color:var(--pumpkin);cursor:pointer;display:none;padding:0.2rem 0.6rem;border:1px solid var(--pumpkin);border-radius:12px;letter-spacing:0.5px;text-transform:uppercase" onclick="resetWeeklyTasks()">Reset</span>
         </div>
         <div class="weekly-tasks-list" id="weeklyTasksList"></div>
