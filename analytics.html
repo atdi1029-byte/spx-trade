@@ -690,12 +690,33 @@ zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'
 zone.addEventListener('drop', function(e) { e.preventDefault(); zone.classList.remove('dragover'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
 input.addEventListener('change', function() { if (input.files.length) handleFile(input.files[0]); });
 
+var SYNC_URL = 'https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec';
+
+function syncToSheet(csvText) {
+    // Use POST via no-cors (Apps Script doPost handles it, we don't need the response)
+    fetch(SYNC_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'save_analytics_csv', data: csvText })
+    }).then(function() {
+        console.log('Synced to sheet (no-cors POST)');
+    }).catch(function(err) { console.warn('Sheet sync failed:', err); });
+}
+
+function loadFromSheet() {
+    return fetch(SYNC_URL + '?action=load_analytics_csv')
+        .then(function(r) { return r.json(); })
+        .then(function(d) { return d.data || null; });
+}
+
 function handleFile(file) {
     var reader = new FileReader();
     reader.onload = function(e) {
         try {
             var text = e.target.result;
             localStorage.setItem('analytics_csv', text);
+            syncToSheet(text);
             var rows = parseCSV(text);
             if (!rows.length) { alert('No valid rows found'); return; }
             analyze(rows);
@@ -712,14 +733,24 @@ function resetUpload() {
     document.getElementById('newDataBtn').style.display = 'none';
 }
 
-// Auto-load saved data
-try {
-    var saved = localStorage.getItem('analytics_csv');
-    if (saved) {
-        var rows = parseCSV(saved);
-        if (rows.length) { analyze(rows); zone.style.display = 'none'; }
-    }
-} catch(e) {}
+// Auto-load: try localStorage first, then fall back to Google Sheet
+(function() {
+    try {
+        var saved = localStorage.getItem('analytics_csv');
+        if (saved) {
+            var rows = parseCSV(saved);
+            if (rows.length) { analyze(rows); zone.style.display = 'none'; return; }
+        }
+    } catch(e) {}
+    // No local data — try loading from Sheet (mobile use case)
+    loadFromSheet().then(function(data) {
+        if (data) {
+            localStorage.setItem('analytics_csv', data);
+            var rows = parseCSV(data);
+            if (rows.length) { analyze(rows); zone.style.display = 'none'; }
+        }
+    }).catch(function(err) { console.warn('Could not load from sheet:', err); });
+})()
 </script>
 </body>
 </html>
