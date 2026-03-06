@@ -269,6 +269,9 @@
         .weekly-task-item:hover .weekly-task-checkbox { box-shadow: 0 0 10px rgba(212, 132, 62, 0.35); }
         .weekly-task-item.checked .weekly-task-checkbox { background: var(--green-candle); border-color: var(--green-candle); box-shadow: 0 0 8px rgba(74, 138, 74, 0.4); }
         .weekly-task-item.checked .weekly-task-checkbox::after { content: '\2713'; color: var(--text-bright); font-size: 0.8rem; font-weight: 700; }
+        .weekly-task-item.sub-task { padding-left: 2rem; font-size: 0.8rem; }
+        .weekly-task-item.sub-task .weekly-task-checkbox { width: 16px; height: 16px; border-width: 1.5px; }
+        .weekly-task-item.sub-task .weekly-task-checkbox::after { font-size: 0.7rem; }
         .task-text { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--text-bright); transition: all 0.2s; }
 
         /* ============ 4-DAY CHECK ============ */
@@ -3015,9 +3018,11 @@
         container.style.display = '';
         document.getElementById('weeklyTasksList').innerHTML = tasks.map((task, i) => {
             const isDone = checked.includes(i);
-            return `<div class="weekly-task-item${isDone ? ' checked' : ''}" onclick="toggleTask(${i}, ${JSON.stringify(tasks).replace(/"/g, '&quot;')})">
+            const isSub = task.startsWith('>');
+            const displayText = isSub ? task.slice(1).trim() : task;
+            return `<div class="weekly-task-item${isDone ? ' checked' : ''}${isSub ? ' sub-task' : ''}" onclick="toggleTask(${i}, ${JSON.stringify(tasks).replace(/"/g, '&quot;')})">
                 <div class="weekly-task-checkbox"></div>
-                <span class="task-text">${esc(task)}</span>
+                <span class="task-text">${esc(displayText)}</span>
             </div>`;
         }).join('');
     }
