@@ -667,53 +667,6 @@
         }
         .portfolio-btn:hover { background: var(--pumpkin-deep); color: var(--cream); box-shadow: 0 0 10px #d4843e33; }
 
-        /* ============ PORTFOLIO MODAL ============ */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85); z-index: 9998; display: none;
-            align-items: center; justify-content: center;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal-box {
-            background: var(--bg-card); border: 2px solid var(--pumpkin-deep); border-radius: 10px;
-            padding: 1.5rem 2rem; max-width: 550px; width: 90%; max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 0 40px rgba(212,132,62,0.3);
-        }
-        .modal-title {
-            font-family: 'Noto Serif JP', serif; font-size: 1.2rem; font-weight: 900;
-            color: var(--cream); margin-bottom: 1rem; text-align: center;
-        }
-        .modal-input {
-            width: 100%; padding: 0.6rem 1rem; background: var(--bg-dark); border: 1px solid var(--border);
-            border-radius: 4px; color: var(--cream); font-family: 'Space Mono', monospace; font-size: 1rem;
-            text-align: center; margin-bottom: 1rem;
-        }
-        .modal-input:focus { outline: none; border-color: var(--pumpkin); }
-        .modal-table {
-            width: 100%; border-collapse: collapse; font-size: 0.7rem; margin-bottom: 1rem;
-        }
-        .modal-table th {
-            text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border);
-            color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px;
-        }
-        .modal-table td { padding: 6px 8px; border-bottom: 1px solid rgba(58,53,48,0.4); color: var(--text); }
-        .modal-table tr.unproven td { opacity: 0.35; }
-        .modal-table .alloc-amount { font-weight: 700; color: var(--green-bright); }
-        .modal-buttons { display: flex; gap: 0.5rem; justify-content: center; }
-        .modal-confirm {
-            background: var(--green-dim); color: var(--green-bright); border: 1px solid var(--green-candle);
-            padding: 8px 24px; border-radius: 4px; cursor: pointer; font-family: 'Space Mono', monospace;
-            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;
-        }
-        .modal-confirm:hover { background: var(--green-candle); color: var(--cream); }
-        .modal-confirm:disabled { opacity: 0.4; cursor: default; }
-        .modal-cancel {
-            background: var(--bg-dark); color: var(--text-dim); border: 1px solid var(--border);
-            padding: 8px 24px; border-radius: 4px; cursor: pointer; font-family: 'Space Mono', monospace;
-            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;
-        }
-        .modal-cancel:hover { background: var(--border); color: var(--text); }
-
         /* ============ BOTTOM GRID ============ */
         .bottom-grid {
             display: grid;
@@ -1562,7 +1515,7 @@
         <div class="header-right">
             <span><span class="status-dot loading" id="statusDot"></span><span id="statusText">Connecting...</span></span>
             <span id="lastUpdate"></span>
-            <button class="portfolio-btn" onclick="openPortfolioModal()">+ Portfolio</button>
+            <a href="analytics.html" class="portfolio-btn" style="border-color:var(--navy);color:var(--moon);text-decoration:none">Analytics</a>
             <button class="refresh-btn" onclick="fetchData()">Refresh</button>
         </div>
     </div>
@@ -1784,21 +1737,6 @@
     <div class="footer">SPX Trade Dashboard</div>
 </div>
 
-<!-- Portfolio Allocation Modal -->
-<div class="modal-overlay" id="portfolioModal">
-    <div class="modal-box">
-        <div class="modal-title">Add to Portfolio</div>
-        <input type="number" class="modal-input" id="portfolioAmount" placeholder="Enter amount ($)" min="1" oninput="previewAllocation()">
-        <table class="modal-table" id="portfolioTable">
-            <thead><tr><th>Ticker</th><th>Badge</th><th>Grade</th><th>Weight</th><th>Cap</th><th>%</th><th>$ Amount</th></tr></thead>
-            <tbody id="portfolioBody"></tbody>
-        </table>
-        <div class="modal-buttons">
-            <button class="modal-confirm" id="portfolioConfirm" onclick="confirmPortfolio()" disabled>Confirm</button>
-            <button class="modal-cancel" onclick="closePortfolioModal()">Cancel</button>
-        </div>
-    </div>
-</div>
 
 <script>
     // ====== CONFIG ======
@@ -2426,137 +2364,6 @@
         setTimeout(fetchData, 3000);
     }
 
-    // ====== PORTFOLIO ALLOCATION MODAL ======
-    function openPortfolioModal() {
-        document.getElementById('portfolioModal').classList.add('active');
-        document.getElementById('portfolioAmount').value = '';
-        document.getElementById('portfolioAmount').focus();
-        previewAllocation();
-    }
-    function closePortfolioModal() {
-        document.getElementById('portfolioModal').classList.remove('active');
-    }
-    function previewAllocation() {
-        const amount = parseFloat(document.getElementById('portfolioAmount').value) || 0;
-        const body = document.getElementById('portfolioBody');
-        const confirmBtn = document.getElementById('portfolioConfirm');
-
-        // Build allocation preview from allTickers data
-        let eligible = [];
-        let ineligible = [];
-        allTickers.forEach(t => {
-            const badge = t.buyBadge || { grade: 1, name: 'Boulder', weight: 0 };
-            const base = Number(t.buyBase || t.base || 30);
-            const bi = getBadgeInfo(badge.grade);
-            if (badge.grade >= 3) {
-                eligible.push({ ticker: t.ticker, badge: badge.name, grade: badge.grade, weight: badge.weight, base, maxAlloc: bi.maxAlloc });
-            } else {
-                ineligible.push({ ticker: t.ticker, badge: badge.name, grade: badge.grade });
-            }
-        });
-
-        // Diminishing returns: absorb_rate = 1000 / (1000 + base)
-        eligible.forEach(e => { e.absorbRate = 1000 / (1000 + e.base); e.effWeight = e.weight * e.absorbRate; });
-        const totalEffWeight = eligible.reduce((s, e) => s + e.effWeight, 0);
-
-        // Initial proportional allocation
-        eligible.forEach(e => {
-            const pct = totalEffWeight > 0 ? (e.effWeight / totalEffWeight) : 0;
-            e.alloc = Math.round(amount * pct * 100) / 100;
-            e.capped = false;
-        });
-
-        // Iterative cap + redistribute loop
-        for (let iter = 0; iter < 20; iter++) {
-            let overflow = 0;
-            eligible.forEach(e => {
-                if (!e.capped && e.alloc > e.maxAlloc) {
-                    overflow += e.alloc - e.maxAlloc;
-                    e.alloc = e.maxAlloc;
-                    e.capped = true;
-                }
-            });
-            if (overflow <= 0.01) break;
-            const uncappedWeight = eligible.filter(e => !e.capped).reduce((s, e) => s + e.effWeight, 0);
-            if (uncappedWeight <= 0) break;
-            eligible.forEach(e => {
-                if (!e.capped) {
-                    e.alloc += Math.round(overflow * (e.effWeight / uncappedWeight) * 100) / 100;
-                }
-            });
-        }
-
-        const totalAllocated = Math.round(eligible.reduce((s, e) => s + e.alloc, 0) * 100) / 100;
-        const unallocated = Math.round((amount - totalAllocated) * 100) / 100;
-
-        let html = '';
-        eligible.forEach(e => {
-            const pct = totalEffWeight > 0 ? (e.effWeight / totalEffWeight) : 0;
-            const bi = getBadgeInfo(e.grade);
-            const cappedStyle = e.capped ? 'color:#ffaa00;font-weight:700' : '';
-            html += `<tr${e.capped ? ' style="background:rgba(255,170,0,0.08)"' : ''}>
-                <td style="font-weight:700;color:var(--cream)">${esc(e.ticker)}</td>
-                <td><img src="${bi.icon}" class="badge-icon"> ${esc(e.badge)}</td>
-                <td>${e.grade}</td>
-                <td>${e.weight}</td>
-                <td style="${cappedStyle}">$${e.maxAlloc}</td>
-                <td>${(pct * 100).toFixed(1)}%</td>
-                <td class="alloc-amount" style="${cappedStyle}">$${e.alloc.toFixed(2)}</td>
-            </tr>`;
-        });
-        ineligible.forEach(e => {
-            const bi = getBadgeInfo(e.grade);
-            html += `<tr class="unproven">
-                <td>${esc(e.ticker)}</td>
-                <td><img src="${bi.icon}" class="badge-icon"> ${esc(e.badge)}</td>
-                <td>${e.grade}</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td style="font-size:0.55rem;color:var(--text-dim)">Unproven</td>
-            </tr>`;
-        });
-        if (unallocated > 0.01 && amount > 0) {
-            html += `<tr style="border-top:1px solid var(--text-dim)">
-                <td colspan="6" style="text-align:right;color:#ffaa00;font-weight:700">Unallocated:</td>
-                <td style="color:#ffaa00;font-weight:700">$${unallocated.toFixed(2)}</td>
-            </tr>`;
-        }
-
-        body.innerHTML = html;
-        confirmBtn.disabled = amount <= 0 || eligible.length === 0;
-    }
-    async function confirmPortfolio() {
-        const amount = parseFloat(document.getElementById('portfolioAmount').value) || 0;
-        if (amount <= 0) return;
-        const confirmBtn = document.getElementById('portfolioConfirm');
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Allocating...';
-
-        try {
-            const url = POST_URL + '?action=add_portfolio&amount=' + encodeURIComponent(amount);
-            const resp = await fetch(url);
-            const data = await resp.json();
-            if (data.status === 'ok') {
-                confirmBtn.textContent = 'Done!';
-                confirmBtn.style.background = 'var(--green-candle)';
-                setTimeout(() => {
-                    closePortfolioModal();
-                    confirmBtn.textContent = 'Confirm';
-                    confirmBtn.style.background = '';
-                    fetchData();
-                }, 1500);
-            } else {
-                alert('Error: ' + (data.message || 'Unknown error'));
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = 'Confirm';
-            }
-        } catch (err) {
-            alert('Failed: ' + err.message);
-            confirmBtn.disabled = false;
-            confirmBtn.textContent = 'Confirm';
-        }
-    }
 
     // ====== ACTION NEEDED OUTCOME (simple, sends directly to sheet) ======
     async function markActionOutcome(ticker, signal, price, value, elemId) {
