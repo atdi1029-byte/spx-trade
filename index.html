@@ -1121,8 +1121,29 @@
             .need-4day-btn { display: none !important; }
             .liquidity-balance { font-size: 1.4rem; }
             .liquidity-chart-wrap { height: 100px; }
+            .liquidity-changes {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 4px;
+            }
+            .liquidity-change { flex-shrink: 0; }
             .netliq-value { font-size: 1.3rem; }
             .netliq-chart-wrap { height: 130px; }
+            .netliq-components {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 4px;
+            }
+            .netliq-comp { flex-shrink: 0; }
+            .netliq-changes {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 4px;
+            }
+            .netliq-change { flex-shrink: 0; }
         }
 
         /* ============ SIGNALS TABLE ============ */
@@ -3818,8 +3839,10 @@
         const plotW = w - pad.left - pad.right;
         const plotH = h - pad.top - pad.bottom;
 
-        // Trim to last 85 business days (~4 months)
-        const trimAt = Math.max(0, fullSeries.length - 85);
+        // Trim to last 85 business days (~4 months), 22 on mobile (~1 month)
+        const isMobile = window.innerWidth <= 900;
+        const trimDays = isMobile ? 22 : 85;
+        const trimAt = Math.max(0, fullSeries.length - trimDays);
         const series = fullSeries.slice(trimAt);
 
         // Left axis: Net Liquidity
