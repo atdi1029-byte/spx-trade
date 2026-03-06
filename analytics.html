@@ -153,6 +153,8 @@ body > * { position: relative; z-index: 1; }
 .unallocated-row { color: var(--pumpkin-glow); font-weight: 700; }
 @media (max-width: 768px) {
     body { padding: 1rem; }
+    body::before { display: none; }
+    body::after { background-size: cover; opacity: 0.15; }
     .a-grid-2, .a-grid-3, .a-grid-4 { grid-template-columns: 1fr 1fr; }
     .a-stat { font-size: 1.2rem; }
 }
