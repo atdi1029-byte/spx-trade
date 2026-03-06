@@ -1577,7 +1577,7 @@
     <div class="weekly-tasks" id="weeklyTasks" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem">
             <span style="font-size:0.75rem;color:var(--text-dim)" id="weeklyTasksCount"></span>
-            <span id="weeklyReset" style="font-size:0.65rem;color:var(--text-dim);cursor:pointer;opacity:0.5;display:none" onclick="resetWeeklyTasks()">reset</span>
+            <span id="weeklyReset" style="font-size:0.7rem;color:var(--pumpkin);cursor:pointer;display:none;text-decoration:underline" onclick="resetWeeklyTasks()">reset</span>
         </div>
         <div class="weekly-tasks-list" id="weeklyTasksList"></div>
     </div>
@@ -3031,10 +3031,14 @@
         }
         const allDone = tasks.every((_, i) => checked.includes(i));
         const container = document.getElementById('weeklyTasks');
-        if (allDone) { container.style.display = 'none'; return; }
         container.style.display = '';
         const resetEl = document.getElementById('weeklyReset');
-        resetEl.style.display = hiddenSet.size > 0 ? '' : 'none';
+        resetEl.style.display = hiddenSet.size > 0 || allDone ? '' : 'none';
+        if (allDone) {
+            document.getElementById('weeklyTasksList').innerHTML = '';
+            document.getElementById('weeklyTasksCount').textContent = tasks.length + '/' + tasks.length;
+            return;
+        }
         const doneCount = checked.filter(c => c < tasks.length).length;
         document.getElementById('weeklyTasksCount').textContent = doneCount + '/' + tasks.length;
         document.getElementById('weeklyTasksList').innerHTML = tasks.map((task, i) => {
