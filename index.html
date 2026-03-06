@@ -1072,6 +1072,7 @@
             .pokemon-sprite { width: 180px; height: 180px; margin: -1rem 0 -2rem; }
             .pokemon-level-name { font-size: 1.2rem; }
             .pokemon-xp-bar { max-width: 100%; }
+            .status-live { display: none !important; }
             .weekly-tasks { display: none !important; }
             .four-day-btn { display: none !important; }
             .need-4day-btn { display: none !important; }
@@ -1513,8 +1514,8 @@
             </div>
         </div>
         <div class="header-right">
-            <span><span class="status-dot loading" id="statusDot"></span><span id="statusText">Connecting...</span></span>
-            <span id="lastUpdate"></span>
+            <span class="status-live"><span class="status-dot loading" id="statusDot"></span><span id="statusText">Connecting...</span></span>
+            <span class="status-live" id="lastUpdate"></span>
             <a href="analytics.html" class="portfolio-btn" style="border-color:var(--navy);color:var(--moon);text-decoration:none">Analytics</a>
             <button class="refresh-btn" onclick="fetchData()">Refresh</button>
         </div>
