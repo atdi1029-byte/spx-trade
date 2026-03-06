@@ -3012,6 +3012,16 @@
     }
     function renderWeeklyTasks(tasks) {
         const checked = getCheckedTasks();
+        // Auto-check parents whose children are all checked
+        for (let i = 0; i < tasks.length; i++) {
+            if (tasks[i].startsWith('>')) continue;
+            const children = [];
+            for (let j = i + 1; j < tasks.length && tasks[j].startsWith('>'); j++) children.push(j);
+            if (children.length > 0 && children.every(c => checked.includes(c)) && !checked.includes(i)) {
+                checked.push(i);
+                setCheckedTasks(checked);
+            }
+        }
         const allDone = tasks.every((_, i) => checked.includes(i));
         const container = document.getElementById('weeklyTasks');
         if (allDone) { container.style.display = 'none'; return; }
