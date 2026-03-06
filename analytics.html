@@ -157,6 +157,10 @@ body > * { position: relative; z-index: 1; }
     body::after { background-size: cover; opacity: 0.15; }
     .a-grid-2, .a-grid-3, .a-grid-4 { grid-template-columns: 1fr 1fr; }
     .a-stat { font-size: 1.2rem; }
+    .a-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .badge-table { font-size: 0.6rem; min-width: 600px; }
+    .badge-table th { padding: 4px 5px; font-size: 0.5rem; }
+    .badge-table td { padding: 4px 5px; }
 }
 @media (max-width: 480px) {
     .a-grid-4 { grid-template-columns: 1fr 1fr; }

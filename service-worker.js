@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spx-trade-v82';
+const CACHE_NAME = 'spx-trade-v83';
 const ASSETS = [
   './',
   './index.html',
