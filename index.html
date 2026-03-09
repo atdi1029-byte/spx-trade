@@ -1758,63 +1758,7 @@
     ];
     function getBadgeInfo(grade) { return BADGE_INFO.find(b => b.grade === grade) || BADGE_INFO[0]; }
 
-    // ====== BACKTEST DATA (Feb 11, 2026 — 42 assets) ======
-    const BACKTEST = {
-        'AAPL':     { buy: { sl: 7, tp: 5, wr: 68.8, halfTp: 2.5 }, sell: null, note: 'Never short' },
-        'AVGO':     { buy: { sl: 14, tp: 10, wr: 80.6, halfTp: 5 }, sell: null, note: 'Buy-only' },
-        'AMD':      { buy: { sl: 12.5, tp: 13, wr: 56, halfTp: 6.5 }, sell: { sl: 16.5, tp: 6, wr: 75, halfTp: 3 }, note: 'Sell small edge' },
-        'AMZN':     { buy: { sl: 12.5, tp: 8, wr: 70.7, halfTp: 4 }, sell: { sl: 16.5, tp: 8, wr: 81.4, halfTp: 4 }, note: 'Both work' },
-        'BABA':     { buy: { sl: 11, tp: 9.5, wr: 57.7, halfTp: 4.75 }, sell: null, note: 'Never short' },
-        'BOTZ':     { buy: { sl: 7, tp: 4, wr: 71.9, halfTp: 2 }, sell: { sl: 5, tp: 4, wr: 57.1, halfTp: 2 }, note: 'TP 4% both' },
-        'CL1!':     { buy: { sl: 5, tp: 3, wr: 64.7, halfTp: 1.5 }, sell: { sl: 5, tp: 3, wr: 68.5, halfTp: 1.5 }, note: 'Both TP 3%' },
-        'COIN':     { buy: null, sell: null, note: 'AVOID' },
-        'COPPER':   { buy: { sl: 3.5, tp: 3, wr: 58.9, halfTp: 1.5 }, sell: { sl: 3.5, tp: 2, wr: 66.1, halfTp: 1 }, note: 'Buy-favored' },
-        'GOOGL':    { buy: { sl: 5.5, tp: 6, wr: 61.8, halfTp: 3 }, sell: null, note: 'Buy-only' },
-        'HOOD':     { buy: { sl: 13.5, tp: 10, wr: 68.7, halfTp: 5 }, sell: null, note: 'Never short' },
-        'INTC':     { buy: { sl: 8, tp: 4, wr: 68.8, halfTp: 2 }, sell: { sl: 7.5, tp: 8, wr: 54.5, halfTp: 4 }, note: 'Sell-favored' },
-        'ITA':      { buy: { sl: 5.5, tp: 3, wr: 70.1, halfTp: 1.5 }, sell: null, note: 'Never short' },
-        'IWM':      { buy: { sl: 5, tp: 3, wr: 67.3, halfTp: 1.5 }, sell: { sl: 4.5, tp: 4, wr: 57.4, halfTp: 2 }, note: 'Buy-favored' },
-        'MAGS':     { buy: { sl: 4.5, tp: 6, wr: 62.2, halfTp: 3 }, sell: null, note: 'Buy-only' },
-        'META':     { buy: { sl: 7, tp: 6, wr: 64.5, halfTp: 3 }, sell: null, note: 'Buy-only' },
-        'MSFT':     { buy: { sl: 6, tp: 5, wr: 59.6, halfTp: 2.5 }, sell: { sl: 5.5, tp: 5, wr: 61.9, halfTp: 2.5 }, note: 'SELL signals only' },
-        'MSTR':     { buy: { sl: 12, tp: 15, wr: 53.5, halfTp: 7.5 }, sell: null, note: 'Small size, volatile' },
-        'MU':       { buy: { sl: 11, tp: 10, wr: 62.2, halfTp: 5 }, sell: { sl: 14, tp: 8, wr: 63.3, halfTp: 4 }, note: null },
-        'NFLX':     { buy: { sl: 9, tp: 10, wr: 61.4, halfTp: 5 }, sell: { sl: 13, tp: 8, wr: 71.7, halfTp: 4 }, note: null },
-        'NG1!':     { buy: { sl: 7, tp: 6, wr: 59.6, halfTp: 3 }, sell: { sl: 8.5, tp: 7, wr: 57.8, halfTp: 3.5 }, note: null },
-        'NLR':      { buy: { sl: 9.5, tp: 6, wr: 70.9, halfTp: 3 }, sell: { sl: 7, tp: 6, wr: 61.1, halfTp: 3 }, note: null },
-        'NVDA':     { buy: { sl: 9, tp: 12, wr: 54.2, halfTp: 6 }, sell: null, note: 'Never short' },
-        'ORCL':     { buy: { sl: 8, tp: 5, wr: 71.3, halfTp: 2.5 }, sell: { sl: 6, tp: 5, wr: 51.6, halfTp: 2.5 }, note: null },
-        'PLATINUM': { buy: { sl: 3.5, tp: 3, wr: 55.9, halfTp: 1.5 }, sell: null, note: 'Buy-only, small edge' },
-        'PLTR':     { buy: { sl: 10, tp: 10, wr: 63.4, halfTp: 5 }, sell: null, note: 'Never short' },
-        'RIVN':     { buy: { sl: 16.5, tp: 12, wr: 60, halfTp: 6 }, sell: { sl: 18, tp: 10, wr: 75, halfTp: 5 }, note: '$5 size only' },
-        'SILVER':   { buy: { sl: 3.5, tp: 4, wr: 54.4, halfTp: 2 }, sell: null, note: 'Buy-only' },
-        'SMH':      { buy: { sl: 8, tp: 5, wr: 68.8, halfTp: 2.5 }, sell: null, note: 'Never short' },
-        'TLT':      { buy: { sl: 3, tp: 3, wr: 54, halfTp: 1.5 }, sell: null, note: 'Buy-only, small edge' },
-        'TSM':      { buy: { sl: 14, tp: 8, wr: 75.8, halfTp: 4 }, sell: { sl: 13, tp: 4, wr: 66.7, halfTp: 2 }, note: null },
-        'TSLA':     { buy: { sl: 10, tp: 10, wr: 59.1, halfTp: 5 }, sell: null, note: 'Never short' },
-        'URNM':     { buy: { sl: 9, tp: 12, wr: 50.7, halfTp: 6 }, sell: null, note: 'Buy-only' },
-        'USOIL':    { buy: { sl: 5, tp: 3, wr: 64.5, halfTp: 1.5 }, sell: { sl: 4, tp: 3, wr: 64.8, halfTp: 1.5 }, note: 'Sell > Buy' },
-        'VOO':      { buy: { sl: 4, tp: 3, wr: 67.7, halfTp: 1.5 }, sell: null, note: 'Buy-only' },
-        'XAUUSD':   { buy: { sl: 2, tp: 2, wr: 56.8, halfTp: 1 }, sell: null, note: 'REDUCE-only sell OK' },
-        'XBI':      { buy: { sl: 7, tp: 4, wr: 70.2, halfTp: 2 }, sell: null, note: 'Buy-only' },
-        'XLE':      { buy: { sl: 6, tp: 5, wr: 58.4, halfTp: 2.5 }, sell: { sl: 6, tp: 4, wr: 66.7, halfTp: 2 }, note: 'Both work' },
-        'XLK':      { buy: { sl: 6, tp: 4, wr: 70.7, halfTp: 2 }, sell: null, note: 'REDUCE-only sell' },
-        'WMT':      { buy: { sl: 14, tp: 4, wr: 95.1, halfTp: 2 }, sell: { sl: 12, tp: 4, wr: 94.4, halfTp: 2 }, note: 'Both work' },
-        'XPDUSD':   { buy: { sl: 5, tp: 4, wr: 61.6, halfTp: 2 }, sell: { sl: 4, tp: 5, wr: 60.9, halfTp: 2.5 }, note: 'SELL-signals-only shorts' },
-        'K2I1!':    { buy: { sl: 13, tp: 3, wr: 94.6, halfTp: 1.5 }, sell: { sl: 8, tp: 2, wr: 84.6, halfTp: 1 }, note: 'Sell thin' },
-        'QQQ':      { buy: { sl: 14, tp: 4, wr: 91.7, halfTp: 2 }, sell: { sl: 9, tp: 2, wr: 93.3, halfTp: 1 }, note: 'Both work' },
-        '005930':   { buy: { sl: 14, tp: 5, wr: 96.2, halfTp: 2.5 }, sell: { sl: 14, tp: 3, wr: 86.5, halfTp: 1.5 }, note: 'Sell thin' },
-        '000660':   { buy: { sl: 14, tp: 8, wr: 78.7, halfTp: 4 }, sell: { sl: 14, tp: 3, wr: 85.7, halfTp: 1.5 }, note: 'Sell thin' },
-        '011760':   { buy: { sl: 14, tp: 9, wr: 72, halfTp: 4.5 }, sell: { sl: 14, tp: 8, wr: 70.6, halfTp: 4 }, note: 'Sell thin' },
-        'HAFC':     { buy: { sl: 14, tp: 5, wr: 80.6, halfTp: 2.5 }, sell: { sl: 14, tp: 5, wr: 88.6, halfTp: 2.5 }, note: 'Both work' },
-    };
-
-    function getBacktest(ticker, side) {
-        const t = ticker.toUpperCase();
-        const entry = BACKTEST[t];
-        if (!entry) return null;
-        return entry[side] || null;
-    }
+    // BACKTEST system removed (Mar 9, 2026) — user manages own SL/TP
 
     let refreshTimer = null;
     let allTickers = [];
@@ -2008,31 +1952,14 @@
                         earnHtml = `<div style="background:#d4843e22;border:1px solid #d4843e55;border-radius:4px;padding:4px 8px;margin:4px 0;font-size:0.65rem;color:var(--pumpkin)">&#9888; EARNINGS ${earnLabel} (${earnDays}d)</div>`;
                     }
                 }
-                const btSide = isBuy ? 'buy' : 'sell';
-                const bt = getBacktest(a.ticker, btSide);
-                const btEntry = BACKTEST[a.ticker.toUpperCase()];
-                const btNote = btEntry ? btEntry.note : null;
-                const p = Number(String(a.price).replace(/,/g, ''));
-                const noteHtml = btNote ? ` &middot; <span style="color:var(--pumpkin-glow);font-weight:700">${esc(btNote)}</span>` : '';
-                // Build initial SL/TP display from signal price
-                const btDataAttr = bt ? `data-sl="${bt.sl}" data-tp="${bt.tp}" data-half="${bt.halfTp}" data-side="${btSide}"` : '';
-                let btHtml;
-                if (bt && p > 0) {
-                    const slPrice = isBuy ? p * (1 - bt.sl / 100) : p * (1 + bt.sl / 100);
-                    const tpPrice = isBuy ? p * (1 + bt.tp / 100) : p * (1 - bt.tp / 100);
-                    const halfPrice = isBuy ? p * (1 + bt.halfTp / 100) : p * (1 - bt.halfTp / 100);
-                    const fmt = v => v >= 100 ? v.toFixed(1) : v.toFixed(2);
-                    btHtml = `<span class="bt-levels" ${btDataAttr}><span style="color:var(--red-bright)">SL $<span class="bt-sl" style="cursor:pointer" onclick="copyVal(this)">${fmt(slPrice)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.sl}%)</span></span> &middot; <span style="color:var(--green-bright)">TP $<span class="bt-tp" style="cursor:pointer" onclick="copyVal(this)">${fmt(tpPrice)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.tp}%)</span></span> &middot; <span style="color:var(--text-dim)">Half TP 0x0 $<span class="bt-half" style="cursor:pointer" onclick="copyVal(this)">${fmt(halfPrice)}</span></span></span>`;
-                } else {
-                    btHtml = btNote ? '' : `@ $${a.price}`;
-                }
+                const btHtml = `@ $${a.price}`;
+                const noteHtml = '';
                 return `
                     <div class="action-item" id="${id}">
                         <div>
                             <div>${logoHtml}<span class="ticker-badge">${esc(a.ticker)}</span>${badgeHtml}<span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span><span style="margin-left:0.5rem;font-size:0.65rem;color:var(--green-bright);font-weight:700">${effSizeStr !== 'SIT OUT' ? 'Enter at $' + effSizeStr : 'SIT OUT'}</span></div>
                             <div class="action-buttons">
                                 <input type="text" class="entry-input" placeholder="Size $" id="${id}-size" value="${effSizeStr !== 'SIT OUT' ? effSizeStr : ''}">
-                                ${bt ? `<input type="text" class="entry-input" placeholder="Entry $" id="${id}-entry" value="${p}" style="width:80px" oninput="recalcLevels('${id}')">` : ''}
                                 <button class="action-btn entered" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Entered','${id}')">Entered</button>
                                 <button class="action-btn skipped" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Skipped','${id}')">Skipped</button>
                             </div>
@@ -2250,26 +2177,6 @@
         });
     }
 
-    function recalcLevels(actionId) {
-        const input = document.getElementById(actionId + '-entry');
-        if (!input) return;
-        const card = input.closest('.action-item');
-        const levelsEl = card.querySelector('.bt-levels');
-        if (!levelsEl) return;
-        const p = parseFloat(input.value.replace(/,/g, ''));
-        if (!p || p <= 0) return;
-        const sl = parseFloat(levelsEl.dataset.sl);
-        const tp = parseFloat(levelsEl.dataset.tp);
-        const half = parseFloat(levelsEl.dataset.half);
-        const isBuy = levelsEl.dataset.side === 'buy';
-        const slP = isBuy ? p * (1 - sl / 100) : p * (1 + sl / 100);
-        const tpP = isBuy ? p * (1 + tp / 100) : p * (1 - tp / 100);
-        const halfP = isBuy ? p * (1 + half / 100) : p * (1 - half / 100);
-        const fmt = v => v >= 100 ? v.toFixed(1) : v.toFixed(2);
-        levelsEl.querySelector('.bt-sl').textContent = fmt(slP);
-        levelsEl.querySelector('.bt-tp').textContent = fmt(tpP);
-        levelsEl.querySelector('.bt-half').textContent = fmt(halfP);
-    }
 
     async function markAction(ticker, signal, price, value, elemId) {
         const sizeInput = document.getElementById(elemId + '-size');
