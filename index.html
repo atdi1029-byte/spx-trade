@@ -784,6 +784,174 @@
             font-weight: 700; padding-top: 0.5rem; border-top: 1px solid var(--border);
         }
 
+        /* ============ DCA CONTROLS ============ */
+        .dca-controls {
+            display: flex; gap: 0.5rem; align-items: center;
+            justify-content: center; margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .dca-toggle-btn {
+            font-family: 'Space Mono', monospace; font-size: 0.65rem;
+            padding: 0.35rem 0.75rem; border-radius: 6px;
+            border: 1px solid var(--border); background: var(--bg-dark);
+            color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+        }
+        .dca-toggle-btn.active {
+            background: rgba(212,132,62,0.15);
+            border-color: var(--pumpkin); color: var(--pumpkin-glow);
+            text-shadow: 0 0 8px rgba(232,160,76,0.4);
+        }
+        .dca-levelup-btn {
+            font-family: 'Space Mono', monospace; font-size: 0.6rem;
+            padding: 0.35rem 0.75rem; border-radius: 6px;
+            border: 1px solid var(--green-bright);
+            background: rgba(106,170,90,0.1); color: var(--green-bright);
+            cursor: pointer; text-shadow: 0 0 8px rgba(106,170,90,0.3);
+        }
+        .dca-levelup-btn:hover { background: rgba(106,170,90,0.2); }
+        .dca-levelup-btn:disabled { opacity: 0.4; cursor: default; }
+        .dca-reset-btn {
+            font-family: 'Space Mono', monospace; font-size: 0.55rem;
+            padding: 0.3rem 0.6rem; border-radius: 6px;
+            border: 1px solid var(--red-bright);
+            background: rgba(224,85,69,0.08); color: var(--red-bright);
+            cursor: pointer;
+        }
+        .dca-reset-btn:hover { background: rgba(224,85,69,0.2); }
+        .dca-organic-label {
+            text-align: center; font-size: 0.6rem;
+            color: var(--text-dim); margin-top: 0.4rem;
+        }
+        .dca-organic-label img {
+            width: 20px; height: 20px;
+            image-rendering: pixelated; vertical-align: middle; margin: 0 3px;
+        }
+        .dca-deposit-total {
+            text-align: center; font-size: 0.6rem;
+            color: var(--pumpkin-glow); margin-top: 0.3rem;
+        }
+        .dca-health {
+            text-align: center; margin: 0.5rem 0;
+            padding: 0.5rem; background: var(--bg-dark);
+            border: 1px solid var(--border); border-radius: 6px;
+        }
+        .dca-health .health-status { font-weight: 700; font-size: 0.75rem; }
+        .dca-health .health-status.healthy { color: var(--green-bright); text-shadow: 0 0 8px rgba(106,170,90,0.5); }
+        .dca-health .health-status.caution { color: #ffa726; text-shadow: 0 0 8px #ffa726; }
+        .dca-health .health-status.danger { color: var(--red-bright); text-shadow: 0 0 8px rgba(224,85,69,0.5); }
+        .dca-health .health-detail { font-size: 0.6rem; color: var(--text-dim); margin-top: 0.2rem; }
+        .dca-health .health-roi { font-size: 0.6rem; margin-top: 0.15rem; }
+        .dca-health .health-roi.positive { color: var(--green-bright); }
+        .dca-health .health-roi.negative { color: var(--red-bright); }
+
+        /* ============ POKEMON SIZE CHIPS ============ */
+        .pokemon-sizes {
+            display: flex; gap: 0.5rem;
+            justify-content: center; margin-top: 0.5rem;
+        }
+        .pokemon-size-chip {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-family: 'Space Mono', monospace; font-size: 0.7rem;
+            font-weight: 700; padding: 0.25rem 0.5rem;
+            border-radius: 12px; border: 1px solid var(--border);
+            background: var(--bg-dark); color: var(--text);
+        }
+        .pokemon-size-chip.lead {
+            border-color: var(--pumpkin); color: var(--pumpkin-glow);
+            background: rgba(212,132,62,0.1);
+        }
+        .pokemon-size-chip.half {
+            border-color: var(--text-dim); color: var(--text-dim);
+            font-size: 0.6rem;
+        }
+
+        /* ============ KELLY EDGE OPTIMIZER ============ */
+        .kelly-section { margin-bottom: 1.5rem; }
+        .kelly-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem; margin-bottom: 0.75rem;
+        }
+        .kelly-stat {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.5rem 0.4rem; text-align: center;
+        }
+        .kelly-stat .kval {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.1rem; font-weight: 700;
+            color: var(--text-bright); line-height: 1.2;
+        }
+        .kelly-stat .klbl {
+            font-size: 0.5rem; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-top: 3px;
+        }
+        .kelly-compare {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.6rem 0.75rem; background: var(--bg-dark);
+            border: 1px solid var(--border); border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+        .kelly-compare-label {
+            font-size: 0.6rem; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 1px;
+            min-width: 70px;
+        }
+        .kelly-bar-track {
+            flex: 1; height: 8px; background: var(--bg-deep);
+            border-radius: 4px; overflow: hidden; position: relative;
+        }
+        .kelly-bar-fill {
+            height: 100%; border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .kelly-compare-val {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem; font-weight: 700;
+            min-width: 50px; text-align: right;
+        }
+        .kelly-verdict {
+            text-align: center; padding: 0.6rem;
+            border-radius: 6px; font-size: 0.7rem;
+            font-weight: 700; letter-spacing: 1px;
+            margin-top: 0.5rem;
+        }
+        .kelly-verdict.safe {
+            background: rgba(106,170,90,0.1);
+            border: 1px solid var(--green-bright);
+            color: var(--green-bright);
+        }
+        .kelly-verdict.optimal {
+            background: rgba(212,132,62,0.1);
+            border: 1px solid var(--pumpkin);
+            color: var(--pumpkin-glow);
+        }
+        .kelly-verdict.hot {
+            background: rgba(224,85,69,0.1);
+            border: 1px solid var(--red-bright);
+            color: var(--red-bright);
+        }
+        .kelly-milestone {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.4rem 0.6rem; font-size: 0.6rem;
+            color: var(--text-dim); background: var(--bg-dark);
+            border: 1px solid var(--border); border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+        .kelly-milestone .km-val {
+            color: var(--green-bright); font-weight: 700;
+            font-family: 'Space Mono', monospace;
+        }
+        .kelly-stock-input {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem; width: 40px; text-align: center;
+            background: var(--bg-deep); color: var(--pumpkin-glow);
+            border: 1px solid var(--border); border-radius: 4px;
+            padding: 2px 4px;
+        }
+
         /* ============ LIQUIDITY SECTION ============ */
         .liquidity-section { margin: 1.5rem 0; }
         .liquidity-box {
@@ -1075,6 +1243,12 @@
             .pokemon-sprite { width: 180px; height: 180px; margin: -1rem 0 -2rem; }
             .pokemon-level-name { font-size: 1.2rem; }
             .pokemon-xp-bar { max-width: 100%; }
+            .pokemon-sizes { gap: 0.3rem; }
+            .pokemon-size-chip { font-size: 0.6rem; padding: 0.2rem 0.4rem; }
+            .kelly-grid { grid-template-columns: repeat(2, 1fr); gap: 0.35rem; }
+            .kelly-stat .kval { font-size: 0.9rem; }
+            .kelly-compare { flex-wrap: wrap; gap: 0.4rem; }
+            .kelly-compare-label { min-width: 60px; font-size: 0.5rem; }
             .status-live { display: none !important; }
             .weekly-tasks { display: none !important; }
             .four-day-btn { display: none !important; }
@@ -1519,7 +1693,6 @@
         <div class="header-right">
             <span class="status-live"><span class="status-dot loading" id="statusDot"></span><span id="statusText">Connecting...</span></span>
             <span class="status-live" id="lastUpdate"></span>
-            <a href="analytics.html" class="portfolio-btn" style="border-color:var(--navy);color:var(--moon);text-decoration:none">Analytics</a>
             <button class="refresh-btn" onclick="fetchData()">Refresh</button>
         </div>
     </div>
@@ -1585,7 +1758,24 @@
     <!-- Pokemon Scaling -->
     <div class="pokemon-section" id="pokemonSection">
         <div class="section-header" style="margin-top:2rem">Trader Level</div>
+        <div class="dca-controls" id="dcaControls">
+            <button class="dca-toggle-btn" id="dcaToggleBtn" onclick="toggleDCAMode()">DCA: OFF</button>
+            <button class="dca-levelup-btn" id="dcaLevelUpBtn" onclick="dcaLevelUp()" style="display:none">Level Up</button>
+            <button class="dca-reset-btn" id="dcaResetBtn" onclick="dcaReset()" style="display:none">Reset DCA</button>
+        </div>
         <div class="pokemon-box" id="pokemonBox"></div>
+    </div>
+
+    <!-- Kelly Edge Optimizer -->
+    <div class="kelly-section" id="kellySection">
+        <div class="section-header" style="cursor:pointer;border-left-color:var(--pumpkin)" onclick="const c=document.getElementById('kellyContent');c.style.display=c.style.display==='none'?'block':'none';this.querySelector('.toggle-arrow').textContent=c.style.display==='none'?'\u25b6':'\u25bc'">
+            <span class="toggle-arrow">\u25bc</span> Kelly Edge Optimizer
+        </div>
+        <div id="kellyContent">
+            <div class="section-box" id="kellyBox" style="background:rgba(34,31,26,0.95);border:1px solid var(--border);border-radius:10px;padding:1.25rem">
+                <div style="text-align:center;color:var(--text-dim);font-size:0.7rem">Loading stats...</div>
+            </div>
+        </div>
     </div>
 
     <div class="section-header" style="margin-top:2rem">Tickers <span class="count" id="tickerCount">0</span></div>
@@ -1783,6 +1973,11 @@
         levelsEl.querySelector('.bt-half').textContent = fmt(halfP);
         levelsEl.querySelector('.bt-tp').textContent = fmt(tpP);
     }
+
+    // DCA state
+    let dcaMode = localStorage.getItem('spx_dca_mode') === 'true';
+    let dcaTotal = parseFloat(localStorage.getItem('spx_dca_total')) || 0;
+    let stockCount = parseInt(localStorage.getItem('spx_stock_count')) || 10;
 
     let refreshTimer = null;
     let allTickers = [];
@@ -2092,6 +2287,12 @@
 
         // --- Pokemon Scaling ---
         renderPokemon(stats);
+
+        // --- Kelly Edge Optimizer ---
+        renderKelly(stats);
+
+        // --- DCA Controls ---
+        updateDCAControls();
     }
 
     // ====== SIDE FLIP ======
@@ -3096,6 +3297,32 @@
         return null;
     }
 
+    // Compute 5 trade sizes for any profit level (same curve as crypto)
+    function getStockSizes(profit) {
+        const p = Math.max(0, profit);
+        const SIZE_TABLE = [
+            [0,[1,1,1,1,1]], [4,[2,1,1,1,1]], [8,[2,2,1,1,1]], [12,[2,2,2,1,1]],
+            [16,[2,2,2,2,1]], [20,[2,2,2,2,2]], [28,[3,2,2,2,2]], [35,[3,3,2,2,2]],
+            [45,[3,3,3,2,2]], [55,[3,3,3,3,2]], [65,[3,3,3,3,3]], [72,[4,3,3,3,3]],
+            [78,[4,4,3,3,3]], [84,[4,4,4,3,3]], [92,[4,4,4,4,3]], [100,[4,4,4,4,4]],
+            [105,[5,4,4,4,4]], [110,[5,5,4,4,4]], [115,[5,5,5,4,4]], [120,[5,5,5,5,4]],
+            [125,[5,5,5,5,5]]
+        ];
+        if (p <= 125) {
+            let sizes = SIZE_TABLE[0][1];
+            for (const [min, s] of SIZE_TABLE) { if (p >= min) sizes = s; }
+            return sizes.slice();
+        }
+        const base = Math.round(5 + Math.pow((p - 125) / 47, 0.87));
+        const spread = Math.max(1, Math.round(base * 0.05));
+        const t1 = base + spread;
+        const t2 = base;
+        const t3 = base;
+        const t4 = Math.max(1, base - spread);
+        const t5 = Math.max(1, Math.ceil(base / 2));
+        return [t1, t2, t3, t4, t5];
+    }
+
     // Level-up detection
     const POKE_LEVEL_KEY = 'spx_pokemon_level';
     function getUnlockedPokeLevel() { return parseFloat(localStorage.getItem(POKE_LEVEL_KEY) || '0'); }
@@ -3830,13 +4057,22 @@
     setInterval(fetchNetLiquidity, 300000);
 
     function renderPokemon(stats) {
+        window._lastStats = stats;
         const box = document.getElementById('pokemonBox');
         if (!box) return;
         const pnlRaw = (stats.netPnl || '$0').replace('$', '').replace(',', '');
         const pnl = parseFloat(pnlRaw) || 0;
-        const level = getPokemonLevel(pnl);
+
+        // DCA-boosted P&L
+        const activePnl = dcaMode ? Math.round((pnl + dcaTotal) * 100) / 100 : pnl;
+        const organicLevel = getPokemonLevel(pnl);
+        const organicIdx = POKEMON_LEVELS.indexOf(organicLevel) + 1;
+
+        const level = getPokemonLevel(activePnl);
         const nextLevel = getNextPokemonLevel(level);
         const levelIdx = POKEMON_LEVELS.indexOf(level) + 1;
+        const sizes = getStockSizes(level.min);
+        const totalRisk = sizes.reduce((a, b) => a + b, 0);
 
         const pnlStr = pnl >= 0 ? '+$' + pnl.toFixed(2) : '-$' + Math.abs(pnl).toFixed(2);
         const pnlClass = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : 'zero';
@@ -3845,31 +4081,66 @@
         const xpFrom = level.min;
         const xpTo = nextLevel ? nextLevel.min : level.min;
         const xpRange = xpTo - xpFrom;
-        const xpProgress = xpRange > 0 ? Math.max(0, Math.min(100, ((pnl - xpFrom) / xpRange) * 100)) : 100;
+        const xpProgress = xpRange > 0 ? Math.max(0, Math.min(100, ((activePnl - xpFrom) / xpRange) * 100)) : 100;
 
-        const needStr = nextLevel ? '$' + nextLevel.min : '';
+        const needStr = nextLevel ? '$' + (nextLevel.min - activePnl).toFixed(2) + ' to Evolve' : '';
+
+        // Size chips
+        let sizeChips = '';
+        for (let i = 0; i < 5; i++) {
+            const cls = i === 0 ? 'lead' : i === 4 ? 'half' : 'mid';
+            sizeChips += `<span class="pokemon-size-chip ${cls}">$${sizes[i]}</span>`;
+        }
 
         let html = `<div class="pokemon-header">
-            <div class="pokemon-level-name">Lv.${levelIdx} — ${level.pokemon}</div>
+            <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}</div>
             <img class="pokemon-sprite" src="${POKE_SPRITE(level.pokeId)}" alt="${level.pokemon}">
-            <div class="pokemon-pnl ${pnlClass}">P&L: ${pnlStr}${needStr ? ` <span style="color:var(--pumpkin-glow)">&middot; ${needStr} to evolve</span>` : ''}</div>
+            <div class="pokemon-pnl ${pnlClass}">P&L: ${pnlStr}${needStr ? ' <span style="color:var(--pumpkin-glow);font-size:0.85rem">&middot; ' + needStr + '</span>' : ''}</div>
+            <div class="pokemon-sizes">${sizeChips}</div>
         </div>`;
+
+        // DCA health
+        if (dcaMode && dcaTotal > 0) {
+            const roiPct = dcaTotal > 0 ? (pnl / dcaTotal * 100) : 0;
+            const roiStr = roiPct >= 0 ? '+' + roiPct.toFixed(0) + '%' : roiPct.toFixed(0) + '%';
+            let healthLabel, healthClass, healthAdvice;
+            if (pnl >= 0) {
+                healthLabel = 'EDGE CONFIRMED';
+                healthClass = 'healthy';
+                healthAdvice = 'System working \u2014 keep DCA\u2019ing';
+            } else {
+                healthLabel = 'SWITCH TO ORGANIC';
+                healthClass = 'danger';
+                healthAdvice = 'P&L negative \u2014 flip DCA off, trade at organic level';
+            }
+            html += `<div class="dca-health">`;
+            html += `<div><span class="health-status ${healthClass}">${healthLabel}</span></div>`;
+            html += `<div class="health-detail">Deposited: $${dcaTotal.toFixed(2)} &middot; Trading P&L: ${pnlStr}</div>`;
+            html += `<div class="health-roi ${roiPct >= 0 ? 'positive' : 'negative'}">ROI: ${roiStr} of deposits earned back</div>`;
+            html += `<div style="font-size:0.6rem;margin-top:0.2rem;color:${healthClass === 'healthy' ? 'var(--green-bright)' : 'var(--red-bright)'}">${healthAdvice}</div>`;
+            html += `</div>`;
+            if (organicIdx !== levelIdx) {
+                html += `<div class="dca-organic-label"><img src="${POKE_SPRITE(organicLevel.pokeId)}" alt="${organicLevel.pokemon}"> Organic: Lv.${organicIdx} ${organicLevel.pokemon} ($${pnl.toFixed(2)} P&L)</div>`;
+            }
+        } else if (dcaMode) {
+            html += `<div class="dca-deposit-total">DCA active \u2014 tap Level Up to start</div>`;
+        }
 
         html += `<div class="pokemon-xp-bar">
             <div class="pokemon-xp-track">
                 <div class="pokemon-xp-fill" style="width:${xpProgress}%"></div>
             </div>
             <div class="pokemon-xp-labels">
-                <span>$${xpFrom}</span>
+                <span>$${xpFrom.toLocaleString()}</span>
                 <span>${xpProgress.toFixed(0)}%</span>
-                <span>${nextLevel ? '$' + xpTo : 'MAX'}</span>
+                <span>${nextLevel ? '$' + xpTo.toLocaleString() : 'MAX'}</span>
             </div>
         </div>`;
 
         if (nextLevel) {
-            html += `<div class="pokemon-next-evolve">${level.pokemon} evolves at $${nextLevel.min} profit</div>`;
+            html += `<div class="pokemon-next-evolve">${level.pokemon} evolves at $${nextLevel.min.toLocaleString()} profit \u2014 Total risk: $${totalRisk}</div>`;
         } else {
-            html += `<div class="pokemon-next-evolve">MAX LEVEL — You are the very best!</div>`;
+            html += `<div class="pokemon-next-evolve">MAX LEVEL \u2014 You are the very best!</div>`;
         }
 
         // Set location background
@@ -3878,7 +4149,234 @@
         }
 
         box.innerHTML = html;
-        checkPokemonLevelUp(pnl);
+        checkPokemonLevelUp(activePnl);
+    }
+
+    // ====== DCA MODE ======
+    function toggleDCAMode() {
+        dcaMode = !dcaMode;
+        localStorage.setItem('spx_dca_mode', dcaMode ? 'true' : 'false');
+        updateDCAControls();
+        if (window._lastStats) renderPokemon(window._lastStats);
+        fireGet(POST_URL + '?action=toggle_dca&mode=' + dcaMode);
+    }
+
+    function updateDCAControls() {
+        const btn = document.getElementById('dcaToggleBtn');
+        const lvlBtn = document.getElementById('dcaLevelUpBtn');
+        const resetBtn = document.getElementById('dcaResetBtn');
+        if (btn) {
+            btn.textContent = 'DCA: ' + (dcaMode ? 'ON' : 'OFF');
+            btn.classList.toggle('active', dcaMode);
+        }
+        if (lvlBtn) {
+            lvlBtn.style.display = dcaMode ? '' : 'none';
+            if (dcaMode && window._lastStats) {
+                const pnlRaw = (window._lastStats.netPnl || '$0').replace('$', '').replace(',', '');
+                const pnl = parseFloat(pnlRaw) || 0;
+                const boostedPnl = Math.round((pnl + dcaTotal) * 100) / 100;
+                const currentDCALevel = getPokemonLevel(boostedPnl);
+                const nextDCALevel = getNextPokemonLevel(currentDCALevel);
+                if (nextDCALevel) {
+                    const gap = Math.max(0, nextDCALevel.min - boostedPnl);
+                    const nextIdx = POKEMON_LEVELS.indexOf(nextDCALevel) + 1;
+                    lvlBtn.textContent = 'Level Up \u2192 Lv.' + nextIdx + ' ' + nextDCALevel.pokemon + ' (+$' + gap.toFixed(2) + ')';
+                    lvlBtn.disabled = false;
+                } else {
+                    lvlBtn.textContent = 'MAX LEVEL';
+                    lvlBtn.disabled = true;
+                }
+            }
+        }
+        if (resetBtn) {
+            resetBtn.style.display = dcaTotal > 0 ? '' : 'none';
+        }
+    }
+
+    function dcaReset() {
+        if (!confirm('Reset DCA to $0? This clears all deposits.')) return;
+        dcaTotal = 0;
+        localStorage.setItem('spx_dca_total', '0');
+        updateDCAControls();
+        if (window._lastStats) renderPokemon(window._lastStats);
+        fireGet(POST_URL + '?action=reset_dca');
+    }
+
+    function dcaLevelUp() {
+        if (!dcaMode || !window._lastStats) return;
+        const pnlRaw = (window._lastStats.netPnl || '$0').replace('$', '').replace(',', '');
+        const pnl = parseFloat(pnlRaw) || 0;
+        const boostedPnl = Math.round((pnl + dcaTotal) * 100) / 100;
+        const currentDCALevel = getPokemonLevel(boostedPnl);
+        const nextDCALevel = getNextPokemonLevel(currentDCALevel);
+        if (!nextDCALevel) return;
+        const gap = Math.max(0.01, nextDCALevel.min - boostedPnl);
+        const nextIdx = POKEMON_LEVELS.indexOf(nextDCALevel) + 1;
+        if (!confirm('Add $' + gap.toFixed(2) + ' DCA to reach Lv.' + nextIdx + ' ' + nextDCALevel.pokemon + '?')) return;
+        dcaTotal += gap;
+        localStorage.setItem('spx_dca_total', dcaTotal.toString());
+        updateDCAControls();
+        renderPokemon(window._lastStats);
+        fireGet(POST_URL + '?action=update_dca&amount=' + gap.toFixed(2));
+    }
+
+    function updateStockCount(val) {
+        stockCount = Math.max(1, Math.min(50, parseInt(val) || 10));
+        localStorage.setItem('spx_stock_count', stockCount.toString());
+        if (window._lastStats) renderKelly(window._lastStats);
+    }
+
+    // ====== KELLY EDGE OPTIMIZER ======
+    function renderKelly(stats) {
+        const box = document.getElementById('kellyBox');
+        if (!box) return;
+
+        const wins = parseInt(stats.wins) || 0;
+        const losses = parseInt(stats.losses) || 0;
+        const total = wins + losses;
+        if (total < 5) {
+            box.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:0.7rem;padding:0.5rem">Need at least 5 completed trades for Kelly calculation</div>';
+            return;
+        }
+
+        // Parse dollar strings
+        const parseDollar = s => parseFloat((s || '$0').replace('$', '').replace(',', '')) || 0;
+        const gw = Math.abs(parseDollar(stats.totalProfit));
+        const gl = Math.abs(parseDollar(stats.totalLost));
+        const pnl = parseDollar(stats.netPnl);
+        const activePnl = dcaMode ? pnl + dcaTotal : pnl;
+
+        const wr = wins / total;
+        const avgWin = wins > 0 ? gw / wins : 0;
+        const avgLoss = losses > 0 ? gl / losses : 0;
+        const rr = avgLoss > 0 ? avgWin / avgLoss : 0;
+        const ev = avgWin * wr - avgLoss * (1 - wr);
+        const profitFactor = gl > 0 ? gw / gl : Infinity;
+
+        // Kelly
+        const b = rr;
+        const kellyF = b > 0 ? (b * wr - (1 - wr)) / b : 0;
+        const halfKelly = kellyF / 2;
+
+        // Per-stock allocation
+        const halfKellyDollar = Math.max(0, activePnl * halfKelly);
+        const perStock = stockCount > 0 ? halfKellyDollar / stockCount : 0;
+
+        // Pokemon curve sizes at current P&L
+        const pokeSizes = getStockSizes(Math.max(0, activePnl));
+        const pokeTotal = pokeSizes.reduce((a, c) => a + c, 0);
+
+        // What Pokemon is as % of Kelly
+        const pokeVsHalf = halfKellyDollar > 0 ? (pokeTotal / halfKellyDollar) * 100 : 0;
+
+        // Edge rate
+        const edgeRate = ev;
+
+        // Geometric mean
+        const lnG = wr * Math.log(1 + avgWin) + (1 - wr) * Math.log(1 - Math.min(avgLoss, 0.99));
+        const tradesToDouble = lnG > 0 ? Math.ceil(Math.log(2) / lnG) : Infinity;
+
+        // Verdict
+        let verdictText, verdictClass;
+        if (activePnl <= 0) {
+            verdictText = 'BUILD P&L FIRST \u2014 Kelly needs positive bankroll';
+            verdictClass = 'hot';
+        } else if (pokeVsHalf > 150) {
+            verdictText = 'OVER KELLY \u2014 early grind levels, fine at tiny $';
+            verdictClass = 'hot';
+        } else if (pokeVsHalf >= 70 && pokeVsHalf <= 130) {
+            verdictText = 'OPTIMAL ZONE \u2014 Pokemon curve matches Kelly';
+            verdictClass = 'optimal';
+        } else {
+            verdictText = 'CONSERVATIVE \u2014 room to push harder if WR holds';
+            verdictClass = 'safe';
+        }
+
+        // Reliability warning
+        let reliabilityNote = '';
+        if (total < 50) {
+            reliabilityNote = `<div style="font-size:0.55rem;color:#ffa726;text-align:center;margin-top:0.4rem">&#9888; ${total} trades \u2014 Kelly needs 50+ for reliability (Taleb: small samples lie)</div>`;
+        } else if (total < 100) {
+            reliabilityNote = `<div style="font-size:0.55rem;color:var(--pumpkin-glow);text-align:center;margin-top:0.4rem">${total} trades \u2014 getting reliable. 100+ = strong confidence.</div>`;
+        } else {
+            reliabilityNote = `<div style="font-size:0.55rem;color:var(--green-bright);text-align:center;margin-top:0.4rem">${total} trades \u2014 statistically reliable edge</div>`;
+        }
+
+        box.innerHTML = `
+            <div class="kelly-grid">
+                <div class="kelly-stat">
+                    <div class="kval" style="color:var(--green-bright)">${(wr * 100).toFixed(1)}%</div>
+                    <div class="klbl">Win Rate</div>
+                </div>
+                <div class="kelly-stat">
+                    <div class="kval" style="color:${rr >= 1 ? 'var(--green-bright)' : '#ffa726'}">${rr.toFixed(2)}x</div>
+                    <div class="klbl">Reward/Risk</div>
+                </div>
+                <div class="kelly-stat">
+                    <div class="kval" style="color:var(--pumpkin-glow)">${(kellyF * 100).toFixed(1)}%</div>
+                    <div class="klbl">Kelly f*</div>
+                </div>
+                <div class="kelly-stat">
+                    <div class="kval" style="color:var(--green-bright)">${(halfKelly * 100).toFixed(1)}%</div>
+                    <div class="klbl">Half-Kelly</div>
+                </div>
+                <div class="kelly-stat">
+                    <div class="kval" style="color:var(--text-bright)">${profitFactor === Infinity ? '\u221e' : profitFactor.toFixed(2)}x</div>
+                    <div class="klbl">Profit Factor</div>
+                </div>
+                <div class="kelly-stat">
+                    <div class="kval" style="color:${ev > 0 ? 'var(--green-bright)' : 'var(--red-bright)'}">$${ev.toFixed(3)}</div>
+                    <div class="klbl">EV / Trade</div>
+                </div>
+                <div class="kelly-stat">
+                    <div class="kval" style="color:var(--pumpkin-glow)">${(edgeRate * 100).toFixed(1)}%</div>
+                    <div class="klbl">Edge / $1</div>
+                </div>
+                <div class="kelly-stat">
+                    <div class="kval" style="color:var(--cream)">${tradesToDouble < 10000 ? tradesToDouble : '\u221e'}</div>
+                    <div class="klbl">Trades to 2x</div>
+                </div>
+            </div>
+
+            <div style="font-size:0.6rem;color:var(--pumpkin-glow);font-weight:700;margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:1px">Kelly / Stocks</div>
+
+            <div class="kelly-compare">
+                <div class="kelly-compare-label">Half-Kelly</div>
+                <div class="kelly-bar-track">
+                    <div class="kelly-bar-fill" style="width:${Math.min(100, halfKelly * 100 / 0.5)}%;background:var(--green-bright)"></div>
+                </div>
+                <div class="kelly-compare-val" style="color:var(--green-bright)">$${halfKellyDollar.toFixed(0)}</div>
+            </div>
+            <div class="kelly-compare">
+                <div class="kelly-compare-label">Full Kelly</div>
+                <div class="kelly-bar-track">
+                    <div class="kelly-bar-fill" style="width:${Math.min(100, kellyF * 100 / 0.5)}%;background:var(--red-bright);opacity:0.6"></div>
+                </div>
+                <div class="kelly-compare-val" style="color:var(--red-bright)">$${(activePnl * kellyF).toFixed(0)}</div>
+            </div>
+            <div class="kelly-compare">
+                <div class="kelly-compare-label">Per Stock</div>
+                <div class="kelly-bar-track">
+                    <div class="kelly-bar-fill" style="width:${Math.min(100, activePnl > 0 ? (perStock / Math.max(1, halfKellyDollar)) * 100 : 0)}%;background:var(--pumpkin)"></div>
+                </div>
+                <div class="kelly-compare-val" style="color:var(--pumpkin-glow)">$${perStock.toFixed(0)}</div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-top:0.6rem;font-size:0.6rem;color:var(--text-dim)">
+                <span>Trading</span>
+                <input type="number" class="kelly-stock-input" value="${stockCount}" min="1" max="50" onchange="updateStockCount(this.value)">
+                <span>stocks \u2192 $${perStock.toFixed(0)} each</span>
+            </div>
+
+            <div class="kelly-verdict ${verdictClass}">${verdictText}</div>
+            ${reliabilityNote}
+
+            <div class="kelly-milestone">
+                <span>Pokemon curve total:</span>
+                <span class="km-val">$${pokeTotal}</span>
+                <span style="color:var(--text-dim)">(${pokeVsHalf.toFixed(0)}% of Half-Kelly)</span>
+            </div>
+        `;
     }
 
     // ====== INIT ======
