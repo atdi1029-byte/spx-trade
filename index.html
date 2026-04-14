@@ -4085,18 +4085,10 @@
 
         const needStr = nextLevel ? '$' + (nextLevel.min - activePnl).toFixed(2) + ' to Evolve' : '';
 
-        // Size chips
-        let sizeChips = '';
-        for (let i = 0; i < 5; i++) {
-            const cls = i === 0 ? 'lead' : i === 4 ? 'half' : 'mid';
-            sizeChips += `<span class="pokemon-size-chip ${cls}">$${sizes[i]}</span>`;
-        }
-
         let html = `<div class="pokemon-header">
             <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}</div>
             <img class="pokemon-sprite" src="${POKE_SPRITE(level.pokeId)}" alt="${level.pokemon}">
             <div class="pokemon-pnl ${pnlClass}">P&L: ${pnlStr}${needStr ? ' <span style="color:var(--pumpkin-glow);font-size:0.85rem">&middot; ' + needStr + '</span>' : ''}</div>
-            <div class="pokemon-sizes">${sizeChips}</div>
         </div>`;
 
         // DCA health
@@ -4138,7 +4130,7 @@
         </div>`;
 
         if (nextLevel) {
-            html += `<div class="pokemon-next-evolve">${level.pokemon} evolves at $${nextLevel.min.toLocaleString()} profit \u2014 Total risk: $${totalRisk}</div>`;
+            html += `<div class="pokemon-next-evolve">${level.pokemon} evolves at $${nextLevel.min.toLocaleString()} profit</div>`;
         } else {
             html += `<div class="pokemon-next-evolve">MAX LEVEL \u2014 You are the very best!</div>`;
         }
@@ -4281,14 +4273,14 @@
         if (activePnl <= 0) {
             verdictText = 'BUILD P&L FIRST \u2014 Kelly needs positive bankroll';
             verdictClass = 'hot';
-        } else if (pokeVsHalf > 150) {
-            verdictText = 'OVER KELLY \u2014 early grind levels, fine at tiny $';
+        } else if (kellyF <= 0) {
+            verdictText = 'NO EDGE \u2014 Kelly says don\u2019t bet';
             verdictClass = 'hot';
-        } else if (pokeVsHalf >= 70 && pokeVsHalf <= 130) {
-            verdictText = 'OPTIMAL ZONE \u2014 Pokemon curve matches Kelly';
+        } else if (perStock >= 1) {
+            verdictText = 'EDGE DETECTED \u2014 $' + perStock.toFixed(0) + '/stock across ' + stockCount + ' positions';
             verdictClass = 'optimal';
         } else {
-            verdictText = 'CONSERVATIVE \u2014 room to push harder if WR holds';
+            verdictText = 'THIN EDGE \u2014 bankroll too small for ' + stockCount + ' stocks';
             verdictClass = 'safe';
         }
 
@@ -4370,12 +4362,6 @@
 
             <div class="kelly-verdict ${verdictClass}">${verdictText}</div>
             ${reliabilityNote}
-
-            <div class="kelly-milestone">
-                <span>Pokemon curve total:</span>
-                <span class="km-val">$${pokeTotal}</span>
-                <span style="color:var(--text-dim)">(${pokeVsHalf.toFixed(0)}% of Half-Kelly)</span>
-            </div>
         `;
     }
 
