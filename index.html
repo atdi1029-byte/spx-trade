@@ -656,10 +656,6 @@
         .ticker-link.hl { color: #4ade80; border-color: #4ade8022; }
         .ticker-link.hl:hover { background: #4ade8022; border-color: #4ade80; color: #86efac; }
 
-        /* ============ BADGE DISPLAY ============ */
-        .badge-icon { width: 20px; height: 20px; vertical-align: middle; image-rendering: auto; }
-        .badge-label { font-family: 'Space Mono', monospace; font-size: 0.5rem; font-weight: 700; color: var(--pumpkin-glow); letter-spacing: 0.5px; vertical-align: middle; }
-        .badge-multiplier { font-family: 'Space Mono', monospace; font-size: 0.5rem; font-weight: 700; color: var(--cream); background: var(--pumpkin-deep); padding: 1px 5px; border-radius: 2px; vertical-align: middle; margin-left: 4px; }
 
         /* ============ ADD TO PORTFOLIO BUTTON ============ */
         .portfolio-btn {
@@ -1943,20 +1939,6 @@
     const API_URL = 'https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec?action=dashboard';
     const REFRESH_INTERVAL = 60000; // 60 seconds
 
-    const BADGE_INFO = [
-        { grade: 1,  name: 'Boulder',    icon: 'badges/Boulder_Badge.png',  multiplier: 1.0, weight: 0,  maxAlloc: 0 },
-        { grade: 2,  name: 'Cascade',    icon: 'badges/Cascade_Badge.png',  multiplier: 1.0, weight: 0,  maxAlloc: 0 },
-        { grade: 3,  name: 'Thunder',    icon: 'badges/Thunder_Badge.png',  multiplier: 1.0, weight: 5,  maxAlloc: 25 },
-        { grade: 4,  name: 'Rainbow',    icon: 'badges/Rainbow_Badge.png',  multiplier: 1.3, weight: 10, maxAlloc: 50 },
-        { grade: 5,  name: 'Soul',       icon: 'badges/Soul_Badge.png',     multiplier: 1.5, weight: 15, maxAlloc: 75 },
-        { grade: 6,  name: 'Marsh',      icon: 'badges/Marsh_Badge.png',    multiplier: 1.7, weight: 20, maxAlloc: 100 },
-        { grade: 7,  name: 'Volcano',    icon: 'badges/Volcano_Badge.png',  multiplier: 2.0, weight: 25, maxAlloc: 150 },
-        { grade: 8,  name: 'Earth',      icon: 'badges/Earth_Badge.png',    multiplier: 2.3, weight: 30, maxAlloc: 200 },
-        { grade: 9,  name: 'Elite Four', icon: 'badges/master-ball.png',    multiplier: 2.5, weight: 35, maxAlloc: 300 },
-        { grade: 10, name: 'Master',     icon: 'badges/master-ball.png',    multiplier: 3.0, weight: 40, maxAlloc: 500 }
-    ];
-    function getBadgeInfo(grade) { return BADGE_INFO.find(b => b.grade === grade) || BADGE_INFO[0]; }
-
     // Uniform SL/TP levels (same as crypto — guardrails, not overfitted per-ticker)
     const BT_DEFAULTS = { buy: { sl:14.5, tp:15, halfTp:7 }, sell: { sl:20, tp:13, halfTp:7 } };
     function recalcLevels(actionId) {
@@ -2159,8 +2141,6 @@
                 const matchTicker = tickers.find(t => t.ticker.toUpperCase() === a.ticker.toUpperCase());
                 const effSize = matchTicker ? (isBuy ? matchTicker.buyEffectiveSize : matchTicker.sellEffectiveSize) : 0;
                 const effSizeStr = effSize === 'SIT OUT' ? 'SIT OUT' : Number(effSize || 0).toFixed(2);
-                const badge = matchTicker ? (isBuy ? matchTicker.buyBadge : matchTicker.sellBadge) : null;
-                const badgeHtml = badge ? `<img src="${getBadgeInfo(badge.grade).icon}" class="badge-icon" style="margin-left:4px">` : '';
                 const stops = matchTicker ? (isBuy ? Number(matchTicker.buyStopouts || 0) : Number(matchTicker.sellStopouts || 0)) : 0;
                 const warnHtml = stops >= 3 ? `<div style="background:#c44b3f22;border:1px solid #c44b3f55;border-radius:4px;padding:4px 8px;margin:4px 0;font-size:0.65rem;color:var(--red-bright)">&#9888; ${stops} consecutive stop-outs on this ticker — be careful</div>` : '';
                 // Earnings warning
@@ -2192,7 +2172,7 @@
                 return `
                     <div class="action-item" id="${id}">
                         <div>
-                            <div>${logoHtml}<span class="ticker-badge">${esc(a.ticker)}</span>${badgeHtml}<span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span><span style="margin-left:0.5rem;font-size:0.65rem;color:var(--green-bright);font-weight:700">${effSizeStr !== 'SIT OUT' ? 'Enter at $' + effSizeStr : 'SIT OUT'}</span></div>
+                            <div>${logoHtml}<span class="ticker-badge">${esc(a.ticker)}</span><span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span><span style="margin-left:0.5rem;font-size:0.65rem;color:var(--green-bright);font-weight:700">${effSizeStr !== 'SIT OUT' ? 'Enter at $' + effSizeStr : 'SIT OUT'}</span></div>
                             <div class="meta">@ $${a.price}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}</div>
                             ${btLevelsHtml}
                             <div class="action-buttons">
@@ -2322,20 +2302,6 @@
             const sc = (data.status || 'IDLE').replace(/\s+/g, '_');
             statusEl.className = 'ticker-status ' + sc;
             statusEl.textContent = data.status || 'IDLE';
-        }
-
-        // Badge
-        const badgeEl = card.querySelector('.side-badge');
-        if (badgeEl && data.badge) {
-            const bi2 = getBadgeInfo(data.badge.grade || 1);
-            const multLabel2 = data.badge.multiplier > 1 ? `<span class="badge-multiplier">&times;${data.badge.multiplier}</span>` : '';
-            badgeEl.innerHTML = `<span class="badge-label">${esc(bi2.name)}</span>${multLabel2}`;
-        }
-        const badgeIcon = card.querySelector('.badge-icon');
-        if (badgeIcon && data.badge) {
-            const bi3 = getBadgeInfo(data.badge.grade || 1);
-            badgeIcon.src = bi3.icon;
-            badgeIcon.title = bi3.name + ' Badge (Grade ' + bi3.grade + ')';
         }
 
         // Signal badge
@@ -2614,8 +2580,6 @@
         const activeSide = (t.lastSignal === 'sell' || t.lastSignal === 'reduce') ? 'sell' : 'buy';
 
         // Build per-side data objects
-        const buyBadge = t.buyBadge || { grade: 1, name: 'Boulder', multiplier: 1.0 };
-        const sellBadge = t.sellBadge || { grade: 1, name: 'Boulder', multiplier: 1.0 };
         const buyData = {
             base: Number(t.buyBase || t.base || 30),
             phase: t.buyPhase || t.phase || 'No trades',
@@ -2626,7 +2590,6 @@
             nextAction: t.buyNextAction || (activeSide === 'buy' ? t.nextAction : ''),
             lastSignal: t.buyLastSignal || (activeSide === 'buy' ? t.lastSignal : ''),
             price: t.buyPrice || (activeSide === 'buy' ? t.price : 0),
-            badge: buyBadge,
             effectiveSize: t.buyEffectiveSize || 0
         };
         const sellData = {
@@ -2639,7 +2602,6 @@
             nextAction: t.sellNextAction || (activeSide === 'sell' ? t.nextAction : ''),
             lastSignal: t.sellLastSignal || (activeSide === 'sell' ? t.lastSignal : ''),
             price: t.sellPrice || (activeSide === 'sell' ? t.price : 0),
-            badge: sellBadge,
             effectiveSize: t.sellEffectiveSize || 0
         };
 
@@ -2647,8 +2609,6 @@
         const statusClass = (sd.status || 'IDLE').replace(/\s+/g, '_');
         const lockedClass = sd.locked > 0 ? 'green' : '';
         const stopClass = sd.stopouts > 0 ? 'red' : '';
-        const bi = getBadgeInfo(sd.badge ? sd.badge.grade : 1);
-        const multLabel = sd.badge && sd.badge.multiplier > 1 ? `<span class="badge-multiplier">&times;${sd.badge.multiplier}</span>` : '';
         const effSize = sd.effectiveSize;
 
         return `
@@ -2659,7 +2619,6 @@
                     <div style="display:flex;align-items:center;gap:0.5rem">
                         <img src="${logoUrl(t.ticker)}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="stock-logo-fallback" style="display:none">${esc(t.ticker.slice(0,2))}</span>
                         <span class="ticker-name">${esc(t.ticker)}</span>
-                        <img src="${bi.icon}" class="badge-icon" title="${bi.name} Badge (Grade ${bi.grade})">
                         <span class="ticker-status ${statusClass}">${esc(sd.status || 'IDLE')}</span>
                     </div>
                     <div class="side-toggle">
@@ -2668,7 +2627,6 @@
                     </div>
                 </div>
                 <dl class="ticker-detail">
-                    <dt>Badge</dt><dd class="side-badge"><span class="badge-label">${esc(bi.name)}</span>${multLabel}</dd>
                     <dt>Last Signal</dt><dd class="side-signal"><span class="signal-badge ${signalClass(sd.lastSignal)}" style="font-size:0.55rem;padding:2px 6px">${signalLabel(sd.lastSignal)}</span></dd>
                     <dt>Price</dt><dd class="side-price">${sd.price ? '$' + Number(sd.price).toFixed(2) : '-'}</dd>
                     <dt>Base Size</dt><dd class="side-base">$${sd.base.toFixed(2)}</dd>
