@@ -1218,6 +1218,212 @@
             line-height: 1.4;
         }
 
+        /* ============ GLOBAL LIQUIDITY SECTION ============ */
+        .globliq-section { margin: 1rem 0; }
+        .globliq-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+        }
+        .globliq-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.8rem;
+        }
+        .globliq-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            color: var(--text-bright);
+        }
+        .globliq-value.up {
+            color: var(--green-bright);
+            text-shadow: 0 0 12px rgba(106,170,90,0.5);
+        }
+        .globliq-value.down {
+            color: var(--red-bright);
+            text-shadow: 0 0 12px rgba(224,85,69,0.5);
+        }
+        .globliq-components {
+            display: flex;
+            gap: 1.25rem;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .globliq-comp {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+        }
+        .globliq-comp .label {
+            color: var(--text-dim);
+            font-size: 0.55rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .globliq-comp .value {
+            font-weight: 700;
+            margin-top: 2px;
+            color: var(--text);
+        }
+        .globliq-changes {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .globliq-change {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+        }
+        .globliq-change .label {
+            color: var(--text-dim);
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .globliq-change .value {
+            font-weight: 700;
+            margin-top: 2px;
+        }
+        .globliq-change .value.up { color: var(--green-bright); }
+        .globliq-change .value.down { color: var(--red-bright); }
+        .globliq-chart-wrap {
+            position: relative;
+            width: 100%;
+            height: 160px;
+            margin: 0.8rem 0;
+            border-radius: 6px;
+            overflow: hidden;
+            background: rgba(18,16,14,0.5);
+            border: 1px solid var(--border);
+        }
+        .globliq-chart-wrap canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .globliq-legend {
+            display: flex;
+            gap: 1.25rem;
+            margin-top: 0.4rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+        }
+        .globliq-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .globliq-legend-swatch {
+            width: 14px;
+            height: 3px;
+            border-radius: 2px;
+        }
+        .globliq-regime {
+            display: inline-block;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-left: 8px;
+            cursor: help;
+            position: relative;
+        }
+        .globliq-regime.green {
+            background: rgba(74,138,74,0.25);
+            color: var(--green-bright);
+        }
+        .globliq-regime.red {
+            background: rgba(196,75,63,0.25);
+            color: var(--red-bright);
+        }
+        .globliq-regime.orange {
+            background: rgba(212,132,62,0.25);
+            color: var(--pumpkin-glow);
+        }
+        .globliq-regime.gray {
+            background: rgba(138,126,106,0.15);
+            color: var(--text-dim);
+        }
+        .globliq-regime .zone-tip {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: calc(100% + 8px);
+            width: 280px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.7rem;
+            font-weight: 400;
+            letter-spacing: 0;
+            color: var(--text);
+            line-height: 1.5;
+            z-index: 50;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            white-space: normal;
+        }
+        .globliq-regime:hover .zone-tip,
+        .globliq-regime.tip-open .zone-tip { display: block; }
+        .globliq-correlation {
+            display: inline-block;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-left: 8px;
+            cursor: help;
+            position: relative;
+        }
+        .globliq-correlation.aligned {
+            background: rgba(74,138,74,0.25);
+            color: var(--green-bright);
+        }
+        .globliq-correlation.divergent {
+            background: rgba(196,75,63,0.25);
+            color: var(--red-bright);
+        }
+        .globliq-correlation .zone-tip {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 8px);
+            width: 260px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.7rem;
+            font-weight: 400;
+            letter-spacing: 0;
+            color: var(--text);
+            line-height: 1.5;
+            z-index: 50;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            white-space: normal;
+        }
+        .globliq-correlation:hover .zone-tip,
+        .globliq-correlation.tip-open .zone-tip { display: block; }
+        .globliq-insight {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 0.75rem;
+            font-style: italic;
+            color: var(--cream);
+            opacity: 0.7;
+            margin-top: 0.6rem;
+            line-height: 1.4;
+        }
+
         @media (max-width: 900px) {
             .header { flex-direction: column; text-align: center; gap: 0.75rem; }
             .header-left { flex-direction: column; }
@@ -1274,6 +1480,22 @@
                 padding-bottom: 4px;
             }
             .netliq-change { flex-shrink: 0; }
+            .globliq-value { font-size: 1.3rem; }
+            .globliq-chart-wrap { height: 130px; }
+            .globliq-components {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 4px;
+            }
+            .globliq-comp { flex-shrink: 0; }
+            .globliq-changes {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 4px;
+            }
+            .globliq-change { flex-shrink: 0; }
         }
 
         /* ============ SIGNALS TABLE ============ */
@@ -1875,6 +2097,78 @@
                 </div>
             </div>
             <div class="netliq-insight" id="netLiqInsight"></div>
+        </div>
+    </div>
+
+    <!-- Global Liquidity Index (Fed + ECB + BOJ) with SPX Overlay -->
+    <div class="globliq-section" id="globLiqSection">
+        <div class="section-header" style="margin-top:1.5rem">Global Liquidity
+            <span class="globliq-regime gray" id="globLiqRegime"
+                  onclick="this.classList.toggle('tip-open')">
+                --<span class="zone-tip" id="regimeTip"></span>
+            </span>
+            <span class="globliq-correlation" id="globLiqCorrelation"
+                  onclick="this.classList.toggle('tip-open')">
+                --<span class="zone-tip" id="globCorrTip"></span>
+            </span>
+        </div>
+        <div class="globliq-box" id="globLiqBox">
+            <div class="globliq-top">
+                <div>
+                    <div class="globliq-value" id="globLiqValue">--</div>
+                    <div class="liquidity-date" id="globLiqDate"></div>
+                </div>
+                <div style="text-align:right;font-family:'Space Mono',monospace;font-size:0.75rem">
+                    <div style="color:var(--text-dim);font-size:0.55rem;letter-spacing:1px">S&amp;P 500</div>
+                    <div id="globLiqSpx" style="font-weight:700;color:var(--pumpkin-glow)">--</div>
+                </div>
+            </div>
+            <div class="globliq-components" id="globLiqComponents">
+                <div class="globliq-comp">
+                    <div class="label">Fed (US)</div>
+                    <div class="value" id="globLiqFed">--</div>
+                </div>
+                <div class="globliq-comp">
+                    <div class="label">ECB (EU)</div>
+                    <div class="value" id="globLiqEcb">--</div>
+                </div>
+                <div class="globliq-comp">
+                    <div class="label">BOJ (JP)</div>
+                    <div class="value" id="globLiqBoj">--</div>
+                </div>
+            </div>
+            <div class="globliq-changes">
+                <div class="globliq-change">
+                    <div class="label">30d Change</div>
+                    <div class="value" id="globLiqChange30d">--</div>
+                </div>
+                <div class="globliq-change">
+                    <div class="label">90d Change</div>
+                    <div class="value" id="globLiqChange90d">--</div>
+                </div>
+                <div class="globliq-change">
+                    <div class="label">30d %</div>
+                    <div class="value" id="globLiqPct30d">--</div>
+                </div>
+                <div class="globliq-change">
+                    <div class="label">90d %</div>
+                    <div class="value" id="globLiqPct90d">--</div>
+                </div>
+            </div>
+            <div class="globliq-chart-wrap">
+                <canvas id="globLiqChart"></canvas>
+            </div>
+            <div class="globliq-legend">
+                <div class="globliq-legend-item">
+                    <div class="globliq-legend-swatch" style="background:#b06cc8"></div>
+                    <span style="color:#b06cc8">Global Liquidity</span>
+                </div>
+                <div class="globliq-legend-item">
+                    <div class="globliq-legend-swatch" style="background:#6aaa5a"></div>
+                    <span style="color:var(--green-bright)">S&amp;P 500</span>
+                </div>
+            </div>
+            <div class="globliq-insight" id="globLiqInsight"></div>
         </div>
     </div>
 
@@ -4019,6 +4313,392 @@
     // Fetch net liquidity (staggered 2s after TGA)
     setTimeout(fetchNetLiquidity, 2000);
     setInterval(fetchNetLiquidity, 300000);
+
+    // ====== GLOBAL LIQUIDITY INDEX (Fed + ECB + BOJ) + SPX OVERLAY ======
+    const GLOBLIQ_API = POST_URL + '?action=global_liquidity';
+    let globLiqCache = null;
+
+    async function fetchGlobalLiquidity() {
+        try {
+            const resp = await fetch(GLOBLIQ_API + '&t=' + Date.now());
+            const data = await resp.json();
+            if (data.status === 'ok' && data.metrics) {
+                globLiqCache = data;
+                localStorage.setItem('globLiqCache', JSON.stringify(data));
+                renderGlobalLiquidity(data);
+            }
+        } catch (err) {
+            console.error('Global Liquidity fetch error:', err);
+            try {
+                const cached = JSON.parse(
+                    localStorage.getItem('globLiqCache') || 'null'
+                );
+                if (cached) renderGlobalLiquidity(cached);
+            } catch(e) {}
+        }
+    }
+
+    function renderGlobalLiquidity(data) {
+        const m = data.metrics;
+        const series = data.series || [];
+        if (!m) return;
+
+        // Main value
+        const valEl = document.getElementById('globLiqValue');
+        valEl.textContent = m.currentGlobalLiqFormatted || '--';
+        valEl.className = 'globliq-value ' +
+            (m.change30d >= 0 ? 'up' : 'down');
+
+        // Date + SPX
+        document.getElementById('globLiqDate').textContent =
+            m.currentDate ? 'As of ' + m.currentDate : '';
+        document.getElementById('globLiqSpx').textContent =
+            m.currentSpx ? m.currentSpx.toLocaleString() : '--';
+
+        // Component breakdown
+        document.getElementById('globLiqFed').textContent =
+            '$' + formatBillions(m.fed || 0);
+        document.getElementById('globLiqEcb').textContent =
+            '$' + formatBillions(m.ecb || 0);
+        document.getElementById('globLiqBoj').textContent =
+            '$' + formatBillions(m.boj || 0);
+
+        // Changes
+        const c30 = document.getElementById('globLiqChange30d');
+        c30.textContent = m.change30dFormatted || '--';
+        c30.className = 'value ' + (m.change30d >= 0 ? 'up' : 'down');
+
+        const c90 = document.getElementById('globLiqChange90d');
+        c90.textContent = m.change90dFormatted || '--';
+        c90.className = 'value ' + (m.change90d >= 0 ? 'up' : 'down');
+
+        const p30 = document.getElementById('globLiqPct30d');
+        p30.textContent = m.pct30d || '--';
+        p30.className = 'value ' + (m.change30d >= 0 ? 'up' : 'down');
+
+        const p90 = document.getElementById('globLiqPct90d');
+        p90.textContent = m.pct90d || '--';
+        p90.className = 'value ' + (m.change90d >= 0 ? 'up' : 'down');
+
+        // Regime badge + tooltip
+        const REGIME_TIPS = {
+            'EXPANSION': 'Global central banks expanding balance sheets rapidly (>3% in 90 days). Historically very bullish for risk assets. Per Capital Wars, this is the strongest tailwind for equities.',
+            'GROWING': 'Central banks slowly expanding (1-3% in 90 days). Mild tailwind — liquidity supportive but not surging.',
+            'STABLE': 'Global liquidity roughly flat (-1% to +1%). Neutral regime — other factors will drive markets.',
+            'TIGHTENING': 'Central banks reducing balance sheets (-1% to -3% in 90 days). Mild headwind — liquidity slowly draining.',
+            'CONTRACTION': 'Central banks aggressively tightening (>3% decline in 90 days). Major headwind for risk assets. Historically correlates with corrections.'
+        };
+        const regEl = document.getElementById('globLiqRegime');
+        const regTip = document.getElementById('regimeTip');
+        regEl.textContent = m.regime || '--';
+        regEl.appendChild(regTip);
+        regEl.className = 'globliq-regime ' + (m.regimeColor || 'gray');
+        regTip.textContent = REGIME_TIPS[m.regime] || '';
+
+        // Correlation badge
+        const corrEl = document.getElementById('globLiqCorrelation');
+        const corrTip = document.getElementById('globCorrTip');
+        if (m.correlation === 'aligned') {
+            corrEl.textContent = 'ALIGNED';
+            corrEl.appendChild(corrTip);
+            corrEl.className = 'globliq-correlation aligned';
+            corrTip.textContent = 'Global Liquidity and SPX moving in the same direction over 30 days. Capital flows driving the market as Capital Wars predicts.';
+        } else {
+            corrEl.textContent = 'DIVERGENT';
+            corrEl.appendChild(corrTip);
+            corrEl.className = 'globliq-correlation divergent';
+            corrTip.textContent = 'Global Liquidity and SPX moving in opposite directions. Potential inflection point — Howell says liquidity usually wins.';
+        }
+
+        // Insight
+        const insightEl = document.getElementById('globLiqInsight');
+        const liqDir = m.change30d >= 0 ? 'rising' : 'falling';
+        let insight = '';
+        if (m.regime === 'EXPANSION' && m.correlation === 'aligned')
+            insight = 'Full expansion + aligned = strongest bull regime. Central banks are flooding the system.';
+        else if (m.regime === 'EXPANSION' && m.correlation === 'divergent')
+            insight = 'Global liquidity surging but SPX lagging — potential catch-up trade ahead.';
+        else if (m.regime === 'CONTRACTION' && m.correlation === 'aligned')
+            insight = 'Contraction + aligned = risk-off. Central banks draining liquidity, markets following.';
+        else if (m.regime === 'CONTRACTION' && m.correlation === 'divergent')
+            insight = 'Liquidity contracting but SPX rising — rally may not be sustainable without central bank support.';
+        else if (liqDir === 'rising')
+            insight = 'Global liquidity trending up — supportive backdrop for risk assets.';
+        else
+            insight = 'Global liquidity trending down — watch for headwinds to equity markets.';
+        insightEl.textContent = insight;
+
+        drawGlobLiqChart(series, m);
+    }
+
+    let globLiqChartState = null;
+
+    function drawGlobLiqChart(fullSeries, metrics, skipSave) {
+        const canvas = document.getElementById('globLiqChart');
+        if (!canvas || fullSeries.length < 2) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        const w = rect.width;
+        const h = rect.height;
+        const pad = { top: 10, right: 55, bottom: 20, left: 55 };
+        const plotW = w - pad.left - pad.right;
+        const plotH = h - pad.top - pad.bottom;
+
+        const isMobile = window.innerWidth <= 900;
+        const trimDays = isMobile ? 22 : 85;
+        const trimAt = Math.max(0, fullSeries.length - trimDays);
+        const series = fullSeries.slice(trimAt);
+
+        // Left axis: Global Liquidity
+        const liqVals = series.map(d => d.globalLiq);
+        const liqMin = Math.min(...liqVals) * 0.999;
+        const liqMax = Math.max(...liqVals) * 1.001;
+        const liqRange = liqMax - liqMin || 1;
+
+        // Right axis: SPX
+        const spxVals = series.map(d => d.spx);
+        const spxMin = Math.min(...spxVals) * 0.998;
+        const spxMax = Math.max(...spxVals) * 1.002;
+        const spxRange = spxMax - spxMin || 1;
+
+        const toY_liq = v =>
+            pad.top + plotH * (1 - (v - liqMin) / liqRange);
+        const toY_spx = v =>
+            pad.top + plotH * (1 - (v - spxMin) / spxRange);
+        const toX = i =>
+            pad.left + (i / (series.length - 1)) * plotW;
+
+        if (!skipSave) {
+            globLiqChartState = {
+                series, liqMin, liqRange, spxMin, spxRange,
+                pad, w, h, plotW, plotH,
+                rawSeries: fullSeries, metrics
+            };
+        }
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Grid lines
+        ctx.strokeStyle = 'rgba(58,53,48,0.4)';
+        ctx.lineWidth = 0.5;
+        for (let g = 0; g <= 3; g++) {
+            const gy = pad.top + plotH * (1 - g / 3);
+            ctx.beginPath();
+            ctx.moveTo(pad.left, gy);
+            ctx.lineTo(w - pad.right, gy);
+            ctx.stroke();
+
+            // Left axis labels (Global Liq in trillions)
+            const lVal = liqMin + liqRange * (g / 3);
+            ctx.fillStyle = 'rgba(176,108,200,0.6)';
+            ctx.font = '9px "Space Mono", monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText(
+                (lVal / 1000000).toFixed(1) + 'T',
+                pad.left - 4, gy + 3
+            );
+
+            // Right axis labels (SPX)
+            const sVal = spxMin + spxRange * (g / 3);
+            ctx.fillStyle = 'rgba(106,170,90,0.6)';
+            ctx.textAlign = 'left';
+            ctx.fillText(
+                Math.round(sVal).toLocaleString(),
+                w - pad.right + 4, gy + 3
+            );
+        }
+
+        // Global Liquidity area fill (purple tint)
+        const liqGrad = ctx.createLinearGradient(
+            0, pad.top, 0, h - pad.bottom
+        );
+        liqGrad.addColorStop(0, 'rgba(176,108,200,0.15)');
+        liqGrad.addColorStop(1, 'rgba(176,108,200,0.02)');
+        ctx.beginPath();
+        for (let i = 0; i < series.length; i++) {
+            const x = toX(i), y = toY_liq(series[i].globalLiq);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.lineTo(toX(series.length - 1), h - pad.bottom);
+        ctx.lineTo(pad.left, h - pad.bottom);
+        ctx.closePath();
+        ctx.fillStyle = liqGrad;
+        ctx.fill();
+
+        // Global Liquidity line (purple)
+        ctx.beginPath();
+        for (let i = 0; i < series.length; i++) {
+            const x = toX(i), y = toY_liq(series[i].globalLiq);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = '#b06cc8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // SPX line (green)
+        ctx.beginPath();
+        for (let i = 0; i < series.length; i++) {
+            const x = toX(i), y = toY_spx(series[i].spx);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = '#6aaa5a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // End dots
+        const lastIdx = series.length - 1;
+        ctx.beginPath();
+        ctx.arc(
+            toX(lastIdx), toY_liq(series[lastIdx].globalLiq),
+            3, 0, Math.PI * 2
+        );
+        ctx.fillStyle = '#b06cc8';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(
+            toX(lastIdx), toY_spx(series[lastIdx].spx),
+            3, 0, Math.PI * 2
+        );
+        ctx.fillStyle = '#6aaa5a';
+        ctx.fill();
+
+        // X-axis date labels
+        ctx.fillStyle = 'rgba(138,126,106,0.6)';
+        ctx.font = '8px "Space Mono", monospace';
+        if (series.length > 0) {
+            const fmtDate = d => d.slice(5);
+            ctx.textAlign = 'left';
+            ctx.fillText(
+                fmtDate(series[0].date), pad.left, h - 4
+            );
+            ctx.textAlign = 'center';
+            ctx.fillText(
+                fmtDate(series[Math.floor(series.length / 2)].date),
+                pad.left + plotW / 2, h - 4
+            );
+            ctx.textAlign = 'right';
+            ctx.fillText(
+                fmtDate(series[lastIdx].date),
+                w - pad.right, h - 4
+            );
+        }
+    }
+
+    // Hover tooltip for Global Liquidity chart
+    const globLiqCanvas = document.getElementById('globLiqChart');
+    if (globLiqCanvas) {
+        globLiqCanvas.addEventListener('mousemove', function(e) {
+            if (!globLiqChartState) return;
+            const { series, liqMin, liqRange, spxMin, spxRange,
+                    pad, w, h, plotW, plotH } = globLiqChartState;
+            const rect = globLiqCanvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+
+            const idx = Math.round(
+                (mx - pad.left) / plotW * (series.length - 1)
+            );
+            if (idx < 0 || idx >= series.length) return;
+
+            drawGlobLiqChart(
+                globLiqChartState.rawSeries,
+                globLiqChartState.metrics, true
+            );
+
+            const ctx = globLiqCanvas.getContext('2d');
+            ctx.save();
+
+            const toX = i =>
+                pad.left + (i / (series.length - 1)) * plotW;
+            const toY_liq = v =>
+                pad.top + plotH * (1 - (v - liqMin) / liqRange);
+            const toY_spx = v =>
+                pad.top + plotH * (1 - (v - spxMin) / spxRange);
+            const x = toX(idx);
+            const yLiq = toY_liq(series[idx].globalLiq);
+            const ySpx = toY_spx(series[idx].spx);
+
+            // Crosshair
+            ctx.strokeStyle = 'rgba(176,108,200,0.4)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(x, pad.top);
+            ctx.lineTo(x, h - pad.bottom);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Dots
+            ctx.beginPath();
+            ctx.arc(x, yLiq, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#b06cc8';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(x, ySpx, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#6aaa5a';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Tooltip box
+            const date = series[idx].date.slice(5);
+            const liqVal = '$' +
+                (series[idx].globalLiq / 1000000).toFixed(1) + 'T';
+            const spxVal =
+                Math.round(series[idx].spx).toLocaleString();
+            const tipText = date + '  ' + liqVal + '  ' + spxVal;
+
+            ctx.font = '8px "Space Mono", monospace';
+            const tw = ctx.measureText(tipText).width;
+            const boxW = tw + 12;
+            const boxH = 18;
+            let bx = x - boxW / 2;
+            if (bx < pad.left) bx = pad.left;
+            if (bx + boxW > w - pad.right)
+                bx = w - pad.right - boxW;
+            let by = Math.min(yLiq, ySpx) - boxH - 8;
+            if (by < 2) by = Math.max(yLiq, ySpx) + 8;
+
+            ctx.fillStyle = 'rgba(18,16,14,0.92)';
+            ctx.strokeStyle = 'rgba(176,108,200,0.5)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(bx, by, boxW, boxH, 3);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#f0e6cc';
+            ctx.fillText(tipText, bx + 6, by + 12);
+
+            ctx.restore();
+        });
+
+        globLiqCanvas.addEventListener('mouseleave', function() {
+            if (globLiqChartState)
+                drawGlobLiqChart(
+                    globLiqChartState.rawSeries,
+                    globLiqChartState.metrics, true
+                );
+        });
+    }
+
+    // Fetch global liquidity (staggered 4s after page load)
+    setTimeout(fetchGlobalLiquidity, 4000);
+    setInterval(fetchGlobalLiquidity, 300000);
 
     function renderPokemon(stats) {
         window._lastStats = stats;
