@@ -4085,10 +4085,18 @@
 
         const needStr = nextLevel ? '$' + (nextLevel.min - activePnl).toFixed(2) + ' to Evolve' : '';
 
+        // Per-stock sizing: Pokemon total budget / stock count
+        const perStock = stockCount > 0 ? totalRisk / stockCount : 0;
+
         let html = `<div class="pokemon-header">
             <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}</div>
             <img class="pokemon-sprite" src="${POKE_SPRITE(level.pokeId)}" alt="${level.pokemon}">
             <div class="pokemon-pnl ${pnlClass}">P&L: ${pnlStr}${needStr ? ' <span style="color:var(--pumpkin-glow);font-size:0.85rem">&middot; ' + needStr + '</span>' : ''}</div>
+            <div style="margin-top:0.5rem;text-align:center">
+                <div style="font-size:0.55rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Per Stock ($${totalRisk} / ${stockCount} stocks)</div>
+                <div style="font-size:1.4rem;font-weight:700;color:var(--pumpkin-glow);text-shadow:0 0 12px rgba(232,160,76,0.4);font-family:'Space Mono',monospace">$${perStock.toFixed(2)}</div>
+                <div style="font-size:0.55rem;color:var(--text-dim)"><span style="cursor:pointer;text-decoration:underline" onclick="const v=prompt('How many stocks?',${stockCount});if(v)updateStockCount(v)">change count</span></div>
+            </div>
         </div>`;
 
         // DCA health
