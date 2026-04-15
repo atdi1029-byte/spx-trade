@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+  content="width=device-width, initial-scale=1.0,
+  maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#12100e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style"
+  content="black-translucent">
+<title>Ticker Watchlist - SPX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect"
+  href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nosifer&family=Noto+Serif+JP:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap"
+  rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-deep: #12100e;
+  --bg-dark: #1a1815;
+  --bg-card: #221f1a;
+  --bg-card-hover: #2a2620;
+  --border: #3a3530;
+  --border-light: #4a4238;
+  --text: #d4c8b0;
+  --text-dim: #8a7e6a;
+  --text-bright: #f0e6cc;
+  --pumpkin: #d4843e;
+  --pumpkin-glow: #e8a04c;
+  --pumpkin-deep: #b8602a;
+  --green-candle: #4a8a4a;
+  --green-bright: #6aaa5a;
+  --red-candle: #c44b3f;
+  --cream: #e8d5a8;
+}
+
+body {
+  font-family: 'Space Mono', monospace;
+  background: var(--bg-deep);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-dark);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header h1 {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--text-bright);
+}
+
+.header h1 span {
+  font-family: 'Nosifer', cursive;
+  color: var(--pumpkin);
+  font-size: 16px;
+}
+
+.back-btn {
+  color: var(--pumpkin);
+  text-decoration: none;
+  font-size: 14px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: var(--bg-card);
+  border-color: var(--pumpkin);
+}
+
+/* Stats bar */
+.stats-bar {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  padding: 16px 20px;
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--border);
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-num {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--pumpkin-glow);
+}
+
+.stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+}
+
+.progress-wrap {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 12px 20px;
+}
+
+.progress-track {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg, var(--pumpkin-deep), var(--pumpkin-glow));
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.pace-info {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 5px 14px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  border-color: var(--pumpkin);
+  color: var(--text);
+}
+
+.filter-btn.active {
+  background: var(--pumpkin);
+  color: #12100e;
+  border-color: var(--pumpkin);
+  font-weight: 700;
+}
+
+/* Sections */
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.section {
+  margin-top: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cream);
+}
+
+.section-count {
+  font-size: 11px;
+  color: var(--text-dim);
+  background: rgba(212,132,62,0.15);
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+.ticker-list {
+  list-style: none;
+  padding: 6px 0;
+}
+
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-bottom: 1px solid rgba(58,53,48,0.5);
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.ticker-item:last-child { border-bottom: none; }
+
+.ticker-item:hover {
+  background: var(--bg-card-hover);
+}
+
+.ticker-item.checked {
+  opacity: 0.45;
+}
+
+.ticker-item.checked .ticker-symbol {
+  text-decoration: line-through;
+}
+
+.ticker-item.checked .check-box {
+  background: var(--green-candle);
+  border-color: var(--green-bright);
+}
+
+.ticker-item.checked .check-box::after {
+  content: '\2713';
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.check-box {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border-light);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.ticker-symbol {
+  font-weight: 700;
+  color: var(--pumpkin-glow);
+  min-width: 60px;
+  font-size: 14px;
+}
+
+.ticker-name {
+  color: var(--text);
+  font-size: 12px;
+  flex: 1;
+}
+
+.ticker-type {
+  font-size: 10px;
+  color: var(--text-dim);
+  background: var(--bg-dark);
+  padding: 2px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* Hide checked items filter */
+.hide-checked .ticker-item.checked {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .header h1 { font-size: 16px; }
+  .stats-bar { gap: 20px; }
+  .stat-num { font-size: 22px; }
+  .ticker-item { padding: 10px 14px; }
+  .ticker-name { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1><span>SPX</span> Watchlist</h1>
+  </div>
+  <a href="index.html" class="back-btn">Dashboard</a>
+</div>
+
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-num" id="checkedCount">0</div>
+    <div class="stat-label">Added</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" id="remainCount">100</div>
+    <div class="stat-label">Remaining</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" id="weeksLeft">50</div>
+    <div class="stat-label">Weeks Left</div>
+  </div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"
+      style="width:0%"></div>
+  </div>
+  <div class="pace-info" id="paceInfo">
+    2 per week &mdash; ~50 weeks to complete
+  </div>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" data-f="all">
+    All</button>
+  <button class="filter-btn" data-f="unchecked">
+    Remaining</button>
+  <button class="filter-btn" data-f="checked">
+    Added</button>
+</div>
+
+<div class="container" id="listContainer"></div>
+
+<script>
+const STORAGE_KEY = 'spx_watchlist_v1';
+
+const TICKERS = [
+  { cat: 'Mega-Cap Tech', items: [
+    { s: 'AAPL', n: 'Apple', t: 'stock' },
+    { s: 'MSFT', n: 'Microsoft', t: 'stock' },
+    { s: 'NVDA', n: 'Nvidia', t: 'stock' },
+    { s: 'GOOGL', n: 'Alphabet', t: 'stock' },
+    { s: 'AMZN', n: 'Amazon', t: 'stock' },
+    { s: 'META', n: 'Meta Platforms', t: 'stock' },
+    { s: 'TSLA', n: 'Tesla', t: 'stock' },
+    { s: 'AVGO', n: 'Broadcom', t: 'stock' },
+    { s: 'TSM', n: 'Taiwan Semiconductor', t: 'stock' },
+    { s: 'ORCL', n: 'Oracle', t: 'stock' },
+    { s: 'CRM', n: 'Salesforce', t: 'stock' },
+    { s: 'AMD', n: 'AMD', t: 'stock' },
+    { s: 'NFLX', n: 'Netflix', t: 'stock' },
+    { s: 'ADBE', n: 'Adobe', t: 'stock' },
+    { s: 'INTC', n: 'Intel', t: 'stock' },
+  ]},
+  { cat: 'Financials', items: [
+    { s: 'JPM', n: 'JPMorgan Chase', t: 'stock' },
+    { s: 'V', n: 'Visa', t: 'stock' },
+    { s: 'MA', n: 'Mastercard', t: 'stock' },
+    { s: 'BAC', n: 'Bank of America', t: 'stock' },
+    { s: 'GS', n: 'Goldman Sachs', t: 'stock' },
+    { s: 'MS', n: 'Morgan Stanley', t: 'stock' },
+    { s: 'BLK', n: 'BlackRock', t: 'stock' },
+    { s: 'SCHW', n: 'Charles Schwab', t: 'stock' },
+    { s: 'AXP', n: 'American Express', t: 'stock' },
+    { s: 'C', n: 'Citigroup', t: 'stock' },
+  ]},
+  { cat: 'Healthcare & Pharma', items: [
+    { s: 'UNH', n: 'UnitedHealth', t: 'stock' },
+    { s: 'JNJ', n: 'Johnson & Johnson', t: 'stock' },
+    { s: 'LLY', n: 'Eli Lilly', t: 'stock' },
+    { s: 'PFE', n: 'Pfizer', t: 'stock' },
+    { s: 'ABBV', n: 'AbbVie', t: 'stock' },
+    { s: 'MRK', n: 'Merck', t: 'stock' },
+    { s: 'TMO', n: 'Thermo Fisher', t: 'stock' },
+    { s: 'ABT', n: 'Abbott Labs', t: 'stock' },
+    { s: 'AMGN', n: 'Amgen', t: 'stock' },
+    { s: 'NVO', n: 'Novo Nordisk', t: 'stock' },
+  ]},
+  { cat: 'Consumer & Retail', items: [
+    { s: 'WMT', n: 'Walmart', t: 'stock' },
+    { s: 'COST', n: 'Costco', t: 'stock' },
+    { s: 'HD', n: 'Home Depot', t: 'stock' },
+    { s: 'MCD', n: "McDonald's", t: 'stock' },
+    { s: 'SBUX', n: 'Starbucks', t: 'stock' },
+    { s: 'NKE', n: 'Nike', t: 'stock' },
+    { s: 'TGT', n: 'Target', t: 'stock' },
+    { s: 'LOW', n: "Lowe's", t: 'stock' },
+    { s: 'DIS', n: 'Disney', t: 'stock' },
+    { s: 'PEP', n: 'PepsiCo', t: 'stock' },
+  ]},
+  { cat: 'Energy & Industrials', items: [
+    { s: 'XOM', n: 'ExxonMobil', t: 'stock' },
+    { s: 'CVX', n: 'Chevron', t: 'stock' },
+    { s: 'COP', n: 'ConocoPhillips', t: 'stock' },
+    { s: 'SLB', n: 'Schlumberger', t: 'stock' },
+    { s: 'OXY', n: 'Occidental Petroleum', t: 'stock' },
+    { s: 'CAT', n: 'Caterpillar', t: 'stock' },
+    { s: 'BA', n: 'Boeing', t: 'stock' },
+    { s: 'UPS', n: 'UPS', t: 'stock' },
+    { s: 'GE', n: 'GE Aerospace', t: 'stock' },
+    { s: 'RTX', n: 'RTX (Raytheon)', t: 'stock' },
+  ]},
+  { cat: 'Popular Growth', items: [
+    { s: 'PLTR', n: 'Palantir', t: 'stock' },
+    { s: 'SOFI', n: 'SoFi', t: 'stock' },
+    { s: 'COIN', n: 'Coinbase', t: 'stock' },
+    { s: 'RIVN', n: 'Rivian', t: 'stock' },
+    { s: 'HOOD', n: 'Robinhood', t: 'stock' },
+    { s: 'SQ', n: 'Block', t: 'stock' },
+    { s: 'SNAP', n: 'Snap', t: 'stock' },
+    { s: 'UBER', n: 'Uber', t: 'stock' },
+    { s: 'ABNB', n: 'Airbnb', t: 'stock' },
+    { s: 'RBLX', n: 'Roblox', t: 'stock' },
+  ]},
+  { cat: 'Index ETFs', items: [
+    { s: 'SPY', n: 'S&P 500', t: 'etf' },
+    { s: 'QQQ', n: 'Nasdaq 100', t: 'etf' },
+    { s: 'IWM', n: 'Russell 2000', t: 'etf' },
+    { s: 'DIA', n: 'Dow Jones', t: 'etf' },
+    { s: 'VTI', n: 'Total US Market', t: 'etf' },
+    { s: 'VOO', n: 'S&P 500 (Vanguard)', t: 'etf' },
+    { s: 'VT', n: 'Total World', t: 'etf' },
+    { s: 'RSP', n: 'Equal-Weight S&P', t: 'etf' },
+    { s: 'MDY', n: 'S&P MidCap 400', t: 'etf' },
+    { s: 'SCHD', n: 'Schwab Dividend', t: 'etf' },
+  ]},
+  { cat: 'Sector ETFs', items: [
+    { s: 'XLF', n: 'Financials', t: 'etf' },
+    { s: 'XLE', n: 'Energy', t: 'etf' },
+    { s: 'XLK', n: 'Technology', t: 'etf' },
+    { s: 'XLV', n: 'Healthcare', t: 'etf' },
+    { s: 'XLI', n: 'Industrials', t: 'etf' },
+    { s: 'XLP', n: 'Consumer Staples', t: 'etf' },
+    { s: 'XLU', n: 'Utilities', t: 'etf' },
+    { s: 'XLRE', n: 'Real Estate', t: 'etf' },
+    { s: 'XBI', n: 'Biotech', t: 'etf' },
+    { s: 'SMH', n: 'Semiconductors', t: 'etf' },
+  ]},
+  { cat: 'Commodities', items: [
+    { s: 'GLD', n: 'Gold', t: 'commodity' },
+    { s: 'SLV', n: 'Silver', t: 'commodity' },
+    { s: 'USO', n: 'Oil', t: 'commodity' },
+    { s: 'UNG', n: 'Natural Gas', t: 'commodity' },
+    { s: 'PDBC', n: 'Broad Commodities', t: 'commodity' },
+    { s: 'WEAT', n: 'Wheat', t: 'commodity' },
+    { s: 'DBA', n: 'Agriculture', t: 'commodity' },
+  ]},
+  { cat: 'Bonds & Income', items: [
+    { s: 'TLT', n: '20+ Year Treasuries', t: 'etf' },
+    { s: 'BND', n: 'Total Bond Market', t: 'etf' },
+    { s: 'HYG', n: 'High Yield Corporate', t: 'etf' },
+    { s: 'SHY', n: 'Short-Term Treasury', t: 'etf' },
+  ]},
+  { cat: 'Leveraged / Inverse', items: [
+    { s: 'TQQQ', n: '3x Nasdaq Bull', t: 'leveraged' },
+    { s: 'SQQQ', n: '3x Nasdaq Bear', t: 'leveraged' },
+    { s: 'SPXL', n: '3x S&P Bull', t: 'leveraged' },
+    { s: 'UVXY', n: '1.5x VIX Short-Term', t: 'leveraged' },
+  ]},
+];
+
+let checked = {};
+try {
+  checked = JSON.parse(
+    localStorage.getItem(STORAGE_KEY) || '{}');
+} catch(e) { checked = {}; }
+
+function save() {
+  localStorage.setItem(STORAGE_KEY,
+    JSON.stringify(checked));
+}
+
+function totalItems() {
+  let n = 0;
+  TICKERS.forEach(c => n += c.items.length);
+  return n;
+}
+
+function checkedCount() {
+  return Object.keys(checked).filter(k => checked[k])
+    .length;
+}
+
+function updateStats() {
+  const done = checkedCount();
+  const total = totalItems();
+  const remain = total - done;
+  document.getElementById('checkedCount')
+    .textContent = done;
+  document.getElementById('remainCount')
+    .textContent = remain;
+  document.getElementById('weeksLeft')
+    .textContent = Math.ceil(remain / 2);
+  const pct = (done / total * 100).toFixed(1);
+  document.getElementById('progressFill')
+    .style.width = pct + '%';
+  document.getElementById('paceInfo')
+    .textContent = `${pct}% complete \u2014 `
+    + `${Math.ceil(remain / 2)} weeks at 2/week`;
+
+  // Update section counts
+  document.querySelectorAll('.section').forEach(sec => {
+    const cat = sec.dataset.cat;
+    const catData = TICKERS.find(c => c.cat === cat);
+    if (!catData) return;
+    const catDone = catData.items
+      .filter(i => checked[i.s]).length;
+    const badge = sec.querySelector('.section-count');
+    if (badge) badge.textContent =
+      catDone + ' / ' + catData.items.length;
+  });
+}
+
+function render() {
+  const container =
+    document.getElementById('listContainer');
+  container.innerHTML = '';
+
+  TICKERS.forEach(cat => {
+    const sec = document.createElement('div');
+    sec.className = 'section';
+    sec.dataset.cat = cat.cat;
+
+    const catDone = cat.items
+      .filter(i => checked[i.s]).length;
+
+    sec.innerHTML = `
+      <div class="section-header">
+        <div class="section-title">${cat.cat}</div>
+        <div class="section-count">
+          ${catDone} / ${cat.items.length}</div>
+      </div>
+      <ul class="ticker-list"></ul>
+    `;
+
+    const ul = sec.querySelector('.ticker-list');
+
+    cat.items.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'ticker-item'
+        + (checked[item.s] ? ' checked' : '');
+      li.dataset.symbol = item.s;
+      li.innerHTML = `
+        <div class="check-box"></div>
+        <div class="ticker-symbol">${item.s}</div>
+        <div class="ticker-name">${item.n}</div>
+        <div class="ticker-type">${item.t}</div>
+      `;
+      li.addEventListener('click', () => {
+        checked[item.s] = !checked[item.s];
+        if (!checked[item.s]) delete checked[item.s];
+        li.classList.toggle('checked');
+        save();
+        updateStats();
+        applyFilter();
+      });
+      ul.appendChild(li);
+    });
+
+    container.appendChild(sec);
+  });
+
+  updateStats();
+}
+
+// Filters
+let currentFilter = 'all';
+
+function applyFilter() {
+  const items =
+    document.querySelectorAll('.ticker-item');
+  items.forEach(li => {
+    const isChecked =
+      li.classList.contains('checked');
+    if (currentFilter === 'all') {
+      li.style.display = '';
+    } else if (currentFilter === 'unchecked') {
+      li.style.display = isChecked ? 'none' : '';
+    } else if (currentFilter === 'checked') {
+      li.style.display = isChecked ? '' : 'none';
+    }
+  });
+
+  // Hide empty sections
+  document.querySelectorAll('.section').forEach(sec => {
+    const visible = sec.querySelectorAll(
+      '.ticker-item:not([style*="display: none"])');
+    sec.style.display =
+      visible.length === 0 ? 'none' : '';
+  });
+}
+
+document.querySelectorAll('.filter-btn')
+  .forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn')
+      .forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.f;
+    applyFilter();
+  });
+});
+
+render();
+</script>
+</body>
+</html>

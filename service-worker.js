@@ -1,7 +1,8 @@
-const CACHE_NAME = 'spx-trade-v92';
+const CACHE_NAME = 'spx-trade-v93';
 const ASSETS = [
   './',
   './index.html',
+  './watchlist.html',
   './logo.png',
   './bg.png',
   './graveyard-bg.png',
