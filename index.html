@@ -2396,6 +2396,14 @@
     function renderDashboard(data) {
         let { tickers, recentSignals, actionNeeded, stats } = data;
 
+        // Sync DCA pokemon state from server (cross-device)
+        if (stats.dcaMode !== undefined) {
+            dcaMode = stats.dcaMode;
+            dcaTotal = stats.dcaTotal || 0;
+            localStorage.setItem('spx_dca_mode', dcaMode ? 'true' : 'false');
+            localStorage.setItem('spx_dca_total', String(dcaTotal));
+        }
+
         // Filter out locally acted items
         actionNeeded = actionNeeded.filter(a => !isActed(a.ticker || '', a.signal || '', a.price || ''));
 
@@ -4815,7 +4823,7 @@
         localStorage.setItem('spx_dca_mode', dcaMode ? 'true' : 'false');
         updateDCAControls();
         if (window._lastStats) renderPokemon(window._lastStats);
-        fireGet(POST_URL + '?action=toggle_dca&mode=' + dcaMode);
+        fireGet(POST_URL + '?action=toggle_dca&mode=' + dcaMode + '&total=' + dcaTotal);
     }
 
     function updateDCAControls() {
@@ -4856,7 +4864,7 @@
         localStorage.setItem('spx_dca_total', '0');
         updateDCAControls();
         if (window._lastStats) renderPokemon(window._lastStats);
-        fireGet(POST_URL + '?action=reset_dca');
+        fireGet(POST_URL + '?action=toggle_dca&mode=' + dcaMode + '&total=0');
     }
 
     function dcaLevelUp() {
@@ -4874,7 +4882,7 @@
         localStorage.setItem('spx_dca_total', dcaTotal.toString());
         updateDCAControls();
         renderPokemon(window._lastStats);
-        fireGet(POST_URL + '?action=update_dca&amount=' + gap.toFixed(2));
+        fireGet(POST_URL + '?action=toggle_dca&mode=' + dcaMode + '&total=' + dcaTotal.toFixed(2));
     }
 
     function updateStockCount(val) {
