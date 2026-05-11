@@ -410,6 +410,8 @@
         .action-btn.zero:hover { background: #1f6feb44; color: var(--cream); }
         .action-btn.close-trade { background: #f5a62322; color: #f5a623; border-color: #f5a62344; display: none; }
         .action-btn.close-trade:hover { background: #f5a62344; color: var(--cream); }
+        .reopen-btn { font-family: 'Space Mono', monospace; font-size: 0.5rem; font-weight: 700; padding: 2px 8px; border-radius: 3px; border: 1px solid #6a9fdb44; background: #1f6feb11; color: #6a9fdb; cursor: pointer; }
+        .reopen-btn:hover { background: #1f6feb33; color: var(--cream); }
         .pnl-badge { display: inline-block; font-size: 0.5rem; font-weight: 700; padding: 1px 6px; border-radius: 3px; margin-left: 0; vertical-align: middle; }
         .pnl-badge.positive { background: var(--green-dim); color: var(--green-bright); }
         .pnl-badge.negative { background: #c44b3f22; color: var(--red-bright); }
@@ -1957,6 +1959,16 @@
     <!-- Action Needed -->
     <div class="action-section" id="actionSection">
         <div class="section-header">Action Needed <span class="count" id="actionCount">0</span></div>
+        <div style="display:flex;gap:6px;padding:6px 0 4px;align-items:center;flex-wrap:wrap">
+            <input type="text" id="quickTicker" placeholder="Ticker" style="width:72px;background:#1a1610;border:1px solid var(--border);color:var(--fg);border-radius:6px;padding:5px 8px;font-size:0.8rem;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+            <select id="quickSide" style="background:#1a1610;border:1px solid var(--border);color:var(--fg);border-radius:6px;padding:5px 8px;font-size:0.8rem">
+                <option value="buy">BUY</option>
+                <option value="sell">SELL</option>
+            </select>
+            <input type="text" id="quickPrice" placeholder="Price $" style="width:90px;background:#1a1610;border:1px solid var(--border);color:var(--fg);border-radius:6px;padding:5px 8px;font-size:0.8rem">
+            <button onclick="calcQuickLevels()" style="background:var(--pumpkin);border:none;color:#fff;border-radius:6px;padding:5px 14px;font-size:0.8rem;cursor:pointer;font-weight:700">Go</button>
+        </div>
+        <div id="quickLevelsResult" style="display:none;background:#1a1610;border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:0.8rem"></div>
         <div class="action-list" id="actionList"></div>
     </div>
 
@@ -2254,6 +2266,26 @@
         levelsEl.querySelector('.bt-sl').textContent = fmt(slP);
         levelsEl.querySelector('.bt-half').textContent = fmt(halfP);
         levelsEl.querySelector('.bt-tp').textContent = fmt(tpP);
+    }
+
+    function calcQuickLevels() {
+        const ticker = document.getElementById('quickTicker').value.trim().toUpperCase();
+        const side = document.getElementById('quickSide').value;
+        const p = parseFloat(document.getElementById('quickPrice').value.replace(/,/g, ''));
+        const out = document.getElementById('quickLevelsResult');
+        if (!ticker || !p || p <= 0) { out.style.display = 'none'; return; }
+        const bt = BT_DEFAULTS[side];
+        const isBuy = side === 'buy';
+        const fmt = v => v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toPrecision(4);
+        const slP = isBuy ? p * (1 - bt.sl / 100) : p * (1 + bt.sl / 100);
+        const halfP = isBuy ? p * (1 + bt.halfTp / 100) : p * (1 - bt.halfTp / 100);
+        const tpP = isBuy ? p * (1 + bt.tp / 100) : p * (1 - bt.tp / 100);
+        out.style.display = 'block';
+        out.innerHTML = `<strong style="color:var(--pumpkin)">${ticker}</strong> <span style="opacity:0.6">${side.toUpperCase()} @ $${p}</span><br>
+            <span style="color:var(--red-bright)">SL: $<span class="tap-copy" onclick="copyVal(this)">${fmt(slP)}</span></span> &nbsp;
+            <span style="color:var(--green-bright)">TP1: $<span class="tap-copy" onclick="copyVal(this)">${fmt(halfP)}</span></span> &nbsp;
+            <span style="color:var(--green-bright)">TP2: $<span class="tap-copy" onclick="copyVal(this)">${fmt(tpP)}</span></span>
+            <span style="opacity:0.5;font-size:0.65rem"> (${bt.sl}% / ${bt.halfTp}% / ${bt.tp}%)</span>`;
     }
 
     // DCA state
@@ -2803,6 +2835,17 @@
     }
 
 
+    // Reopen trade — resets outcome back to Open on the sheet
+    async function reopenTrade(ticker, signal) {
+        const url = new URL(POST_URL);
+        url.searchParams.set('action', 'update_position');
+        url.searchParams.set('ticker', ticker);
+        url.searchParams.set('signal', signal);
+        url.searchParams.set('field', 'reopen');
+        await fireGet(url.toString());
+        setTimeout(fetchData, 2000);
+    }
+
     // ====== ACTION NEEDED OUTCOME (simple, sends directly to sheet) ======
     async function markActionOutcome(ticker, signal, price, value, elemId) {
         const profitInput = document.getElementById(elemId + '-profit');
@@ -2958,6 +3001,7 @@
                 </dl>
                 <div class="ticker-phase">${esc(sd.phase || 'No data')}</div>
                 ${sd.nextAction ? '<div class="ticker-action">' + esc(sd.nextAction) + '</div>' : ''}
+                ${(sd.status === 'PROFIT' || sd.status === 'STOPPED') && sd.lastSignal ? `<div style="margin-top:0.4rem"><button class="reopen-btn" onclick="reopenTrade('${esc(t.ticker)}','${esc(sd.lastSignal)}')">↺ Reopen</button></div>` : ''}
                 <div class="ticker-links">
                     <a class="ticker-link tv" href="${getTickerLink(t.ticker, 'tv')}" target="_blank">TradingView</a>
                     <a class="ticker-link hl" href="${getTickerLink(t.ticker, 'hl')}" target="_blank">Hyperliquid</a>
@@ -3091,7 +3135,8 @@
         const wins = (data.closedTrades || []).map(t => ({
             ticker: t.ticker,
             profit: Number(t.profit || 0).toFixed(2),
-            date: t.date || ''
+            date: t.date || '',
+            signal: t.signal || 'buy'
         }));
         countEl.textContent = wins.length;
         if (wins.length === 0) {
@@ -3155,6 +3200,7 @@
                     </svg>
                 </div>
                 <div class="stone-date">${esc(w.date)}</div>
+                <button class="reopen-btn" style="margin-top:0.3rem" onclick="reopenTrade('${esc(w.ticker)}','${esc(w.signal)}')">↺ Reopen</button>
             </div>
         `).join('');
     }
