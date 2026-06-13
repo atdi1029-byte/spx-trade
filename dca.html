@@ -1108,7 +1108,16 @@ function saveData(data) {
 }
 
 // ====== CLOUD SYNC ======
+let syncReady = false;
+function _hasRealHoldings(data) {
+    if (!data || !data.portfolios) return false;
+    return Object.values(data.portfolios).some(p =>
+        Object.values(p.holdings || {}).some(h => h.shares > 0)
+    );
+}
 function syncToCloud(data) {
+    if (!syncReady) return;
+    if (!_hasRealHoldings(data)) { console.warn('[SPX DCA] BLOCKED — no real holdings, refusing cloud push'); return; }
     try {
         const json = JSON.stringify(data);
         const encoded = encodeURIComponent(json);
@@ -2705,8 +2714,9 @@ function switchPortfolio() {
 }
 
 // ====== INIT ======
-document.addEventListener('DOMContentLoaded', () => {
-    mergeAndLoadFromCloud();
+document.addEventListener('DOMContentLoaded', async () => {
+    await mergeAndLoadFromCloud();
+    syncReady = true;
     refreshPrices();
 });
 
@@ -2715,10 +2725,12 @@ document.addEventListener('visibilitychange', () => {
 });
 
 window.addEventListener('online', () => {
+    if (!syncReady) return;
     setTimeout(() => { mergeAndLoadFromCloud(); const d = loadData(); syncToCloud(d); }, 1000);
 });
 
 document.addEventListener('pagehide', () => {
+    if (!syncReady) return;
     const d = loadData();
     if (d && d.portfolios) syncToCloud(d);
 });
