@@ -2291,7 +2291,7 @@
     // DCA state
     let dcaMode = localStorage.getItem('spx_dca_mode') === 'true';
     let dcaTotal = parseFloat(localStorage.getItem('spx_dca_total')) || 0;
-    let stockCount = parseInt(localStorage.getItem('spx_stock_count')) || 10;
+    let stockCount = parseInt(localStorage.getItem('spx_stock_count')) || 20;
 
     let refreshTimer = null;
     let allTickers = [];
@@ -4803,8 +4803,8 @@
 
         const needStr = nextLevel ? '$' + (nextLevel.min - activePnl).toFixed(2) + ' to Evolve' : '';
 
-        // Per-stock sizing: Half-Kelly $ / ticker count
-        const tickerCount = allTickers.length || stockCount;
+        // Per-stock sizing: Half-Kelly $ / concurrent positions
+        const tickerCount = stockCount;
         const wins = parseInt(stats.wins) || 0;
         const losses = parseInt(stats.losses) || 0;
         const tradeTotal = wins + losses;
@@ -4824,7 +4824,7 @@
             <img class="pokemon-sprite" src="${POKE_SPRITE(level.pokeId)}" alt="${level.pokemon}">
             <div class="pokemon-pnl ${pnlClass}">P&L: ${pnlStr}${needStr ? ' <span style="color:var(--pumpkin-glow);font-size:0.85rem">&middot; ' + needStr + '</span>' : ''}</div>
             ${tradeTotal >= 5 && perStock > 0 ? `<div style="margin-top:0.5rem;text-align:center">
-                <div style="font-size:0.55rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Per Trade (Half-Kelly / ${tickerCount} tickers)</div>
+                <div style="font-size:0.55rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Per Trade (Half-Kelly / ${tickerCount} positions)</div>
                 <div style="font-size:1.4rem;font-weight:700;color:var(--pumpkin-glow);text-shadow:0 0 12px rgba(232,160,76,0.4);font-family:'Space Mono',monospace">$${perStock.toFixed(2)}</div>
                 <div style="font-size:0.55rem;color:var(--text-dim)">Kelly budget: $${halfKellyDollar.toFixed(0)}</div>
             </div>` : ''}
@@ -4952,7 +4952,7 @@
     }
 
     function updateStockCount(val) {
-        stockCount = Math.max(1, Math.min(50, parseInt(val) || 10));
+        stockCount = Math.max(1, Math.min(50, parseInt(val) || 20));
         localStorage.setItem('spx_stock_count', stockCount.toString());
         if (window._lastStats) renderKelly(window._lastStats);
     }
