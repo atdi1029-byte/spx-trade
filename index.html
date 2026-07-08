@@ -862,6 +862,54 @@
             border-color: var(--text-dim); color: var(--text-dim);
             font-size: 0.6rem;
         }
+        .pokemon-size-chip.quarter {
+            border-color: #f5c842; color: #f5c842;
+            background: rgba(245,200,66,0.08);
+            font-size: 0.6rem;
+        }
+        .pokemon-size-chip.eighth {
+            border-color: #e85454; color: #e85454;
+            background: rgba(232,84,84,0.08);
+            font-size: 0.6rem;
+        }
+        .kelly-sizes-grid {
+            display: flex; flex-wrap: wrap; gap: 0.5rem;
+            justify-content: center; margin-top: 0.6rem;
+        }
+        .kelly-size-card {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 0.4rem 0.7rem; border-radius: 10px;
+            border: 1px solid var(--border); background: var(--bg-dark);
+            min-width: 90px;
+        }
+        .kelly-size-card.half-k {
+            border-color: var(--pumpkin);
+            background: rgba(212,132,62,0.1);
+        }
+        .kelly-size-card.quarter-k {
+            border-color: #f5c842;
+            background: rgba(245,200,66,0.08);
+        }
+        .kelly-size-card.eighth-k {
+            border-color: #e85454;
+            background: rgba(232,84,84,0.08);
+        }
+        .kelly-size-label {
+            font-size: 0.5rem; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-dim);
+            margin-bottom: 0.15rem;
+        }
+        .kelly-size-val {
+            font-size: 1.1rem; font-weight: 700;
+            font-family: 'Space Mono', monospace;
+        }
+        .kelly-size-card.half-k .kelly-size-val { color: var(--pumpkin-glow); }
+        .kelly-size-card.quarter-k .kelly-size-val { color: #f5c842; }
+        .kelly-size-card.eighth-k .kelly-size-val { color: #e85454; }
+        .kelly-size-per {
+            font-size: 0.45rem; color: var(--text-dim);
+            margin-top: 0.1rem;
+        }
 
         /* ============ KELLY EDGE OPTIMIZER ============ */
         .kelly-section { margin-bottom: 1.5rem; }
@@ -4817,16 +4865,35 @@
         const rr = avgLoss > 0 ? avgWin / avgLoss : 0;
         const kellyF = rr > 0 ? (rr * wr - (1 - wr)) / rr : 0;
         const halfKellyDollar = Math.max(0, activePnl * kellyF / 2);
-        const perStock = tickerCount > 0 ? halfKellyDollar / tickerCount : 0;
+        const quarterKellyDollar = Math.max(0, activePnl * kellyF / 4);
+        const eighthKellyDollar = Math.max(0, activePnl * kellyF / 8);
+        const perStockHalf = tickerCount > 0 ? halfKellyDollar / tickerCount : 0;
+        const perStockQuarter = tickerCount > 0 ? quarterKellyDollar / tickerCount : 0;
+        const perStockEighth = tickerCount > 0 ? eighthKellyDollar / tickerCount : 0;
 
         let html = `<div class="pokemon-header">
             <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}</div>
             <img class="pokemon-sprite" src="${POKE_SPRITE(level.pokeId)}" alt="${level.pokemon}">
             <div class="pokemon-pnl ${pnlClass}">P&L: ${pnlStr}${needStr ? ' <span style="color:var(--pumpkin-glow);font-size:0.85rem">&middot; ' + needStr + '</span>' : ''}</div>
-            ${tradeTotal >= 5 && perStock > 0 ? `<div style="margin-top:0.5rem;text-align:center">
-                <div style="font-size:0.55rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Per Trade (Half-Kelly / ${tickerCount} positions)</div>
-                <div style="font-size:1.4rem;font-weight:700;color:var(--pumpkin-glow);text-shadow:0 0 12px rgba(232,160,76,0.4);font-family:'Space Mono',monospace">$${perStock.toFixed(2)}</div>
-                <div style="font-size:0.55rem;color:var(--text-dim)">Kelly budget: $${halfKellyDollar.toFixed(0)}</div>
+            ${tradeTotal >= 5 && perStockHalf > 0 ? `<div style="margin-top:0.5rem;text-align:center">
+                <div style="font-size:0.55rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.4rem">Per Trade / ${tickerCount} positions</div>
+                <div class="kelly-sizes-grid">
+                    <div class="kelly-size-card half-k">
+                        <div class="kelly-size-label">\u00bd Kelly</div>
+                        <div class="kelly-size-val">$${perStockHalf.toFixed(2)}</div>
+                        <div class="kelly-size-per">budget $${halfKellyDollar.toFixed(0)}</div>
+                    </div>
+                    <div class="kelly-size-card quarter-k">
+                        <div class="kelly-size-label">\ud83d\udc14 \u00bc Kelly</div>
+                        <div class="kelly-size-val">$${perStockQuarter.toFixed(2)}</div>
+                        <div class="kelly-size-per">budget $${quarterKellyDollar.toFixed(0)}</div>
+                    </div>
+                    <div class="kelly-size-card eighth-k">
+                        <div class="kelly-size-label">\ud83c\udfb0 \u215b Kelly</div>
+                        <div class="kelly-size-val">$${perStockEighth.toFixed(2)}</div>
+                        <div class="kelly-size-per">budget $${eighthKellyDollar.toFixed(0)}</div>
+                    </div>
+                </div>
             </div>` : ''}
         </div>`;
 
