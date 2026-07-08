@@ -4879,17 +4879,17 @@
                 <div style="font-size:0.55rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.4rem">Per Trade / ${tickerCount} positions</div>
                 <div class="kelly-sizes-grid">
                     <div class="kelly-size-card half-k">
-                        <div class="kelly-size-label">\u00bd Kelly</div>
+                        <div class="kelly-size-label"><span style="font-size:1.2rem">\u00bd</span> Kelly</div>
                         <div class="kelly-size-val">$${perStockHalf.toFixed(2)}</div>
                         <div class="kelly-size-per">budget $${halfKellyDollar.toFixed(0)}</div>
                     </div>
                     <div class="kelly-size-card quarter-k">
-                        <div class="kelly-size-label">\ud83d\udc14 \u00bc Kelly</div>
+                        <div class="kelly-size-label"><span style="font-size:1.2rem">\ud83d\udc14</span> <span style="font-size:1.2rem">\u00bc</span> Kelly</div>
                         <div class="kelly-size-val">$${perStockQuarter.toFixed(2)}</div>
                         <div class="kelly-size-per">budget $${quarterKellyDollar.toFixed(0)}</div>
                     </div>
                     <div class="kelly-size-card eighth-k">
-                        <div class="kelly-size-label">\ud83c\udfb0 \u215b Kelly</div>
+                        <div class="kelly-size-label"><span style="font-size:1.2rem">\ud83c\udfb0</span> <span style="font-size:1.2rem">\u215b</span> Kelly</div>
                         <div class="kelly-size-val">$${perStockEighth.toFixed(2)}</div>
                         <div class="kelly-size-per">budget $${eighthKellyDollar.toFixed(0)}</div>
                     </div>
@@ -5160,14 +5160,14 @@
                 <div class="kelly-compare-val" style="color:var(--pumpkin-glow)">$${perStock.toFixed(0)}</div>
             </div>
             <div class="kelly-compare">
-                <div class="kelly-compare-label" style="color:#ffb74d">&#9889; Blended Avg</div>
+                <div class="kelly-compare-label" style="color:#ffb74d"><span style="font-size:1.1rem">&#9889;</span> Blended Avg</div>
                 <div class="kelly-bar-track">
                     <div class="kelly-bar-fill" style="width:${Math.min(100, halfKellyDollar > 0 ? ((pokeTotal + halfKellyDollar) / 2 / halfKellyDollar) * 50 : 0)}%;background:#ffb74d"></div>
                 </div>
                 <div class="kelly-compare-val" style="color:#ffb74d">$${((pokeTotal + halfKellyDollar) / 2).toFixed(0)}</div>
             </div>
             <div class="kelly-compare">
-                <div class="kelly-compare-label" style="color:#90a4ae">&#128020; Quarter Kelly</div>
+                <div class="kelly-compare-label" style="color:#90a4ae"><span style="font-size:1.1rem">&#128020;</span> Quarter Kelly</div>
                 <div class="kelly-bar-track">
                     <div class="kelly-bar-fill" style="width:${Math.min(100, halfKelly * 100 / 1.0)}%;background:#90a4ae;opacity:0.6"></div>
                 </div>
