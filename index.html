@@ -1807,6 +1807,69 @@
             letter-spacing: 2px;
             text-transform: uppercase;
         }
+
+        /* ============ ADD TRADE MODAL ============ */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 360px;
+            width: 100%;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+        }
+        .modal-box .modal-msg {
+            font-size: 0.9rem;
+            color: var(--text-bright);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        .modal-box input {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-dark);
+            color: var(--text-bright);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            outline: none;
+        }
+        .modal-box input:focus { border-color: var(--pumpkin); }
+        .modal-buttons {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+        .modal-buttons button {
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            border: none;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .modal-btn-cancel {
+            background: var(--bg-dark);
+            color: var(--text-dim);
+            border: 1px solid var(--border) !important;
+        }
+        .modal-btn-ok {
+            background: var(--pumpkin);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -1967,6 +2030,7 @@
             <span class="status-live"><span class="status-dot loading" id="statusDot"></span><span id="statusText">Connecting...</span></span>
             <span class="status-live" id="lastUpdate"></span>
             <button class="refresh-btn" onclick="fetchData()">Refresh</button>
+            <button class="refresh-btn" onclick="showAddTradeModal()" style="background:rgba(34,120,60,0.3);border-color:var(--green-candle);color:var(--green-bright)">+ Trade</button>
         </div>
     </div>
 
@@ -5034,6 +5098,76 @@
         stockCount = Math.max(1, Math.min(50, parseInt(val) || 20));
         localStorage.setItem('spx_stock_count', stockCount.toString());
         if (window._lastStats) renderKelly(window._lastStats);
+    }
+
+    // ====== ADD TRADE MODAL ======
+    async function showAddTradeModal() {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        const box = document.createElement('div');
+        box.className = 'modal-box';
+        box.innerHTML = `
+            <div class="modal-msg">Add Manual Trade</div>
+            <input id="at-ticker" type="text" placeholder="Ticker (e.g. AAPL)" style="text-transform:uppercase">
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+                <label style="color:var(--text-dim);font-size:0.75rem;cursor:pointer">
+                    <input type="radio" name="at-signal" value="buy" checked> Buy
+                </label>
+                <label style="color:var(--text-dim);font-size:0.75rem;cursor:pointer">
+                    <input type="radio" name="at-signal" value="sell"> Short
+                </label>
+            </div>
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+                <label style="color:var(--text-dim);font-size:0.75rem;cursor:pointer">
+                    <input type="radio" name="at-outcome" value="TP Hit" checked> TP Hit
+                </label>
+                <label style="color:var(--text-dim);font-size:0.75rem;cursor:pointer">
+                    <input type="radio" name="at-outcome" value="Stopped Out"> Stopped Out
+                </label>
+                <label style="color:var(--text-dim);font-size:0.75rem;cursor:pointer">
+                    <input type="radio" name="at-outcome" value="0x0"> 0x0
+                </label>
+                <label style="color:var(--text-dim);font-size:0.75rem;cursor:pointer">
+                    <input type="radio" name="at-outcome" value="Closed"> Closed
+                </label>
+            </div>
+            <input id="at-profit" type="text" placeholder="P&L in $ (e.g. 2.50 or -1.30)">
+        `;
+        const btns = document.createElement('div');
+        btns.className = 'modal-buttons';
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'modal-btn-cancel';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = () => overlay.remove();
+        const okBtn = document.createElement('button');
+        okBtn.className = 'modal-btn-ok';
+        okBtn.textContent = 'Add';
+        okBtn.onclick = async () => {
+            const ticker = box.querySelector('#at-ticker').value.trim().toUpperCase();
+            const signal = box.querySelector('input[name="at-signal"]:checked').value;
+            const outcome = box.querySelector('input[name="at-outcome"]:checked').value;
+            const profit = box.querySelector('#at-profit').value.trim();
+            if (!ticker) { showToast('Ticker required'); return; }
+            overlay.remove();
+            const params = new URLSearchParams({
+                action: 'add_trade', ticker, signal, outcome,
+                profit: profit || '0'
+            });
+            try {
+                await fireGet(POST_URL + '?' + params);
+                showToast(`${ticker} ${outcome} added`, 'success');
+                setTimeout(fetchData, 1000);
+            } catch (e) {
+                showToast('Failed to add trade: ' + e.message);
+            }
+        };
+        btns.appendChild(cancelBtn);
+        btns.appendChild(okBtn);
+        box.appendChild(btns);
+        overlay.appendChild(box);
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        document.body.appendChild(overlay);
+        box.querySelector('#at-ticker').focus();
     }
 
     // ====== KELLY EDGE OPTIMIZER ======
