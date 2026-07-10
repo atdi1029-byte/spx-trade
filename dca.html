@@ -1927,11 +1927,19 @@ function confirmSell() {
     const price = getPrice(sellTicker);
     if (price <= 0) return;
 
-    const sharesToSell = amount / price;
+    let sharesToSell = amount / price;
     const data = loadData();
     const pd = data.portfolios[currentPortfolio];
     const h = pd.holdings[sellTicker];
-    if (!h || h.shares < sharesToSell) {
+    if (!h || h.shares <= 0) {
+        alert('Not enough shares to sell');
+        return;
+    }
+    // If selling within 1% of all shares (rounding from displayed value), sell all
+    if (sharesToSell > h.shares && sharesToSell <= h.shares * 1.01) {
+        sharesToSell = h.shares;
+    }
+    if (h.shares < sharesToSell) {
         alert('Not enough shares to sell');
         return;
     }
