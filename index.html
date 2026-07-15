@@ -984,6 +984,43 @@
             border: 1px solid var(--red-bright);
             color: var(--red-bright);
         }
+        /* ============ STRATEGY REVIEW BUTTON ============ */
+        .review-banner {
+            display: none;
+            margin-bottom: 1.25rem;
+        }
+        .review-banner.visible { display: block; }
+        .review-btn {
+            width: 100%;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.7rem 1.2rem;
+            background: linear-gradient(135deg, #1a1200 0%, #2a1800 100%);
+            border: 1px solid #ff9800;
+            color: #ffb74d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: flashReview 1.5s ease-in-out infinite alternate;
+            transition: all 0.2s;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        .review-btn:hover {
+            background: linear-gradient(135deg, #2a1f00 0%, #3a2a00 100%);
+            border-color: #ffb74d;
+        }
+        .review-btn .review-sub {
+            display: block;
+            font-size: 0.55rem;
+            font-weight: 400;
+            color: #b8860b;
+            margin-top: 4px;
+        }
+        @keyframes flashReview {
+            from { box-shadow: 0 0 8px rgba(255,152,0,0.3); }
+            to { box-shadow: 0 0 16px rgba(255,152,0,0.6); }
+        }
         .kelly-milestone {
             display: flex; align-items: center; gap: 0.5rem;
             padding: 0.4rem 0.6rem; font-size: 0.6rem;
@@ -2322,6 +2359,13 @@
             </div>
         </div>
         <div>
+            <!-- Strategy Review Banner -->
+            <div class="review-banner" id="reviewBanner">
+                <button class="review-btn" onclick="dismissReview()">
+                    STRATEGY REVIEW DUE
+                    <span class="review-sub" id="reviewSub">50 trades reached — tap to mark reviewed</span>
+                </button>
+            </div>
             <div class="section-header">Performance Summary</div>
             <div class="section-box">
                 <div class="perf-grid" id="perfGrid"></div>
@@ -2721,6 +2765,25 @@
                 <div class="perf-label">Worst Ticker</div>
             </div>
         `;
+        // Next review indicator
+        const totalTr = parseInt(stats.totalTrades) || 0;
+        const lastRev = parseInt(
+            localStorage.getItem(REVIEW_KEY) || '0'
+        );
+        const nextRev = lastRev + REVIEW_INTERVAL;
+        if (totalTr < nextRev) {
+            perfGrid.innerHTML += `
+                <div class="perf-item" style="grid-column:1/-1;
+                    text-align:center">
+                    <span style="color:#b39ddb;font-size:0.65rem">
+                        Next review: ${nextRev} trades
+                        (${nextRev - totalTr} to go)
+                    </span>
+                </div>`;
+        }
+
+        // --- Strategy Review Milestone ---
+        checkReviewDue(stats.totalTrades || 0);
 
         // --- Pokemon Scaling ---
         renderPokemon(stats);
@@ -3246,6 +3309,45 @@
     }
 
     // ====== VICTORY GARDEN ======
+    // ============ STRATEGY REVIEW MILESTONE ============
+    const REVIEW_KEY = 'spx_last_review_trades';
+    const REVIEW_INTERVAL = 50;
+
+    function checkReviewDue(totalTrades) {
+        const banner = document.getElementById('reviewBanner');
+        const sub = document.getElementById('reviewSub');
+        if (!banner) return;
+        const lastReview = parseInt(
+            localStorage.getItem(REVIEW_KEY) || '0'
+        );
+        const nextReview = lastReview + REVIEW_INTERVAL;
+        if (totalTrades >= nextReview) {
+            const milestone = Math.floor(
+                totalTrades / REVIEW_INTERVAL
+            ) * REVIEW_INTERVAL;
+            sub.textContent = milestone +
+                ' trades reached — tap to mark reviewed';
+            banner.classList.add('visible');
+        } else {
+            banner.classList.remove('visible');
+        }
+    }
+
+    function dismissReview() {
+        const banner = document.getElementById('reviewBanner');
+        const perfVal = document.querySelector(
+            '#perfGrid .perf-item .perf-val'
+        );
+        const total = parseInt(perfVal?.textContent) || 0;
+        const milestone = Math.floor(
+            total / REVIEW_INTERVAL
+        ) * REVIEW_INTERVAL;
+        localStorage.setItem(REVIEW_KEY, String(milestone));
+        fireGet(POST_URL + '?action=set_review&milestone='
+            + milestone);
+        banner.classList.remove('visible');
+    }
+
     function renderVictories(data) {
         const garden = document.getElementById('graveyard');
         const countEl = document.getElementById('graveyardCount');
