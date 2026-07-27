@@ -419,7 +419,25 @@
         .stock-logo { width: 22px; height: 22px; border-radius: 50%; object-fit: contain; background: var(--bg-dark); border: 1px solid var(--border); vertical-align: middle; margin-right: 6px; }
         .stock-logo-fallback { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; align-items: center; justify-content: center; font-size: 0.45rem; font-weight: 700; color: var(--cream); background: var(--pumpkin-deep); vertical-align: middle; margin-right: 6px; }
         .ticker-card .stock-logo, .ticker-card .stock-logo-fallback { width: 28px; height: 28px; font-size: 0.5rem; margin-right: 0; }
-        .open-trades-filters { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; }
+        .open-trades-filters { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; align-items: center; }
+        .ot-search {
+            font-family: 'Space Mono', monospace; font-size: 0.6rem;
+            background: var(--bg-dark); border: 1px solid var(--border);
+            color: var(--text); border-radius: 3px; padding: 4px 8px;
+            width: 100px; text-transform: uppercase;
+        }
+        .ot-search::placeholder { color: var(--text-dim); }
+        .ot-search:focus { outline: none; border-color: var(--pumpkin); }
+        .ao-badge {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem; font-weight: 700;
+            padding: 2px 6px; border-radius: 3px;
+            letter-spacing: 1px;
+            color: var(--pumpkin-glow);
+            background: rgba(232, 160, 76, 0.12);
+            border: 1px solid rgba(232, 160, 76, 0.5);
+            text-shadow: 0 0 6px rgba(232, 160, 76, 0.7);
+        }
         .filter-btn {
             font-family: 'Space Mono', monospace; font-size: 0.55rem; font-weight: 700; padding: 4px 12px;
             border-radius: 3px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-dim);
@@ -2129,6 +2147,7 @@
     <!-- Open Trades -->
     <div class="section-header">Open Trades <span class="count" id="openCount">0</span></div>
     <div class="open-trades-filters">
+        <input type="text" class="ot-search" id="otSearch" placeholder="Search..." oninput="filterOpenTrades()">
         <button class="filter-btn active" onclick="setOpenFilter('all',this)">All</button>
         <button class="filter-btn" onclick="setOpenFilter('no-0x0',this)">No OxO</button>
         <button class="filter-btn" onclick="setOpenFilter('no-tp',this)">No TP</button>
@@ -2619,6 +2638,16 @@
         streakEl.textContent = streakDisplay;
         streakEl.className = 'stat-value' + (streakStr.includes('W') ? ' green' : streakStr.includes('L') ? ' red' : '');
 
+        // --- Build set of tickers with open positions ---
+        const openTickerSides = new Set();
+        tickers.forEach(t => {
+            const tk = t.ticker.toUpperCase();
+            const bs = t.buyStatus || t.status || '';
+            const ss = t.sellStatus || '';
+            if (bs === 'OPEN' || bs === 'NEW SIGNAL') openTickerSides.add(tk + '_buy');
+            if (ss === 'OPEN' || ss === 'NEW SIGNAL') openTickerSides.add(tk + '_sell');
+        });
+
         // --- Action Needed (only new signals, not outcomes) ---
         const actionList = document.getElementById('actionList');
         const actionCount = document.getElementById('actionCount');
@@ -2652,7 +2681,11 @@
                         earnHtml = `<div style="background:#d4843e22;border:1px solid #d4843e55;border-radius:4px;padding:4px 8px;margin:4px 0;font-size:0.65rem;color:var(--pumpkin)">&#9888; EARNINGS ${earnLabel} (${earnDays}d)</div>`;
                     }
                 }
-                const p = Number(String(a.price).replace(/,/g, ''));
+                let p = Number(String(a.price).replace(/,/g, ''));
+                // Fallback: if signal has no price, use ticker's current price
+                if (!p && matchTicker) {
+                    p = Number(matchTicker.currentPrice || matchTicker.price || 0);
+                }
                 const btSide = isBuy ? 'buy' : 'sell';
                 const bt = BT_DEFAULTS[btSide];
                 const btDataAttr = `data-sl="${bt.sl}" data-tp="${bt.tp}" data-half="${bt.halfTp}" data-side="${btSide}"`;
@@ -2664,17 +2697,19 @@
                     const fmt = v => v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toPrecision(4);
                     btLevelsHtml = `<div class="meta" style="margin-top:0.2rem"><span class="bt-levels" ${btDataAttr}><span style="color:var(--red-bright)">SL <span class="bt-sl tap-copy" onclick="copyVal(this)">${fmt(slP)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.sl}%)</span></span> &middot; <span style="color:var(--green-bright)">TP1 <span class="bt-half tap-copy" onclick="copyVal(this)">${fmt(halfP)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.halfTp}%)</span></span> &middot; <span style="color:var(--green-bright)">TP2 <span class="bt-tp tap-copy" onclick="copyVal(this)">${fmt(tpP)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.tp}%)</span></span></span></div>`;
                 }
+                const aoSide = isBuy ? 'buy' : 'sell';
+                const isAlreadyOpen = openTickerSides.has(a.ticker.toUpperCase() + '_' + aoSide);
                 return `
                     <div class="action-item" id="${id}">
                         <div>
-                            <div>${logoHtml}<span class="ticker-badge">${esc(a.ticker)}</span><span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span><span style="margin-left:0.5rem;font-size:0.65rem;color:var(--green-bright);font-weight:700">${effSizeStr !== 'SIT OUT' ? 'Enter at $' + effSizeStr : 'SIT OUT'}</span></div>
-                            <div class="meta">@ $${a.price}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}</div>
+                            <div>${logoHtml}<span class="ticker-badge">${esc(a.ticker)}</span><span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span>${isAlreadyOpen ? '<span class="ao-badge" style="margin-left:0.5rem">A.O.</span>' : ''}<span style="margin-left:0.5rem;font-size:0.65rem;color:var(--green-bright);font-weight:700">${effSizeStr !== 'SIT OUT' ? 'Enter at $' + effSizeStr : 'SIT OUT'}</span></div>
+                            <div class="meta">@ $${p}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}</div>
                             ${btLevelsHtml}
                             <div class="action-buttons">
                                 <input type="text" class="entry-input" placeholder="Size $" id="${id}-size" value="${effSizeStr !== 'SIT OUT' ? effSizeStr : ''}">
                                 <input type="text" class="entry-input" placeholder="Entry $" id="${id}-entry" value="${p}" style="width:80px" oninput="recalcLevels('${id}')">
-                                <button class="action-btn entered" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Entered','${id}')">Entered</button>
-                                <button class="action-btn skipped" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${a.price},'Skipped','${id}')">Skipped</button>
+                                <button class="action-btn entered" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${p},'Entered','${id}')">Entered</button>
+                                <button class="action-btn skipped" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${p},'Skipped','${id}')">Skipped</button>
                             </div>
                         </div>
                         ${warnHtml}${earnHtml}
@@ -3048,15 +3083,15 @@
         filterOpenTrades();
     }
     function filterOpenTrades() {
+        const search = (document.getElementById('otSearch').value || '').toUpperCase().trim();
         document.querySelectorAll('#openTradesList .action-item').forEach(el => {
+            const ticker = (el.dataset.ticker || '').toUpperCase();
             const status = (el.dataset.status || '').toLowerCase();
-            if (openTradeFilter === 'no-0x0' && status === '0x0') {
-                el.style.display = 'none';
-            } else if (openTradeFilter === 'no-tp' && status === 'tp') {
-                el.style.display = 'none';
-            } else {
-                el.style.display = '';
-            }
+            const matchSearch = !search || ticker.includes(search);
+            let matchFilter = true;
+            if (openTradeFilter === 'no-0x0' && status === '0x0') matchFilter = false;
+            else if (openTradeFilter === 'no-tp' && status === 'tp') matchFilter = false;
+            el.style.display = (matchSearch && matchFilter) ? '' : 'none';
         });
     }
 
@@ -3094,7 +3129,7 @@
             const badgeClass = outcome === '0x0' ? 'pnl-badge neutral' : (pnl > 0 ? 'pnl-badge positive' : 'pnl-badge neutral');
             const badgeText = outcome === '0x0' ? 'OxO' : (pnl > 0 ? 'TP +$' + pnl.toFixed(2) : '');
             return `
-                <div class="action-item" id="${id}" data-pnl="${pnl}" data-status="${initStatus}" style="${initBorder}">
+                <div class="action-item" id="${id}" data-ticker="${esc(t.ticker)}" data-pnl="${pnl}" data-status="${initStatus}" style="${initBorder}">
                     <div>
                         <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem">
                             <img src="${logo}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" style="margin-right:0">
@@ -3629,25 +3664,27 @@
         }
     }
 
-    // Override filterOpenTrades to handle need-4day
+    // Override filterOpenTrades to handle need-4day + search
     const _origFilterOpen = filterOpenTrades;
     filterOpenTrades = function() {
         const states = get4DayStates();
         const fourDays = 4 * 24 * 60 * 60 * 1000;
+        const search = (document.getElementById('otSearch').value || '').toUpperCase().trim();
         document.querySelectorAll('#openTradesList .action-item').forEach(el => {
             const status = (el.dataset.status || '').toLowerCase();
-            const ticker = el.querySelector('.ticker-badge')?.textContent;
+            const ticker = (el.dataset.ticker || '').toUpperCase();
+            const matchSearch = !search || ticker.includes(search);
+            let matchFilter = true;
             if (openTradeFilter === 'no-0x0' && status === '0x0') {
-                el.style.display = 'none';
+                matchFilter = false;
             } else if (openTradeFilter === 'no-tp' && status === 'tp') {
-                el.style.display = 'none';
+                matchFilter = false;
             } else if (openTradeFilter === 'need-4day') {
-                const ts = ticker && states[ticker];
-                const needsCheck = ts && (fourDays - (Date.now() - ts)) <= 0;
-                el.style.display = needsCheck ? '' : 'none';
-            } else {
-                el.style.display = '';
+                const ts = el.querySelector('.ticker-badge')?.textContent;
+                const tsState = ts && states[ts];
+                matchFilter = tsState && (fourDays - (Date.now() - tsState)) <= 0;
             }
+            el.style.display = (matchSearch && matchFilter) ? '' : 'none';
         });
     };
 
