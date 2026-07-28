@@ -2130,7 +2130,7 @@
 
     <!-- Action Needed -->
     <div class="action-section" id="actionSection">
-        <div class="section-header">Action Needed <span class="count" id="actionCount">0</span></div>
+        <div class="section-header" style="display:flex;align-items:center;gap:10px">Action Needed <span class="count" id="actionCount">0</span><button id="skipAllBtn" onclick="skipAllActions()" style="display:none;margin-left:auto;background:transparent;border:1px solid var(--text-dim);color:var(--text-dim);border-radius:4px;padding:2px 10px;font-size:0.6rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px">Skip All</button></div>
         <div style="display:flex;gap:6px;padding:6px 0 4px;align-items:center;flex-wrap:wrap">
             <input type="text" id="quickTicker" placeholder="Ticker" style="width:72px;background:#1a1610;border:1px solid var(--border);color:var(--fg);border-radius:6px;padding:5px 8px;font-size:0.8rem;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
             <select id="quickSide" style="background:#1a1610;border:1px solid var(--border);color:var(--fg);border-radius:6px;padding:5px 8px;font-size:0.8rem">
@@ -2653,6 +2653,7 @@
         const actionCount = document.getElementById('actionCount');
         let newSignals = actionNeeded.filter(a => a.type === 'mark_action');
         actionCount.textContent = newSignals.length;
+        document.getElementById('skipAllBtn').style.display = newSignals.length > 1 ? '' : 'none';
         if (newSignals.length === 0) {
             actionList.innerHTML = '<div class="no-actions">All caught up - no actions needed</div>';
         } else {
@@ -2954,6 +2955,14 @@
         });
     }
 
+
+    function skipAllActions() {
+        const items = document.querySelectorAll('#actionList .action-item');
+        items.forEach(el => {
+            const btn = el.querySelector('.action-btn.skipped');
+            if (btn) btn.click();
+        });
+    }
 
     async function markAction(ticker, signal, price, value, elemId) {
         const sizeInput = document.getElementById(elemId + '-size');
