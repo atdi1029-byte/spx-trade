@@ -2642,7 +2642,7 @@
         const openTickerSides = new Set();
         tickers.forEach(t => {
             const tk = t.ticker.toUpperCase();
-            const bs = t.buyStatus || t.status || '';
+            const bs = t.buyStatus || '';
             const ss = t.sellStatus || '';
             if (bs === 'OPEN' || bs === 'NEW SIGNAL') openTickerSides.add(tk + '_buy');
             if (ss === 'OPEN' || ss === 'NEW SIGNAL') openTickerSides.add(tk + '_sell');
@@ -2722,7 +2722,7 @@
         const pendingTickers = new Set(newSignals.map(a => a.ticker.toUpperCase()));
         let openTrades = [];
         tickers.forEach(t => {
-            const bs = t.buyStatus || t.status || '';
+            const bs = t.buyStatus || '';
             const ss = t.sellStatus || '';
             if ((bs === 'OPEN' || bs === 'NEW SIGNAL') && !pendingTickers.has(t.ticker.toUpperCase())) {
                 openTrades.push({ ticker: t.ticker, lastSignal: t.buyLastSignal || 'buy', price: t.buyPrice || t.price, phase: t.buyPhase || t.phase, nextSize: t.buyNextSize != null ? t.buyNextSize : t.nextSize, status: bs, side: 'buy', outcome: t.buyOutcome || '', profitLocked: t.buyProfitLocked || 0 });
@@ -3174,7 +3174,7 @@
             nextSize: t.buyNextSize != null ? t.buyNextSize : (activeSide === 'buy' ? t.nextSize : 0),
             locked: Number(t.buyLocked || (activeSide === 'buy' ? t.locked : 0)),
             stopouts: Number(t.buyStopouts || (activeSide === 'buy' ? t.stopouts : 0)),
-            status: t.buyStatus || (activeSide === 'buy' ? t.status : 'IDLE'),
+            status: t.buyStatus || 'IDLE',
             nextAction: t.buyNextAction || (activeSide === 'buy' ? t.nextAction : ''),
             lastSignal: t.buyLastSignal || (activeSide === 'buy' ? t.lastSignal : ''),
             price: t.buyPrice || (activeSide === 'buy' ? t.price : 0),
@@ -3186,7 +3186,7 @@
             nextSize: t.sellNextSize != null ? t.sellNextSize : (activeSide === 'sell' ? t.nextSize : 0),
             locked: Number(t.sellLocked || (activeSide === 'sell' ? t.locked : 0)),
             stopouts: Number(t.sellStopouts || (activeSide === 'sell' ? t.stopouts : 0)),
-            status: t.sellStatus || (activeSide === 'sell' ? t.status : 'IDLE'),
+            status: t.sellStatus || 'IDLE',
             nextAction: t.sellNextAction || (activeSide === 'sell' ? t.nextAction : ''),
             lastSignal: t.sellLastSignal || (activeSide === 'sell' ? t.lastSignal : ''),
             price: t.sellPrice || (activeSide === 'sell' ? t.price : 0),
