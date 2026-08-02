@@ -696,7 +696,7 @@ zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'
 zone.addEventListener('drop', function(e) { e.preventDefault(); zone.classList.remove('dragover'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
 input.addEventListener('change', function() { if (input.files.length) handleFile(input.files[0]); });
 
-var SYNC_URL = 'https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec';
+var SYNC_URL = 'https://script.google.com/macros/s/AKfycbyeL8nGHmsRRG2uk7I3cuh2aWQ14RRKvJYwOblvOWw36_QIKyr9KaA4jXK1K5pyySNiBg/exec';
 
 function syncToSheet(csvText) {
     // Use POST via no-cors (Apps Script doPost handles it, we don't need the response)
