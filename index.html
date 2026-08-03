@@ -2644,8 +2644,8 @@
             const tk = t.ticker.toUpperCase();
             const bs = t.buyStatus || '';
             const ss = t.sellStatus || '';
-            if (bs === 'OPEN' || bs === 'NEW SIGNAL') openTickerSides.add(tk + '_buy');
-            if (ss === 'OPEN' || ss === 'NEW SIGNAL') openTickerSides.add(tk + '_sell');
+            if (bs === 'OPEN') openTickerSides.add(tk + '_buy');
+            if (ss === 'OPEN') openTickerSides.add(tk + '_sell');
         });
 
         // --- Action Needed (only new signals, not outcomes) ---
