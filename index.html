@@ -2700,12 +2700,29 @@
                 }
                 const aoSide = isBuy ? 'buy' : 'sell';
                 const isAlreadyOpen = openTickerSides.has(a.ticker.toUpperCase() + '_' + aoSide);
+                // QQQ proxy for NASDAQ signals
+                let proxyHtml = '';
+                if (a.ticker.toUpperCase() === 'NASDAQ' && p > 0) {
+                    const qqqTicker = tickers.find(t => t.ticker.toUpperCase() === 'QQQ');
+                    const qqqP = qqqTicker ? Number(qqqTicker.currentPrice || qqqTicker.price || 0) : 0;
+                    if (qqqP > 0) {
+                        const qSl = isBuy ? qqqP * (1 - bt.sl / 100) : qqqP * (1 + bt.sl / 100);
+                        const qTp = isBuy ? qqqP * (1 + bt.tp / 100) : qqqP * (1 - bt.tp / 100);
+                        const qHalf = isBuy ? qqqP * (1 + bt.halfTp / 100) : qqqP * (1 - bt.halfTp / 100);
+                        const qFmt = v => v.toFixed(2);
+                        proxyHtml = `<div style="background:#2d304033;border:1px solid #4a423855;border-radius:4px;padding:6px 8px;margin:4px 0">
+                            <div style="font-size:0.7rem;font-weight:700;color:var(--cream);margin-bottom:2px">QQQ <span style="color:var(--text-dim);font-weight:400">@ $${qFmt(qqqP)}</span></div>
+                            <div style="font-size:0.65rem"><span style="color:var(--red-bright)">SL <span class="tap-copy" onclick="copyVal(this)">${qFmt(qSl)}</span></span> &middot; <span style="color:var(--green-bright)">TP1 <span class="tap-copy" onclick="copyVal(this)">${qFmt(qHalf)}</span></span> &middot; <span style="color:var(--green-bright)">TP2 <span class="tap-copy" onclick="copyVal(this)">${qFmt(qTp)}</span></span></div>
+                        </div>`;
+                    }
+                }
                 return `
                     <div class="action-item" id="${id}">
                         <div>
                             <div>${logoHtml}<span class="ticker-badge">${esc(a.ticker)}</span><span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span>${isAlreadyOpen ? '<span class="ao-badge" style="margin-left:0.5rem">A.O.</span>' : ''}<span style="margin-left:0.5rem;font-size:0.65rem;color:var(--green-bright);font-weight:700">${effSizeStr !== 'SIT OUT' ? 'Enter at $' + effSizeStr : 'SIT OUT'}</span></div>
                             <div class="meta">@ $${p}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}</div>
                             ${btLevelsHtml}
+                            ${proxyHtml}
                             <div class="action-buttons">
                                 <input type="text" class="entry-input" placeholder="Size $" id="${id}-size" value="${effSizeStr !== 'SIT OUT' ? effSizeStr : ''}">
                                 <input type="text" class="entry-input" placeholder="Entry $" id="${id}-entry" value="${p}" style="width:80px" oninput="recalcLevels('${id}')">
