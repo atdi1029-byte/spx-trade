@@ -1036,8 +1036,9 @@
             margin-top: 4px;
         }
         @keyframes flashReview {
-            from { box-shadow: 0 0 8px rgba(255,152,0,0.3); }
-            to { box-shadow: 0 0 16px rgba(255,152,0,0.6); }
+            0% { box-shadow: 0 0 8px rgba(255,152,0,0.3); text-shadow: 0 0 6px rgba(255,152,0,0.3); opacity: 1; }
+            50% { box-shadow: 0 0 30px rgba(255,152,0,0.9), 0 0 60px rgba(255,152,0,0.4); text-shadow: 0 0 15px rgba(255,152,0,0.9); opacity: 0.6; }
+            100% { box-shadow: 0 0 8px rgba(255,152,0,0.3); text-shadow: 0 0 6px rgba(255,152,0,0.3); opacity: 1; }
         }
         .kelly-milestone {
             display: flex; align-items: center; gap: 0.5rem;
@@ -2073,6 +2074,14 @@
 <div class="content">
     <div class="error-banner" id="errorBanner"></div>
 
+    <!-- Strategy Review Banner -->
+    <div class="review-banner" id="reviewBanner">
+        <button class="review-btn" onclick="dismissReview()">
+            STRATEGY REVIEW DUE
+            <span class="review-sub" id="reviewSub">50 trades reached — tap to mark reviewed</span>
+        </button>
+    </div>
+
     <div class="header">
         <div class="header-left">
             <img src="logo.png" alt="SPX" class="header-logo">
@@ -2378,13 +2387,6 @@
             </div>
         </div>
         <div>
-            <!-- Strategy Review Banner -->
-            <div class="review-banner" id="reviewBanner">
-                <button class="review-btn" onclick="dismissReview()">
-                    STRATEGY REVIEW DUE
-                    <span class="review-sub" id="reviewSub">50 trades reached — tap to mark reviewed</span>
-                </button>
-            </div>
             <div class="section-header">Performance Summary</div>
             <div class="section-box">
                 <div class="perf-grid" id="perfGrid"></div>
