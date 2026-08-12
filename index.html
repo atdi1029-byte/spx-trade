@@ -5155,9 +5155,9 @@
         const kellyF = rr > 0 ? (rr * wr - (1 - wr)) / rr : 0;
         const pokeProfitCap = activePnl > 0 ? activePnl * 0.01 : 0;
         const halfKellyDollar = Math.min(Math.max(0, activePnl * kellyF / 2), pokeProfitCap || Infinity);
-        const quarterKellyDollar = Math.min(Math.max(0, activePnl * kellyF / 4), pokeProfitCap || Infinity);
-        const eighthKellyDollar = Math.min(Math.max(0, activePnl * kellyF / 8), pokeProfitCap || Infinity);
-        const sixteenthKellyDollar = Math.min(Math.max(0, activePnl * kellyF / 16), pokeProfitCap || Infinity);
+        const quarterKellyDollar = halfKellyDollar / 2;
+        const eighthKellyDollar = halfKellyDollar / 4;
+        const sixteenthKellyDollar = halfKellyDollar / 8;
         const perStockHalf = tickerCount > 0 ? halfKellyDollar / tickerCount : 0;
         const perStockQuarter = tickerCount > 0 ? quarterKellyDollar / tickerCount : 0;
         const perStockEighth = tickerCount > 0 ? eighthKellyDollar / tickerCount : 0;
