@@ -5153,8 +5153,9 @@
         const wr = tradeTotal > 0 ? wins / tradeTotal : 0;
         const rr = avgLoss > 0 ? avgWin / avgLoss : 0;
         const kellyF = rr > 0 ? (rr * wr - (1 - wr)) / rr : 0;
-        const pokeProfitCap = activePnl > 0 ? activePnl * 0.01 : 0;
-        const halfKellyDollar = Math.min(Math.max(0, activePnl * kellyF / 2), pokeProfitCap || Infinity);
+        const rawPokeHalfKelly = Math.max(0, activePnl * kellyF / 2);
+        const pokeProfitCap = activePnl > 0 ? Math.max(1, activePnl * 0.01) : 0;
+        const halfKellyDollar = pokeProfitCap > 0 ? Math.min(rawPokeHalfKelly, pokeProfitCap) : rawPokeHalfKelly;
         const quarterKellyDollar = halfKellyDollar / 2;
         const eighthKellyDollar = halfKellyDollar / 4;
         const sixteenthKellyDollar = halfKellyDollar / 8;
@@ -5424,7 +5425,7 @@
         const halfKelly = kellyF / 2;
 
         // Per-stock allocation (capped at 1% of profit)
-        const profitCap = activePnl > 0 ? activePnl * 0.01 : 0;
+        const profitCap = activePnl > 0 ? Math.max(1, activePnl * 0.01) : 0;
         const rawHalfKellyDollar = Math.max(0, activePnl * halfKelly);
         const halfKellyDollar = profitCap > 0 ? Math.min(rawHalfKellyDollar, profitCap) : rawHalfKellyDollar;
         const kellyCapped = profitCap > 0 && rawHalfKellyDollar > profitCap;
