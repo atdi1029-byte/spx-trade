@@ -1002,6 +1002,23 @@
             border: 1px solid var(--red-bright);
             color: var(--red-bright);
         }
+        /* ============ TOAST ============ */
+        #toastContainer {
+            position: fixed; top: 1rem; right: 1rem;
+            z-index: 99999; display: flex;
+            flex-direction: column; gap: 0.5rem;
+        }
+        .toast {
+            padding: 0.6rem 1.2rem; border-radius: 8px;
+            font-size: 0.75rem; font-family: 'Space Mono', monospace;
+            color: var(--text-bright); opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.35s ease;
+            background: rgba(196,75,63,0.9);
+        }
+        .toast.success { background: rgba(74,138,74,0.9); }
+        .toast.show { opacity: 1; transform: translateX(0); }
+
         /* ============ STRATEGY REVIEW BUTTON ============ */
         .review-banner {
             display: none;
@@ -2421,6 +2438,7 @@
     </div>
 </div>
 
+<div id="toastContainer"></div>
 
 <script>
     // ====== CONFIG ======
@@ -2949,6 +2967,41 @@
         const d = document.createElement('div');
         d.textContent = str || '';
         return d.innerHTML;
+    }
+
+    // ====== TOAST ======
+    function showToast(msg, type = 'error', duration = 3500) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast ' + type;
+        toast.textContent = msg;
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 350);
+        }, duration);
+    }
+
+    // ====== STATS RESET ======
+    function setStatsStart(dateStr) {
+        if (dateStr === 'clear') {
+            if (!confirm('Reset stats to all-time? This will include all historical trades in Kelly/stats.')) return;
+        }
+        const url = POST_URL + '?action=set_stats_start&date=' + encodeURIComponent(dateStr);
+        fireGet(url).then(() => {
+            showToast(dateStr === 'clear' ? 'Stats reset to all-time' : 'Stats start: ' + dateStr, 'success');
+            fetchData();
+        });
+    }
+
+    function promptStatsDate() {
+        const d = prompt('Stats start date (YYYY-MM-DD):');
+        if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+            setStatsStart(d);
+        } else if (d) {
+            showToast('Invalid date format — use YYYY-MM-DD');
+        }
     }
 
     // ====== API WRITE FUNCTIONS ======
@@ -5100,10 +5153,11 @@
         const wr = tradeTotal > 0 ? wins / tradeTotal : 0;
         const rr = avgLoss > 0 ? avgWin / avgLoss : 0;
         const kellyF = rr > 0 ? (rr * wr - (1 - wr)) / rr : 0;
-        const halfKellyDollar = Math.max(0, activePnl * kellyF / 2);
-        const quarterKellyDollar = Math.max(0, activePnl * kellyF / 4);
-        const eighthKellyDollar = Math.max(0, activePnl * kellyF / 8);
-        const sixteenthKellyDollar = Math.max(0, activePnl * kellyF / 16);
+        const pokeProfitCap = activePnl > 0 ? activePnl * 0.01 : 0;
+        const halfKellyDollar = Math.min(Math.max(0, activePnl * kellyF / 2), pokeProfitCap || Infinity);
+        const quarterKellyDollar = Math.min(Math.max(0, activePnl * kellyF / 4), pokeProfitCap || Infinity);
+        const eighthKellyDollar = Math.min(Math.max(0, activePnl * kellyF / 8), pokeProfitCap || Infinity);
+        const sixteenthKellyDollar = Math.min(Math.max(0, activePnl * kellyF / 16), pokeProfitCap || Infinity);
         const perStockHalf = tickerCount > 0 ? halfKellyDollar / tickerCount : 0;
         const perStockQuarter = tickerCount > 0 ? quarterKellyDollar / tickerCount : 0;
         const perStockEighth = tickerCount > 0 ? eighthKellyDollar / tickerCount : 0;
@@ -5369,8 +5423,11 @@
         const kellyF = b > 0 ? (b * wr - (1 - wr)) / b : 0;
         const halfKelly = kellyF / 2;
 
-        // Per-stock allocation
-        const halfKellyDollar = Math.max(0, activePnl * halfKelly);
+        // Per-stock allocation (capped at 1% of profit)
+        const profitCap = activePnl > 0 ? activePnl * 0.01 : 0;
+        const rawHalfKellyDollar = Math.max(0, activePnl * halfKelly);
+        const halfKellyDollar = profitCap > 0 ? Math.min(rawHalfKellyDollar, profitCap) : rawHalfKellyDollar;
+        const kellyCapped = profitCap > 0 && rawHalfKellyDollar > profitCap;
         const perStock = stockCount > 0 ? halfKellyDollar / stockCount : 0;
 
         // Pokemon curve sizes at current P&L
@@ -5494,7 +5551,9 @@
             </div>
 
             <div class="kelly-verdict ${verdictClass}">${verdictText}</div>
+            ${kellyCapped ? `<div style="font-size:0.55rem;color:#ffa726;text-align:center;margin-top:0.3rem">&#128737; Kelly capped at 1% of profit ($${profitCap.toFixed(0)}) &mdash; raw Half-Kelly was $${rawHalfKellyDollar.toFixed(0)}</div>` : ''}
             ${reliabilityNote}
+            ${stats.statsStartDate ? `<div style="text-align:center;font-size:0.55rem;color:var(--pumpkin-glow);margin-top:0.3rem">Stats from: <span style="font-weight:700">${stats.statsStartDate}</span> <span onclick="setStatsStart('clear')" style="cursor:pointer;color:var(--text-dim);text-decoration:underline;margin-left:4px">reset</span></div>` : `<div style="text-align:center;font-size:0.55rem;margin-top:0.3rem"><span onclick="promptStatsDate()" style="cursor:pointer;color:var(--text-dim);text-decoration:underline">set stats start date</span></div>`}
         `;
     }
 
