@@ -2761,10 +2761,10 @@
         tickers.forEach(t => {
             const bs = t.buyStatus || '';
             const ss = t.sellStatus || '';
-            if ((bs === 'OPEN' || bs === 'NEW SIGNAL') && !pendingTickers.has(t.ticker.toUpperCase())) {
+            if (bs === 'OPEN' && !pendingTickers.has(t.ticker.toUpperCase())) {
                 openTrades.push({ ticker: t.ticker, lastSignal: t.buyLastSignal || 'buy', price: t.buyPrice || t.price, phase: t.buyPhase || t.phase, nextSize: t.buyNextSize != null ? t.buyNextSize : t.nextSize, status: bs, side: 'buy', outcome: t.buyOutcome || '', profitLocked: t.buyProfitLocked || 0 });
             }
-            if ((ss === 'OPEN' || ss === 'NEW SIGNAL') && !pendingTickers.has(t.ticker.toUpperCase())) {
+            if (ss === 'OPEN' && !pendingTickers.has(t.ticker.toUpperCase())) {
                 openTrades.push({ ticker: t.ticker, lastSignal: t.sellLastSignal || 'sell', price: t.sellPrice || t.price, phase: t.sellPhase || '', nextSize: t.sellNextSize || 0, status: ss, side: 'sell', outcome: t.sellOutcome || '', profitLocked: t.sellProfitLocked || 0 });
             }
         });
