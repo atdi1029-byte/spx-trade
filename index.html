@@ -5157,9 +5157,7 @@
         const wr = tradeTotal > 0 ? wins / tradeTotal : 0;
         const rr = avgLoss > 0 ? avgWin / avgLoss : 0;
         const kellyF = rr > 0 ? (rr * wr - (1 - wr)) / rr : 0;
-        const rawPokeHalfKelly = Math.max(0, activePnl * kellyF / 2);
-        const pokeProfitCap = pnl > 0 ? Math.max(1, pnl * 0.01) : 1;
-        const halfKellyDollar = pokeProfitCap > 0 ? Math.min(rawPokeHalfKelly, pokeProfitCap) : rawPokeHalfKelly;
+        const halfKellyDollar = Math.max(0, activePnl * kellyF / 2);
         const quarterKellyDollar = halfKellyDollar / 2;
         const eighthKellyDollar = halfKellyDollar / 4;
         const sixteenthKellyDollar = halfKellyDollar / 8;
@@ -5428,12 +5426,9 @@
         const kellyF = b > 0 ? (b * wr - (1 - wr)) / b : 0;
         const halfKelly = kellyF / 2;
 
-        // Per-stock allocation (capped at 1% of trading profit, not DCA bankroll)
-        const tradingProfit = pnl;
-        const profitCap = tradingProfit > 0 ? Math.max(1, tradingProfit * 0.01) : 1;
-        const rawHalfKellyDollar = Math.max(0, activePnl * halfKelly);
-        const halfKellyDollar = profitCap > 0 ? Math.min(rawHalfKellyDollar, profitCap) : rawHalfKellyDollar;
-        const kellyCapped = profitCap > 0 && rawHalfKellyDollar > profitCap;
+        // Per-stock allocation (uncapped half-Kelly)
+        const halfKellyDollar = Math.max(0, activePnl * halfKelly);
+        const kellyCapped = false;
         const perStock = stockCount > 0 ? halfKellyDollar / stockCount : 0;
 
         // Pokemon curve sizes at current P&L
@@ -5557,7 +5552,7 @@
             </div>
 
             <div class="kelly-verdict ${verdictClass}">${verdictText}</div>
-            ${kellyCapped ? `<div style="font-size:0.55rem;color:#ffa726;text-align:center;margin-top:0.3rem">&#128737; Kelly capped at 1% of profit ($${profitCap.toFixed(0)}) &mdash; raw Half-Kelly was $${rawHalfKellyDollar.toFixed(0)}</div>` : ''}
+            ${''}<!-- kelly cap removed -->
             ${reliabilityNote}
             ${stats.statsStartDate ? `<div style="text-align:center;font-size:0.55rem;color:var(--pumpkin-glow);margin-top:0.3rem">Stats from: <span style="font-weight:700">${stats.statsStartDate}</span> <span onclick="setStatsStart('clear')" style="cursor:pointer;color:var(--text-dim);text-decoration:underline;margin-left:4px">reset</span></div>` : `<div style="text-align:center;font-size:0.55rem;margin-top:0.3rem"><span onclick="promptStatsDate()" style="cursor:pointer;color:var(--text-dim);text-decoration:underline">set stats start date</span></div>`}
         `;
