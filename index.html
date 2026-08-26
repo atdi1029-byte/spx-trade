@@ -2516,6 +2516,33 @@
         'SNDK': 'sandisk', 'TSLA': 'tesla', 'USAR': 'usa-rare-earth',
         'PALLADIUM': 'metal/palladium', 'USOIL': 'crude-oil'
     };
+    // Korean stocks use numeric tickers — map to readable names
+    const KR_NAME_MAP = {
+        '005930': 'Samsung', '000660': 'SK Hynix',
+        '005380': 'Hyundai Motor', '005490': 'POSCO',
+        '035420': 'Naver', '035720': 'Kakao',
+        '006400': 'Samsung SDI', '051910': 'LG Chem',
+        '003550': 'LG', '066570': 'LG Electronics',
+        '055550': 'Shinhan Fin', '105560': 'KB Financial',
+        '012330': 'Hyundai Mobis', '028260': 'Samsung C&T',
+        '009150': 'Samsung Electro', '034730': 'SK Inc',
+        '000270': 'Kia', '018260': 'Samsung SDS',
+        '086790': 'Hana Financial', '316140': 'Woori Financial',
+        '003670': 'POSCO Future M', '247540': 'Ecopro BM',
+        '373220': 'LG Energy Sol', '352820': 'Hive',
+        '259960': 'Krafton', '036570': 'NCsoft',
+        '251270': 'Netmarble', '263750': 'Pearl Abyss',
+        '011200': 'HMM', '010950': 'S-Oil',
+        '096770': 'SK Innovation', '034020': 'Doosan Enerbility',
+        '032830': 'Samsung Life', '010130': 'Korea Zinc',
+        '030200': 'KT', '017670': 'SK Telecom',
+        '015760': 'Korea Electric', '047050': 'Posco Intl',
+        '326030': 'SK Biopharm', '068270': 'Celltrion',
+        '207940': 'Samsung Bio', '302440': 'SK Bioscience'
+    };
+    function displayName(ticker) {
+        return KR_NAME_MAP[ticker] || ticker;
+    }
     function logoUrl(ticker) {
         const tv = TV_LOGO_MAP[ticker.toUpperCase()];
         if (tv) return TV_LOGO + tv + '.svg';
@@ -2795,7 +2822,7 @@
         tbody.innerHTML = recentSignals.map(s => `
             <tr>
                 <td>${esc(s.timestamp)}</td>
-                <td style="font-weight:700;color:var(--cream)">${esc(s.ticker)}</td>
+                <td style="font-weight:700;color:var(--cream)">${esc(displayName(s.ticker))}</td>
                 <td><span class="signal-badge ${s.signal}">${esc(s.signal)}</span></td>
                 <td>$${Number(s.price || 0).toFixed(2)}</td>
                 <td>${esc(s.timeframe || '-')}</td>
@@ -3218,8 +3245,8 @@
                     <div>
                         <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem">
                             <img src="${logo}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" style="margin-right:0">
-                            <span class="stock-logo-fallback" style="display:none;margin-right:0">${esc(t.ticker.slice(0,2))}</span>
-                            <span class="ticker-badge" style="margin-right:0">${esc(t.ticker)}</span>
+                            <span class="stock-logo-fallback" style="display:none;margin-right:0">${esc(displayName(t.ticker).slice(0,2))}</span>
+                            <span class="ticker-badge" style="margin-right:0">${esc(displayName(t.ticker))}</span>
                             <span class="signal-badge ${signalClass(t.lastSignal)}" style="font-size:0.4rem;padding:1px 4px;opacity:0.7">${signalLabel(t.lastSignal)}</span>
                             <span class="${badgeClass}" id="${id}-badge" style="display:${badgeDisplay};font-size:0.4rem;padding:1px 4px;opacity:0.7;margin-left:auto">${badgeText}</span>
                         </div>
@@ -3282,7 +3309,7 @@
                 <div class="ticker-card-header">
                     <div style="display:flex;align-items:center;gap:0.5rem">
                         <img src="${logoUrl(t.ticker)}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="stock-logo-fallback" style="display:none">${esc(t.ticker.slice(0,2))}</span>
-                        <span class="ticker-name">${esc(t.ticker)}</span>
+                        <span class="ticker-name">${esc(displayName(t.ticker))}</span>
                         <span class="ticker-status ${statusClass}">${esc(sd.status || 'IDLE')}</span>
                     </div>
                     <div class="side-toggle">
@@ -3319,7 +3346,7 @@
 
         if (search) {
             // When searching, show all matches
-            tickers = allTickers.filter(t => t.ticker.toUpperCase().includes(search));
+            tickers = allTickers.filter(t => t.ticker.toUpperCase().includes(search) || displayName(t.ticker).toUpperCase().includes(search));
             btn.textContent = `${tickers.length} match${tickers.length !== 1 ? 'es' : ''}`;
             btn.classList.remove('active');
         } else if (!showAllTickers && tickers.length > TICKER_LIMIT) {
@@ -3507,7 +3534,7 @@
                         <line x1="14" y1="108" x2="76" y2="108" stroke="#5a7a80" stroke-width="0.5" opacity="0.4"/>
 
                         <!-- Engraved text -->
-                        <text x="45" y="58" text-anchor="middle" font-family="'Noto Serif JP',serif" font-size="14" font-weight="900" fill="#e8d5a8" stroke="#1a1815" stroke-width="0.3">${esc(w.ticker)}</text>
+                        <text x="45" y="58" text-anchor="middle" font-family="'Noto Serif JP',serif" font-size="14" font-weight="900" fill="#e8d5a8" stroke="#1a1815" stroke-width="0.3">${esc(displayName(w.ticker))}</text>
                         <text x="45" y="76" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" font-weight="700" fill="#8ae08a" stroke="#1a1815" stroke-width="0.2">+$${w.profit}</text>
                         <text x="45" y="92" text-anchor="middle" font-family="'Noto Serif JP',serif" font-size="7" fill="#c8d8d0" opacity="0.8">R.I.P.</text>
 
