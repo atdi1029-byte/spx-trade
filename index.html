@@ -5161,10 +5161,11 @@
         const quarterKellyDollar = halfKellyDollar / 2;
         const eighthKellyDollar = halfKellyDollar / 4;
         const sixteenthKellyDollar = halfKellyDollar / 8;
-        const perStockHalf = tickerCount > 0 ? halfKellyDollar / tickerCount : 0;
-        const perStockQuarter = tickerCount > 0 ? quarterKellyDollar / tickerCount : 0;
-        const perStockEighth = tickerCount > 0 ? eighthKellyDollar / tickerCount : 0;
-        const perStockSixteenth = tickerCount > 0 ? sixteenthKellyDollar / tickerCount : 0;
+        const pnlCap = Math.max(0, pnl);
+        const perStockHalf = tickerCount > 0 ? Math.min(halfKellyDollar / tickerCount, pnlCap) : 0;
+        const perStockQuarter = tickerCount > 0 ? Math.min(quarterKellyDollar / tickerCount, pnlCap) : 0;
+        const perStockEighth = tickerCount > 0 ? Math.min(eighthKellyDollar / tickerCount, pnlCap) : 0;
+        const perStockSixteenth = tickerCount > 0 ? Math.min(sixteenthKellyDollar / tickerCount, pnlCap) : 0;
 
         let html = `<div class="pokemon-header">
             <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}</div>
