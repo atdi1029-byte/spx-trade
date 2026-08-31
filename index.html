@@ -924,6 +924,18 @@
             border-color: #4dd0e1;
             background: rgba(77,208,225,0.08);
         }
+        .kelly-size-card.sixtyfourth-k {
+            border-color: #66bb6a;
+            background: rgba(102,187,106,0.08);
+        }
+        .kelly-size-card.onetwentyeighth-k {
+            border-color: #ffa726;
+            background: rgba(255,167,38,0.08);
+        }
+        .kelly-size-card.twofiftysixth-k {
+            border-color: #ef5350;
+            background: rgba(239,83,80,0.08);
+        }
         .kelly-size-label {
             font-size: 0.5rem; text-transform: uppercase;
             letter-spacing: 1px; color: var(--text-dim);
@@ -938,6 +950,9 @@
         .kelly-size-card.eighth-k .kelly-size-val { color: #e85454; }
         .kelly-size-card.sixteenth-k .kelly-size-val { color: #b388ff; }
         .kelly-size-card.thirtysecond-k .kelly-size-val { color: #4dd0e1; }
+        .kelly-size-card.sixtyfourth-k .kelly-size-val { color: #66bb6a; }
+        .kelly-size-card.onetwentyeighth-k .kelly-size-val { color: #ffa726; }
+        .kelly-size-card.twofiftysixth-k .kelly-size-val { color: #ef5350; }
         .kelly-size-per {
             font-size: 0.45rem; color: var(--text-dim);
             margin-top: 0.1rem;
@@ -5195,11 +5210,17 @@
         const eighthKellyDollar = halfKellyDollar / 4;
         const sixteenthKellyDollar = halfKellyDollar / 8;
         const thirtysecondKellyDollar = halfKellyDollar / 16;
+        const sixtyfourthKellyDollar = halfKellyDollar / 32;
+        const onetwentyeighthKellyDollar = halfKellyDollar / 64;
+        const twofiftysixthKellyDollar = halfKellyDollar / 128;
         const perStockHalf = tickerCount > 0 ? halfKellyDollar / tickerCount : 0;
         const perStockQuarter = tickerCount > 0 ? quarterKellyDollar / tickerCount : 0;
         const perStockEighth = tickerCount > 0 ? eighthKellyDollar / tickerCount : 0;
         const perStockSixteenth = tickerCount > 0 ? sixteenthKellyDollar / tickerCount : 0;
         const perStockThirtysecond = tickerCount > 0 ? thirtysecondKellyDollar / tickerCount : 0;
+        const perStockSixtyfourth = tickerCount > 0 ? sixtyfourthKellyDollar / tickerCount : 0;
+        const perStockOnetwentyeighth = tickerCount > 0 ? onetwentyeighthKellyDollar / tickerCount : 0;
+        const perStockTwofiftysixth = tickerCount > 0 ? twofiftysixthKellyDollar / tickerCount : 0;
 
         let html = `<div class="pokemon-header">
             <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}</div>
@@ -5232,6 +5253,21 @@
                         <div class="kelly-size-label">\uD83D\uDEE1 <span style="font-size:0.85rem">1/32</span> Kelly</div>
                         <div class="kelly-size-val">$${perStockThirtysecond.toFixed(2)}</div>
                         <div class="kelly-size-per">budget $${thirtysecondKellyDollar.toFixed(0)}</div>
+                    </div>
+                    <div class="kelly-size-card sixtyfourth-k">
+                        <div class="kelly-size-label">\uD83C\uDF31 <span style="font-size:0.85rem">1/64</span> Kelly</div>
+                        <div class="kelly-size-val">$${perStockSixtyfourth.toFixed(2)}</div>
+                        <div class="kelly-size-per">budget $${sixtyfourthKellyDollar.toFixed(0)}</div>
+                    </div>
+                    <div class="kelly-size-card onetwentyeighth-k">
+                        <div class="kelly-size-label">\uD83D\uDD2C <span style="font-size:0.85rem">1/128</span> Kelly</div>
+                        <div class="kelly-size-val">$${perStockOnetwentyeighth.toFixed(2)}</div>
+                        <div class="kelly-size-per">budget $${onetwentyeighthKellyDollar.toFixed(0)}</div>
+                    </div>
+                    <div class="kelly-size-card twofiftysixth-k">
+                        <div class="kelly-size-label">\uD83E\uDEA8 <span style="font-size:0.85rem">1/256</span> Kelly</div>
+                        <div class="kelly-size-val">$${perStockTwofiftysixth.toFixed(2)}</div>
+                        <div class="kelly-size-per">budget $${twofiftysixthKellyDollar.toFixed(0)}</div>
                     </div>
                 </div>
             </div>` : ''}
