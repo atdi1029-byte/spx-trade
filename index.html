@@ -5184,15 +5184,15 @@
         const wr = tradeTotal > 0 ? wins / tradeTotal : 0;
         const rr = avgLoss > 0 ? avgWin / avgLoss : 0;
         const kellyF = rr > 0 ? (rr * wr - (1 - wr)) / rr : 0;
-        const halfKellyDollar = Math.max(0, activePnl * kellyF / 2);
+        const kellyBankroll = Math.max(0, dcaTotal + activePnl);
+        const halfKellyDollar = Math.max(0, kellyBankroll * kellyF / 2);
         const quarterKellyDollar = halfKellyDollar / 2;
         const eighthKellyDollar = halfKellyDollar / 4;
         const sixteenthKellyDollar = halfKellyDollar / 8;
-        const pnlCap = Math.max(0, pnl);
-        const perStockHalf = tickerCount > 0 ? Math.min(halfKellyDollar / tickerCount, pnlCap) : 0;
-        const perStockQuarter = tickerCount > 0 ? Math.min(quarterKellyDollar / tickerCount, pnlCap) : 0;
-        const perStockEighth = tickerCount > 0 ? Math.min(eighthKellyDollar / tickerCount, pnlCap) : 0;
-        const perStockSixteenth = tickerCount > 0 ? Math.min(sixteenthKellyDollar / tickerCount, pnlCap) : 0;
+        const perStockHalf = tickerCount > 0 ? halfKellyDollar / tickerCount : 0;
+        const perStockQuarter = tickerCount > 0 ? quarterKellyDollar / tickerCount : 0;
+        const perStockEighth = tickerCount > 0 ? eighthKellyDollar / tickerCount : 0;
+        const perStockSixteenth = tickerCount > 0 ? sixteenthKellyDollar / tickerCount : 0;
 
         let html = `<div class="pokemon-header">
             <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}</div>
@@ -5454,8 +5454,9 @@
         const kellyF = b > 0 ? (b * wr - (1 - wr)) / b : 0;
         const halfKelly = kellyF / 2;
 
-        // Per-stock allocation (uncapped half-Kelly)
-        const halfKellyDollar = Math.max(0, activePnl * halfKelly);
+        // Per-stock allocation (uncapped half-Kelly, bankroll = deposits + P&L)
+        const kellyBankroll = Math.max(0, dcaTotal + activePnl);
+        const halfKellyDollar = Math.max(0, kellyBankroll * halfKelly);
         const kellyCapped = false;
         const perStock = stockCount > 0 ? halfKellyDollar / stockCount : 0;
 
