@@ -920,6 +920,10 @@
             border-color: #b388ff;
             background: rgba(179,136,255,0.08);
         }
+        .kelly-size-card.thirtysecond-k {
+            border-color: #4dd0e1;
+            background: rgba(77,208,225,0.08);
+        }
         .kelly-size-label {
             font-size: 0.5rem; text-transform: uppercase;
             letter-spacing: 1px; color: var(--text-dim);
@@ -933,6 +937,7 @@
         .kelly-size-card.quarter-k .kelly-size-val { color: #f5c842; }
         .kelly-size-card.eighth-k .kelly-size-val { color: #e85454; }
         .kelly-size-card.sixteenth-k .kelly-size-val { color: #b388ff; }
+        .kelly-size-card.thirtysecond-k .kelly-size-val { color: #4dd0e1; }
         .kelly-size-per {
             font-size: 0.45rem; color: var(--text-dim);
             margin-top: 0.1rem;
@@ -2495,7 +2500,7 @@
     // DCA state
     let dcaMode = localStorage.getItem('spx_dca_mode') === 'true';
     let dcaTotal = parseFloat(localStorage.getItem('spx_dca_total')) || 0;
-    let stockCount = parseInt(localStorage.getItem('spx_stock_count')) || 20;
+    let stockCount = parseInt(localStorage.getItem('spx_stock_count')) || 25;
 
     let refreshTimer = null;
     let allTickers = [];
@@ -5189,10 +5194,12 @@
         const quarterKellyDollar = halfKellyDollar / 2;
         const eighthKellyDollar = halfKellyDollar / 4;
         const sixteenthKellyDollar = halfKellyDollar / 8;
+        const thirtysecondKellyDollar = halfKellyDollar / 16;
         const perStockHalf = tickerCount > 0 ? halfKellyDollar / tickerCount : 0;
         const perStockQuarter = tickerCount > 0 ? quarterKellyDollar / tickerCount : 0;
         const perStockEighth = tickerCount > 0 ? eighthKellyDollar / tickerCount : 0;
         const perStockSixteenth = tickerCount > 0 ? sixteenthKellyDollar / tickerCount : 0;
+        const perStockThirtysecond = tickerCount > 0 ? thirtysecondKellyDollar / tickerCount : 0;
 
         let html = `<div class="pokemon-header">
             <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}</div>
@@ -5220,6 +5227,11 @@
                         <div class="kelly-size-label">\uD83C\uDFAB <span style="font-size:0.85rem">1/16</span> Kelly</div>
                         <div class="kelly-size-val">$${perStockSixteenth.toFixed(2)}</div>
                         <div class="kelly-size-per">budget $${sixteenthKellyDollar.toFixed(0)}</div>
+                    </div>
+                    <div class="kelly-size-card thirtysecond-k">
+                        <div class="kelly-size-label">\uD83D\uDEE1 <span style="font-size:0.85rem">1/32</span> Kelly</div>
+                        <div class="kelly-size-val">$${perStockThirtysecond.toFixed(2)}</div>
+                        <div class="kelly-size-per">budget $${thirtysecondKellyDollar.toFixed(0)}</div>
                     </div>
                 </div>
             </div>` : ''}
