@@ -1988,10 +1988,14 @@ function renderPokemon(stats) {
     const quarterKellyDollar = halfKellyDollar / 2;
     const eighthKellyDollar = halfKellyDollar / 4;
     const sixteenthKellyDollar = halfKellyDollar / 8;
+    const thirtysecondKellyDollar = halfKellyDollar / 16;
+    const sixtyfourthKellyDollar = halfKellyDollar / 32;
     const perStockHalf = tickerCount > 0 ? halfKellyDollar / tickerCount : 0;
     const perStockQuarter = tickerCount > 0 ? quarterKellyDollar / tickerCount : 0;
     const perStockEighth = tickerCount > 0 ? eighthKellyDollar / tickerCount : 0;
     const perStockSixteenth = tickerCount > 0 ? sixteenthKellyDollar / tickerCount : 0;
+    const perStock32 = tickerCount > 0 ? thirtysecondKellyDollar / tickerCount : 0;
+    const perStock64 = tickerCount > 0 ? sixtyfourthKellyDollar / tickerCount : 0;
 
     let html = `<div class="pokemon-header">
         <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}</div>
@@ -2019,6 +2023,16 @@ function renderPokemon(stats) {
                     <div class="kelly-size-label">\uD83C\uDFAB <span style="font-size:0.85rem">1/16</span> Kelly</div>
                     <div class="kelly-size-val">$${perStockSixteenth.toFixed(2)}</div>
                     <div class="kelly-size-per">budget $${sixteenthKellyDollar.toFixed(0)}</div>
+                </div>
+                <div class="kelly-size-card thirtysecond-k">
+                    <div class="kelly-size-label">\uD83D\uDD2C <span style="font-size:0.85rem">1/32</span> Kelly</div>
+                    <div class="kelly-size-val">$${perStock32.toFixed(2)}</div>
+                    <div class="kelly-size-per">budget $${thirtysecondKellyDollar.toFixed(0)}</div>
+                </div>
+                <div class="kelly-size-card sixtyfourth-k">
+                    <div class="kelly-size-label">\uD83E\uDDA0 <span style="font-size:0.85rem">1/64</span> Kelly</div>
+                    <div class="kelly-size-val">$${perStock64.toFixed(2)}</div>
+                    <div class="kelly-size-per">budget $${sixtyfourthKellyDollar.toFixed(0)}</div>
                 </div>
             </div>
         </div>` : ''}
