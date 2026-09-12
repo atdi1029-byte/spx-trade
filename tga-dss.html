@@ -325,12 +325,36 @@ function setupTT(id) {
   c.addEventListener('mouseleave',cl);c.addEventListener('touchend',cl);
 }
 
-// ─── Process a data source — only 3-period and monthly DSS ───
-function processDSS(series, valKey, srcType) {
-  const vals = series.map(d => d[valKey]);
+// ─── Interpolate weekly to daily (linear) ───
+function interpolateToDaily(series, valKey) {
+  if (series.length < 2) return series;
+  const daily = [];
+  for (let i = 0; i < series.length - 1; i++) {
+    const d0 = new Date(series[i].date), d1 = new Date(series[i+1].date);
+    const v0 = series[i][valKey], v1 = series[i+1][valKey];
+    const days = Math.round((d1 - d0) / 86400000);
+    for (let d = 0; d < days; d++) {
+      const dt = new Date(d0.getTime() + d * 86400000);
+      const yyyy = dt.getFullYear();
+      const mm = String(dt.getMonth()+1).padStart(2,'0');
+      const dd = String(dt.getDate()).padStart(2,'0');
+      const obj = { date: yyyy+'-'+mm+'-'+dd };
+      obj[valKey] = v0 + (v1 - v0) * (d / days);
+      daily.push(obj);
+    }
+  }
+  // Add last point
+  daily.push(series[series.length - 1]);
+  return daily;
+}
 
-  // 3-period: resample by 3 (3-day for daily, 3-week for weekly)
-  const s3 = resample(series, srcType === 'weekly' ? 3 : 3);
+// ─── Process a data source — 3-day and monthly DSS ───
+function processDSS(series, valKey, srcType) {
+  // For weekly sources, interpolate to daily first for 3-day chart
+  const dailySeries = srcType === 'weekly' ? interpolateToDaily(series, valKey) : series;
+
+  // 3-day: resample interpolated daily by 3
+  const s3 = resample(dailySeries, 3);
   const raw3 = calcDSS(s3.map(d => d[valKey]), 13, 8);
   const sig3 = ema(raw3, SIG_SMOOTH);
   const trend3 = ema(raw3, TREND_LEN);
@@ -370,6 +394,13 @@ function buildSection(prefix, label, color, data, nDaily, srcType) {
     <table class="info-table">
       <tr><th>TF</th><th>DSS</th><th>Signal</th><th>Tide</th><th>Zone</th></tr>
       <tr>
+        <td class="tf-label" style="color:${TF_COLORS['3D']}">3-Day</td>
+        <td class="${zoneBgClass(cur3)}">${fv(cur3)}</td>
+        <td style="color:${aboveSig3?'#00E676':'#FF1744'}">${aboveSig3?'▲ above':'▼ below'}</td>
+        <td class="${tide3up?'trend-up':'trend-down'}">${tide3up?'▲ RISING':'▼ FALLING'}</td>
+        <td class="${zoneLabelClass(cur3)}" style="font-weight:700;font-size:0.7rem">${zoneLabel(cur3)}</td>
+      </tr>
+      <tr>
         <td class="tf-label" style="color:${TF_COLORS.M}">Monthly</td>
         <td class="${zoneBgClass(curM)}">${fv(curM)}</td>
         <td style="color:${aboveSigM?'#00E676':'#FF1744'}">${aboveSigM?'▲ above':'▼ below'}</td>
@@ -377,6 +408,14 @@ function buildSection(prefix, label, color, data, nDaily, srcType) {
         <td class="${zoneLabelClass(curM)}" style="font-weight:700;font-size:0.7rem">${zoneLabel(curM)}</td>
       </tr>
     </table>
+    <div class="chart-section">
+      <div class="chart-header">
+        <span class="tf" style="color:${TF_COLORS['3D']}">3-Day</span>
+        <span>DSS(13,8) + Signal(5) + Tide(30)</span>
+        <span class="data-src">${data.s3.length} bars${srcType==='weekly'?' (interpolated)':''}</span>
+      </div>
+      <div class="chart-wrap tall"><canvas id="${prefix}-3d"></canvas></div>
+    </div>
     <div class="chart-section">
       <div class="chart-header">
         <span class="tf" style="color:${TF_COLORS.M}">Monthly</span>
@@ -389,6 +428,8 @@ function buildSection(prefix, label, color, data, nDaily, srcType) {
 }
 
 function renderCharts(prefix, data) {
+  drawComposite(prefix+'-3d', data.raw3, data.sig3, data.trend3, data.d3, 3000);
+  setupTT(prefix+'-3d');
   drawComposite(prefix+'-m', data.rawM, data.sigM, data.trendM, data.dM, 500);
   setupTT(prefix+'-m');
   // Scroll to right (most recent)
