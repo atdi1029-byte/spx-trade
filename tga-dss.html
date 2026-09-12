@@ -61,9 +61,8 @@ h1 { font-size: 1.4rem; color: #e8dcc8; margin-bottom: 4px; }
 }
 .chart-header .tf { font-weight: 700; }
 .chart-header .data-src { font-size: 0.6rem; color: #555; margin-left: auto; }
-.chart-wrap { position: relative; height: 180px; }
-.chart-wrap.tall { height: 240px; }
-.chart-wrap canvas { width: 100%; height: 100%; cursor: crosshair; }
+.chart-wrap { position: relative; height: 280px; overflow-x: auto; overflow-y: hidden; }
+.chart-wrap canvas { height: 100%; cursor: crosshair; }
 
 .chart-tooltip {
   position: absolute; background: rgba(15,15,26,0.92);
@@ -216,16 +215,24 @@ function drawChart(id, vals, dates, tfKey, maxPts) {
 function drawComposite(id, comp, sig, trend, dates, maxPts) {
   const c = document.getElementById(id); if (!c) return;
   const dpr = window.devicePixelRatio||1;
-  const r = c.parentElement.getBoundingClientRect();
-  c.width = r.width*dpr; c.height = r.height*dpr;
-  const ctx = c.getContext('2d'); ctx.scale(dpr,dpr);
-  const w = r.width, h = r.height;
-  const pad = {top:10,right:45,bottom:22,left:38};
-  const pw = w-pad.left-pad.right, ph = h-pad.top-pad.bottom;
+  const container = c.parentElement;
+  const containerW = container.getBoundingClientRect().width;
+  const h = container.getBoundingClientRect().height;
+
+  // Collect valid points first to determine width
   const pts = [];
   for (let i=0;i<comp.length;i++) if(comp[i]!==null&&sig[i]!==null) pts.push({v:comp[i],s:sig[i],t:trend[i],d:dates[i]});
   if (pts.length<2) return;
   const disp = pts.slice(-maxPts);
+
+  // 6px per data point, minimum container width
+  const pxPerPt = 6;
+  const w = Math.max(containerW, disp.length * pxPerPt + 83);
+  c.width = w*dpr; c.height = h*dpr;
+  c.style.width = w + 'px';
+  const ctx = c.getContext('2d'); ctx.scale(dpr,dpr);
+  const pad = {top:10,right:45,bottom:22,left:38};
+  const pw = w-pad.left-pad.right, ph = h-pad.top-pad.bottom;
   chartStates[id] = {display:disp,pad,w,h,pw,ph,tfKey:'COMP',isComposite:true};
   const toX = i => pad.left+(i/(disp.length-1))*pw;
   const toY = v => pad.top+ph*(1-Math.max(0,Math.min(100,v))/100);
@@ -401,6 +408,9 @@ function renderCharts(prefix, data) {
   setupTT(prefix+'-3d');
   drawComposite(prefix+'-m', data.rawM, data.sigM, data.trendM, data.dM, 500);
   setupTT(prefix+'-m');
+  // Scroll to right (most recent)
+  const wraps = document.querySelectorAll('#tab-'+prefix+' .chart-wrap');
+  wraps.forEach(w => w.scrollLeft = w.scrollWidth);
 }
 
 // ─── Main ───
