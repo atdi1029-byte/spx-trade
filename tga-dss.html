@@ -14,128 +14,73 @@ body {
   padding: 20px;
   min-height: 100vh;
 }
-h1 {
-  font-size: 1.4rem;
-  color: #e8dcc8;
-  margin-bottom: 4px;
-}
-.subtitle {
-  font-size: 0.75rem;
-  color: #888;
-  margin-bottom: 24px;
-}
+h1 { font-size: 1.4rem; color: #e8dcc8; margin-bottom: 4px; }
+.subtitle { font-size: 0.75rem; color: #888; margin-bottom: 24px; }
 
-/* Info table — matches Pine top-right table */
 .info-table {
-  border-collapse: collapse;
-  margin-bottom: 20px;
-  font-size: 0.8rem;
+  border-collapse: collapse; margin-bottom: 20px; font-size: 0.8rem;
 }
 .info-table th {
-  color: #888;
-  font-weight: 400;
-  padding: 4px 12px;
-  text-align: center;
-  background: #0F0F1A;
-  border: 1px solid #444;
+  color: #888; font-weight: 400; padding: 4px 12px;
+  text-align: center; background: #0F0F1A; border: 1px solid #444;
 }
 .info-table td {
-  padding: 5px 12px;
-  text-align: center;
-  border: 1px solid #444;
-  background: #1A1A2E;
+  padding: 5px 12px; text-align: center;
+  border: 1px solid #444; background: #1A1A2E;
 }
 .info-table .tf-label { font-weight: 700; }
 .info-table .zone-cell { font-weight: 700; font-size: 0.75rem; }
 
-/* Zone value backgrounds (match Pine zoneBg) */
 .zb-ob   { background: rgba(255,23,68,0.4) !important; color: #fff; }
 .zb-high { background: rgba(255,152,0,0.25) !important; color: #fff; }
 .zb-os   { background: rgba(0,230,118,0.4) !important; color: #fff; }
 .zb-low  { background: rgba(0,188,212,0.25) !important; color: #fff; }
 .zb-mid  { background: rgba(51,51,51,0.5) !important; color: #fff; }
-
-/* Zone label colors */
 .zc-ob  { color: #FF1744; }
 .zc-os  { color: #00E676; }
 .zc-mid { color: #888; }
-
-/* Trend arrows */
 .trend-up   { color: #00E676; font-weight: 700; }
 .trend-down { color: #FF1744; font-weight: 700; }
 
-/* Chart area */
 .chart-section {
-  background: #1A1A2E;
-  border: 1px solid #333;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
+  background: #1A1A2E; border: 1px solid #333;
+  border-radius: 8px; padding: 16px; margin-bottom: 20px;
 }
 .chart-header {
-  font-size: 0.85rem;
-  color: #888;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  font-size: 0.85rem; color: #888; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 12px;
 }
 .chart-header .tf { font-weight: 700; }
-.chart-wrap {
-  position: relative;
-  height: 220px;
-}
-.chart-wrap canvas {
-  width: 100%;
-  height: 100%;
-}
+.chart-header .data-src { font-size: 0.65rem; color: #555; margin-left: auto; }
+.chart-wrap { position: relative; height: 220px; }
+.chart-wrap canvas { width: 100%; height: 100%; cursor: crosshair; }
 
-/* Legend */
-.legend {
-  display: flex;
-  gap: 20px;
-  margin-top: 8px;
-  font-size: 0.7rem;
-  color: #888;
-}
-.legend-dot {
-  display: inline-block;
-  width: 10px;
-  height: 3px;
-  border-radius: 2px;
-  margin-right: 4px;
-  vertical-align: middle;
-}
-
-/* Balance header */
-.balance-bar {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-.balance-big {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #e8dcc8;
-}
-.balance-date {
+/* Tooltip */
+.chart-tooltip {
+  position: absolute;
+  background: rgba(15,15,26,0.92);
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 6px 10px;
   font-size: 0.75rem;
-  color: #666;
+  color: #e8dcc8;
+  pointer-events: none;
+  white-space: nowrap;
+  display: none;
+  z-index: 10;
 }
-.balance-note {
-  font-size: 0.7rem;
-  color: #666;
-  font-style: italic;
-}
+.chart-tooltip .tt-date { color: #888; }
+.chart-tooltip .tt-val { font-weight: 700; font-size: 0.85rem; }
+.chart-tooltip .tt-zone { font-size: 0.7rem; margin-top: 2px; }
 
-.loading {
-  color: #666;
-  font-size: 0.85rem;
-  padding: 40px;
-  text-align: center;
+.balance-bar {
+  display: flex; align-items: baseline; gap: 16px;
+  margin-bottom: 20px; flex-wrap: wrap;
 }
+.balance-big { font-size: 1.6rem; font-weight: 700; color: #e8dcc8; }
+.balance-date { font-size: 0.75rem; color: #666; }
+.balance-note { font-size: 0.7rem; color: #666; font-style: italic; }
+.loading { color: #666; font-size: 0.85rem; padding: 40px; text-align: center; }
 </style>
 </head>
 <body>
@@ -149,16 +94,10 @@ h1 {
 
 <script>
 const LIQ_API = 'https://script.google.com/macros/s/AKfycbyeL8nGHmsRRG2uk7I3cuh2aWQ14RRKvJYwOblvOWw36_QIKyr9KaA4jXK1K5pyySNiBg/exec?action=liquidity';
+const FRED_URL = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=WTREGEN&cosd=2024-09-01&coed=2026-12-31';
 
-// ─── DSS Bressert (matches Pine exactly) ───
-// 1. Raw stochastic on source
-// 2. EMA smooth → smooth1
-// 3. Raw stochastic on smooth1
-// 4. EMA smooth → dssLine
 function calcDSS(values, stochLen, smoothLen) {
   const len = values.length;
-
-  // Step 1: raw stochastic
   const rawK = [];
   for (let i = 0; i < len; i++) {
     if (i < stochLen - 1) { rawK.push(null); continue; }
@@ -170,11 +109,7 @@ function calcDSS(values, stochLen, smoothLen) {
     const r = hi - lo;
     rawK.push(r === 0 ? 50 : ((values[i] - lo) / r) * 100);
   }
-
-  // Step 2: EMA of rawK
   const smooth1 = ema(rawK, smoothLen);
-
-  // Step 3: stochastic of smooth1
   const rawK2 = [];
   for (let i = 0; i < len; i++) {
     if (smooth1[i] === null || i < stochLen - 1) { rawK2.push(null); continue; }
@@ -188,14 +123,11 @@ function calcDSS(values, stochLen, smoothLen) {
     const r = hi - lo;
     rawK2.push(r === 0 ? 50 : ((smooth1[i] - lo) / r) * 100);
   }
-
-  // Step 4: EMA of rawK2 = final DSS line
   return ema(rawK2, smoothLen);
 }
 
 function ema(arr, period) {
-  const out = [];
-  const k = 2 / (period + 1);
+  const out = [], k = 2 / (period + 1);
   let prev = null;
   for (let i = 0; i < arr.length; i++) {
     if (arr[i] === null) { out.push(null); continue; }
@@ -205,7 +137,6 @@ function ema(arr, period) {
   return out;
 }
 
-// ─── Resample to N-day bars ───
 function resample(series, days) {
   if (days <= 1) return series;
   const bars = [];
@@ -216,10 +147,8 @@ function resample(series, days) {
   return bars;
 }
 
-// ─── Apply chase smoothing (matches Pine smoothSpeed) ───
 function chaseSmooth(raw, speed) {
-  const out = [];
-  let sm = null;
+  const out = []; let sm = null;
   for (let i = 0; i < raw.length; i++) {
     if (raw[i] === null) { out.push(null); continue; }
     if (sm === null) sm = raw[i];
@@ -229,49 +158,44 @@ function chaseSmooth(raw, speed) {
   return out;
 }
 
-// ─── Zone helpers (match Pine) ───
-const OB = 80, OS = 20;
+function parseFredCSV(text) {
+  const lines = text.trim().split('\n'), series = [];
+  for (let i = 1; i < lines.length; i++) {
+    const [date, val] = lines[i].split(',');
+    if (date && val && val !== '.') series.push({ date, balance: parseFloat(val) });
+  }
+  return series;
+}
 
+const OB = 80, OS = 20;
 function zoneLabel(v) {
   if (v === null) return '—';
-  if (v > OB) return 'OB';
-  if (v < OS) return 'OS';
-  if (v > 65) return 'HIGH';
-  if (v < 35) return 'LOW';
-  return '—';
+  if (v > OB) return 'OB'; if (v < OS) return 'OS';
+  if (v > 65) return 'HIGH'; if (v < 35) return 'LOW'; return '—';
 }
-
 function zoneLabelClass(v) {
   if (v === null) return 'zc-mid';
-  if (v > OB) return 'zc-ob';
-  if (v < OS) return 'zc-os';
-  return 'zc-mid';
+  return v > OB ? 'zc-ob' : v < OS ? 'zc-os' : 'zc-mid';
 }
-
 function zoneBgClass(v) {
   if (v === null) return 'zb-mid';
-  if (v > OB) return 'zb-ob';
-  if (v > 65) return 'zb-high';
-  if (v < OS) return 'zb-os';
-  if (v < 35) return 'zb-low';
-  return 'zb-mid';
+  if (v > OB) return 'zb-ob'; if (v > 65) return 'zb-high';
+  if (v < OS) return 'zb-os'; if (v < 35) return 'zb-low'; return 'zb-mid';
 }
-
+function zoneColor(v) {
+  if (v > OB) return '#FF1744'; if (v < OS) return '#00E676';
+  if (v > 65) return '#FF9800'; if (v < 35) return '#00BCD4'; return '#888';
+}
 function trendArrow(cur, prev) {
   if (cur === null || prev === null) return ['—', 'zc-mid'];
-  return cur > prev
-    ? [' ▲', 'trend-up']
-    : [' ▼', 'trend-down'];
+  return cur > prev ? [' ▲', 'trend-up'] : [' ▼', 'trend-down'];
 }
 
-// ─── TF colors (match Pine) ───
-const TF_COLORS = {
-  'D':  '#00BCD4',
-  '3D': '#FF9800',  // Pine uses black but invisible on dark bg
-  'W':  '#BB86FC'
-};
+const TF_COLORS = { 'D': '#00BCD4', '3D': '#FF9800', 'W': '#BB86FC' };
 
-// ─── Draw chart ───
+// Store chart state for tooltip interaction
+const chartStates = {};
+
 function drawChart(canvasId, dssVals, dates, tfKey, maxPts) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -286,7 +210,6 @@ function drawChart(canvasId, dssVals, dates, tfKey, maxPts) {
   const pw = w - pad.left - pad.right;
   const ph = h - pad.top - pad.bottom;
 
-  // Collect valid points
   const pts = [];
   for (let i = 0; i < dssVals.length; i++) {
     if (dssVals[i] !== null) pts.push({ v: dssVals[i], d: dates[i] });
@@ -294,61 +217,43 @@ function drawChart(canvasId, dssVals, dates, tfKey, maxPts) {
   if (pts.length < 2) return;
   const display = pts.slice(-maxPts);
 
+  // Save state for tooltip
+  chartStates[canvasId] = { display, pad, w, h, pw, ph, tfKey };
+
   const toX = i => pad.left + (i / (display.length - 1)) * pw;
   const toY = v => pad.top + ph * (1 - Math.max(0, Math.min(100, v)) / 100);
 
   ctx.clearRect(0, 0, w, h);
 
-  // OB/OS zone fills
+  // OB/OS fills
   ctx.fillStyle = 'rgba(255,23,68,0.08)';
   ctx.fillRect(pad.left, toY(100), pw, toY(OB) - toY(100));
   ctx.fillStyle = 'rgba(0,230,118,0.08)';
   ctx.fillRect(pad.left, toY(OS), pw, toY(0) - toY(OS));
 
-  // Grid lines
+  // Grid
   [0, OS, 50, OB, 100].forEach(lv => {
     const y = toY(lv);
-    ctx.beginPath();
-    ctx.moveTo(pad.left, y);
-    ctx.lineTo(w - pad.right, y);
-    if (lv === OB) {
-      ctx.strokeStyle = 'rgba(255,23,68,0.35)';
-      ctx.setLineDash([5, 4]);
-    } else if (lv === OS) {
-      ctx.strokeStyle = 'rgba(0,230,118,0.35)';
-      ctx.setLineDash([5, 4]);
-    } else if (lv === 50) {
-      ctx.strokeStyle = 'rgba(102,102,102,0.4)';
-      ctx.setLineDash([3, 5]);
-    } else {
-      ctx.strokeStyle = 'rgba(68,68,68,0.25)';
-      ctx.setLineDash([]);
-    }
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
-    ctx.setLineDash([]);
-    // Label
-    ctx.fillStyle = '#666';
-    ctx.font = '9px "Space Mono", monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(lv, pad.left - 5, y + 3);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y);
+    if (lv === OB) { ctx.strokeStyle = 'rgba(255,23,68,0.35)'; ctx.setLineDash([5,4]); }
+    else if (lv === OS) { ctx.strokeStyle = 'rgba(0,230,118,0.35)'; ctx.setLineDash([5,4]); }
+    else if (lv === 50) { ctx.strokeStyle = 'rgba(102,102,102,0.4)'; ctx.setLineDash([3,5]); }
+    else { ctx.strokeStyle = 'rgba(68,68,68,0.25)'; ctx.setLineDash([]); }
+    ctx.lineWidth = 0.8; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#666'; ctx.font = '9px "Space Mono", monospace';
+    ctx.textAlign = 'right'; ctx.fillText(lv, pad.left - 5, y + 3);
   });
 
-  // Date labels
-  ctx.fillStyle = '#555';
-  ctx.font = '8px "Space Mono", monospace';
-  ctx.textAlign = 'center';
-  const nLabels = Math.min(5, display.length);
+  // Dates
+  ctx.fillStyle = '#555'; ctx.font = '8px "Space Mono", monospace'; ctx.textAlign = 'center';
+  const nLabels = Math.min(6, display.length);
   for (let i = 0; i < nLabels; i++) {
     const idx = Math.floor(i * (display.length - 1) / (nLabels - 1));
     const d = display[idx].d;
-    if (d) {
-      const p = d.split('-');
-      ctx.fillText(p[1] + '-' + p[2], toX(idx), h - 4);
-    }
+    if (d) { const p = d.split('-'); ctx.fillText(p[0].slice(2)+'-'+p[1]+'-'+p[2], toX(idx), h-4); }
   }
 
-  // DSS line
+  // Line
   const lineColor = TF_COLORS[tfKey] || '#00BCD4';
   ctx.beginPath();
   for (let i = 0; i < display.length; i++) {
@@ -359,7 +264,7 @@ function drawChart(canvasId, dssVals, dates, tfKey, maxPts) {
   ctx.lineWidth = tfKey === 'D' ? 3 : 2;
   ctx.stroke();
 
-  // Gradient fill under line
+  // Fill
   ctx.beginPath();
   for (let i = 0; i < display.length; i++) {
     const x = toX(i), y = toY(display[i].v);
@@ -371,86 +276,181 @@ function drawChart(canvasId, dssVals, dates, tfKey, maxPts) {
   const grad = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
   grad.addColorStop(0, lineColor + '18');
   grad.addColorStop(1, lineColor + '03');
-  ctx.fillStyle = grad;
-  ctx.fill();
+  ctx.fillStyle = grad; ctx.fill();
 
   // End dot
   const last = display[display.length - 1];
   ctx.beginPath();
   ctx.arc(toX(display.length - 1), toY(last.v), 4, 0, Math.PI * 2);
-  ctx.fillStyle = lineColor;
-  ctx.fill();
-
-  // Value label at end
-  ctx.fillStyle = '#e8dcc8';
-  ctx.font = '10px "Space Mono", monospace';
+  ctx.fillStyle = lineColor; ctx.fill();
+  ctx.fillStyle = '#e8dcc8'; ctx.font = '10px "Space Mono", monospace';
   ctx.textAlign = 'left';
   ctx.fillText(last.v.toFixed(1), w - pad.right + 6, toY(last.v) + 4);
 }
 
+// ─── Tooltip crosshair on hover/touch ───
+function drawCrosshair(canvasId, mouseX) {
+  const state = chartStates[canvasId];
+  if (!state) return;
+  const { display, pad, w, h, pw, ph, tfKey } = state;
+  const canvas = document.getElementById(canvasId);
+  const tooltip = document.getElementById('tt-' + canvasId);
+  if (!canvas || !tooltip) return;
+
+  // Redraw chart first (clears old crosshair)
+  // We re-render from saved state instead of full redraw
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+
+  // Find nearest point
+  const relX = mouseX - pad.left;
+  if (relX < 0 || relX > pw) { tooltip.style.display = 'none'; return; }
+  const idx = Math.round((relX / pw) * (display.length - 1));
+  const clamped = Math.max(0, Math.min(display.length - 1, idx));
+  const pt = display[clamped];
+
+  const toX = i => pad.left + (i / (display.length - 1)) * pw;
+  const toY = v => pad.top + ph * (1 - Math.max(0, Math.min(100, v)) / 100);
+  const px = toX(clamped);
+  const py = toY(pt.v);
+
+  // Redraw base chart
+  drawChart(canvasId, display.map(p => p.v), display.map(p => p.d), tfKey, display.length);
+
+  // Draw crosshair
+  const ctx2 = canvas.getContext('2d');
+  ctx2.save();
+  ctx2.setLineDash([3, 3]);
+  ctx2.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx2.lineWidth = 0.8;
+  // Vertical
+  ctx2.beginPath(); ctx2.moveTo(px, pad.top); ctx2.lineTo(px, h - pad.bottom); ctx2.stroke();
+  // Horizontal
+  ctx2.beginPath(); ctx2.moveTo(pad.left, py); ctx2.lineTo(w - pad.right, py); ctx2.stroke();
+  ctx2.restore();
+
+  // Dot at intersection
+  ctx2.beginPath();
+  ctx2.arc(px, py, 5, 0, Math.PI * 2);
+  ctx2.fillStyle = '#fff';
+  ctx2.fill();
+  ctx2.beginPath();
+  ctx2.arc(px, py, 3, 0, Math.PI * 2);
+  ctx2.fillStyle = TF_COLORS[tfKey];
+  ctx2.fill();
+
+  // Update tooltip
+  const zl = zoneLabel(pt.v);
+  const zc = zoneColor(pt.v);
+  tooltip.innerHTML = `<div class="tt-date">${pt.d}</div><div class="tt-val" style="color:${zc}">${pt.v.toFixed(1)}</div><div class="tt-zone" style="color:${zc}">${zl}</div>`;
+  tooltip.style.display = 'block';
+
+  // Position tooltip
+  const wrapRect = canvas.parentElement.getBoundingClientRect();
+  let ttLeft = px + 12;
+  if (ttLeft + 120 > wrapRect.width) ttLeft = px - 120;
+  tooltip.style.left = ttLeft + 'px';
+  tooltip.style.top = Math.max(0, py - 30) + 'px';
+}
+
+function setupTooltip(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  // Create tooltip element
+  const tt = document.createElement('div');
+  tt.className = 'chart-tooltip';
+  tt.id = 'tt-' + canvasId;
+  canvas.parentElement.appendChild(tt);
+
+  const getX = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    return (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  };
+
+  canvas.addEventListener('mousemove', e => drawCrosshair(canvasId, getX(e)));
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); drawCrosshair(canvasId, getX(e)); }, { passive: false });
+  canvas.addEventListener('mouseleave', () => {
+    const state = chartStates[canvasId];
+    if (state) drawChart(canvasId, state.display.map(p=>p.v), state.display.map(p=>p.d), state.tfKey, state.display.length);
+    tt.style.display = 'none';
+  });
+  canvas.addEventListener('touchend', () => {
+    const state = chartStates[canvasId];
+    if (state) drawChart(canvasId, state.display.map(p=>p.v), state.display.map(p=>p.d), state.tfKey, state.display.length);
+    tt.style.display = 'none';
+  });
+}
+
 // ─── Main ───
 async function init() {
-  let data;
+  const el = document.getElementById('content');
+  let dailySeries = null, fredSeries = null;
+
   try {
-    const resp = await fetch(LIQ_API + '&t=' + Date.now());
-    data = await resp.json();
+    const [liqResp, fredResp] = await Promise.all([
+      fetch(LIQ_API + '&t=' + Date.now()).then(r => r.json()),
+      fetch(FRED_URL).then(r => r.text())
+    ]);
+    if (liqResp && liqResp.status === 'ok' && liqResp.series) dailySeries = liqResp.series;
+    fredSeries = parseFredCSV(fredResp);
   } catch(e) {
-    document.getElementById('content').innerHTML =
-      '<div class="loading">Failed to fetch TGA data.</div>';
+    try { const r = await fetch(LIQ_API+'&t='+Date.now()); const d = await r.json(); if(d.status==='ok') dailySeries=d.series; } catch(e2){}
+    try { const r = await fetch(FRED_URL); fredSeries = parseFredCSV(await r.text()); } catch(e2){}
+  }
+
+  if (!dailySeries && !fredSeries) {
+    el.innerHTML = '<div class="loading">Failed to fetch TGA data.</div>';
     return;
   }
 
-  if (!data || data.status !== 'ok' || !data.series || data.series.length < 30) {
-    document.getElementById('content').innerHTML =
-      '<div class="loading">Insufficient TGA data.</div>';
-    return;
+  // Daily DSS
+  let dssD = [], dDates = [], curD = null, prevD = null;
+  if (dailySeries && dailySeries.length > 30) {
+    dDates = dailySeries.map(d => d.date);
+    dssD = calcDSS(dailySeries.map(d => d.balance), 13, 8);
+    curD = dssD[dssD.length - 1];
+    prevD = dssD.length > 1 ? dssD[dssD.length - 2] : null;
   }
 
-  const series = data.series;
-  const m = data.metrics;
+  // 3-Day DSS
+  let dss3 = [], dates3 = [], cur3 = null, prev3 = null;
+  if (dailySeries && dailySeries.length > 30) {
+    const s3 = resample(dailySeries, 3);
+    dss3 = chaseSmooth(calcDSS(s3.map(d => d.balance), 13, 8), 0.15);
+    dates3 = s3.map(d => d.date);
+    cur3 = dss3[dss3.length - 1];
+    prev3 = dss3.length > 1 ? dss3[dss3.length - 2] : null;
+  }
 
-  // Daily
-  const dVals = series.map(d => d.balance);
-  const dDates = series.map(d => d.date);
-  const dssD = calcDSS(dVals, 13, 8);
+  // Weekly DSS — from FRED (2 years)
+  let dssW = [], datesW = [], curW = null, prevW = null;
+  if (fredSeries && fredSeries.length > 13) {
+    datesW = fredSeries.map(d => d.date);
+    dssW = chaseSmooth(calcDSS(fredSeries.map(d => d.balance), 13, 8), 0.15);
+    curW = dssW[dssW.length - 1];
+    prevW = dssW.length > 1 ? dssW[dssW.length - 2] : null;
+  }
 
-  // 3-Day
-  const s3 = resample(series, 3);
-  const dss3raw = calcDSS(s3.map(d => d.balance), 13, 8);
-  const dss3 = chaseSmooth(dss3raw, 0.15);
-  const dates3 = s3.map(d => d.date);
-
-  // Weekly
-  const sW = resample(series, 5);
-  const dssWraw = calcDSS(sW.map(d => d.balance), 13, 8);
-  const dssW = chaseSmooth(dssWraw, 0.15);
-  const datesW = sW.map(d => d.date);
-
-  // Current values
-  const curD = dssD[dssD.length - 1];
-  const prevD = dssD.length > 1 ? dssD[dssD.length - 2] : null;
-  const cur3 = dss3[dss3.length - 1];
-  const prev3 = dss3.length > 1 ? dss3[dss3.length - 2] : null;
-  const curW = dssW[dssW.length - 1];
-  const prevW = dssW.length > 1 ? dssW[dssW.length - 2] : null;
+  const bal = dailySeries ? dailySeries[dailySeries.length - 1] : fredSeries[fredSeries.length - 1];
+  const balFmt = bal.balance >= 1e6
+    ? '$' + (bal.balance / 1e6).toFixed(2) + 'T'
+    : '$' + (bal.balance / 1e3).toFixed(1) + 'B';
 
   const [arD, arDc] = trendArrow(curD, prevD);
   const [ar3, ar3c] = trendArrow(cur3, prev3);
   const [arW, arWc] = trendArrow(curW, prevW);
-
   const fv = v => v !== null ? v.toFixed(1) : '—';
 
-  document.getElementById('content').innerHTML = `
+  el.innerHTML = `
     <div class="balance-bar">
-      <span class="balance-big">${m ? m.currentBalanceFormatted : '--'}</span>
-      <span class="balance-date">${m ? 'As of ' + m.currentDate : ''}</span>
-      <span class="balance-note">DSS inverted: OB = Treasury hoarding = bearish | OS = Treasury spending = bullish</span>
+      <span class="balance-big">${balFmt}</span>
+      <span class="balance-date">As of ${bal.date}</span>
+      <span class="balance-note">OB = Treasury hoarding = bearish &nbsp;|&nbsp; OS = Treasury spending = bullish</span>
     </div>
 
     <table class="info-table">
-      <tr>
-        <th>DSS</th><th>Value</th><th>Trend</th><th>Zone</th>
-      </tr>
+      <tr><th>DSS</th><th>Value</th><th>Trend</th><th>Zone</th></tr>
       <tr>
         <td class="tf-label" style="color:${TF_COLORS['D']}">D ★</td>
         <td class="${zoneBgClass(curD)}">${fv(curD)}</td>
@@ -475,6 +475,7 @@ async function init() {
       <div class="chart-header">
         <span class="tf" style="color:${TF_COLORS['D']}">Daily</span>
         <span>DSS(13,8)</span>
+        <span class="data-src">${dailySeries ? dailySeries.length + 'd from API' : 'no data'}</span>
       </div>
       <div class="chart-wrap"><canvas id="c-d"></canvas></div>
     </div>
@@ -483,6 +484,7 @@ async function init() {
       <div class="chart-header">
         <span class="tf" style="color:${TF_COLORS['3D']}">3-Day</span>
         <span>DSS(13,8) smoothed</span>
+        <span class="data-src">resampled from daily</span>
       </div>
       <div class="chart-wrap"><canvas id="c-3d"></canvas></div>
     </div>
@@ -491,15 +493,16 @@ async function init() {
       <div class="chart-header">
         <span class="tf" style="color:${TF_COLORS['W']}">Weekly</span>
         <span>DSS(13,8) smoothed</span>
+        <span class="data-src">${fredSeries ? fredSeries.length + 'w from FRED' : 'no data'}</span>
       </div>
       <div class="chart-wrap"><canvas id="c-w"></canvas></div>
     </div>
   `;
 
   requestAnimationFrame(() => {
-    drawChart('c-d', dssD, dDates, 'D', 120);
-    drawChart('c-3d', dss3, dates3, '3D', 90);
-    drawChart('c-w', dssW, datesW, 'W', 52);
+    if (dssD.length) { drawChart('c-d', dssD, dDates, 'D', 140); setupTooltip('c-d'); }
+    if (dss3.length) { drawChart('c-3d', dss3, dates3, '3D', 90); setupTooltip('c-3d'); }
+    if (dssW.length) { drawChart('c-w', dssW, datesW, 'W', 104); setupTooltip('c-w'); }
   });
 }
 
