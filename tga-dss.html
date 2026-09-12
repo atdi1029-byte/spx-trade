@@ -397,9 +397,9 @@ function buildSection(prefix, label, color, data, nDaily, srcType) {
 }
 
 function renderCharts(prefix, data) {
-  drawComposite(prefix+'-3d', data.raw3, data.sig3, data.trend3, data.d3, 350);
+  drawComposite(prefix+'-3d', data.raw3, data.sig3, data.trend3, data.d3, 1000);
   setupTT(prefix+'-3d');
-  drawComposite(prefix+'-m', data.rawM, data.sigM, data.trendM, data.dM, 100);
+  drawComposite(prefix+'-m', data.rawM, data.sigM, data.trendM, data.dM, 500);
   setupTT(prefix+'-m');
 }
 
