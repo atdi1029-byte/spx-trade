@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TGA DSS Oscillator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #1a1714;
+  color: #d4c9b8;
+  font-family: 'Space Mono', monospace;
+  padding: 20px;
+  min-height: 100vh;
+}
+h1 {
+  font-size: 1.4rem;
+  color: #e8dcc8;
+  margin-bottom: 4px;
+}
+.subtitle {
+  font-size: 0.75rem;
+  color: #8a7e6a;
+  margin-bottom: 24px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+}
+.panel {
+  background: #252119;
+  border: 1px solid #3a3530;
+  border-radius: 8px;
+  padding: 16px;
+}
+.panel-title {
+  font-size: 0.85rem;
+  color: #8a7e6a;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-title .tf {
+  color: #e8dcc8;
+  font-weight: 700;
+}
+.dss-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 8px 0;
+}
+.dss-value.ob { color: #e05545; }
+.dss-value.os { color: #6aaa5a; }
+.dss-value.neutral { color: #d4a94d; }
+.zone-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+  margin-left: 8px;
+}
+.zone-badge.overbought { background: rgba(224,85,69,0.2); color: #e05545; }
+.zone-badge.oversold { background: rgba(106,170,90,0.2); color: #6aaa5a; }
+.zone-badge.neutral { background: rgba(212,169,77,0.2); color: #d4a94d; }
+.chart-wrap {
+  position: relative;
+  height: 200px;
+  margin-top: 12px;
+}
+.chart-wrap canvas {
+  width: 100%;
+  height: 100%;
+}
+.signal-row {
+  display: flex;
+  gap: 16px;
+  font-size: 0.75rem;
+  color: #8a7e6a;
+  margin-top: 8px;
+}
+.signal-row .label { color: #6b6155; }
+.signal-row .up { color: #6aaa5a; }
+.signal-row .down { color: #e05545; }
+
+/* TGA balance panel */
+.balance-panel {
+  background: #252119;
+  border: 1px solid #3a3530;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+.balance-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.balance-big {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #e8dcc8;
+}
+.balance-date {
+  font-size: 0.75rem;
+  color: #6b6155;
+}
+.insight {
+  font-size: 0.75rem;
+  color: #8a7e6a;
+  margin-top: 12px;
+  font-style: italic;
+  line-height: 1.5;
+}
+.loading {
+  color: #6b6155;
+  font-size: 0.85rem;
+  padding: 40px;
+  text-align: center;
+}
+
+/* Cross-signal summary */
+.summary-panel {
+  background: #252119;
+  border: 1px solid #3a3530;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+.summary-title {
+  font-size: 0.85rem;
+  color: #8a7e6a;
+  margin-bottom: 8px;
+}
+.summary-text {
+  font-size: 0.85rem;
+  color: #d4c9b8;
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<h1>TGA DSS Oscillator</h1>
+<p class="subtitle">Double Smoothed Stochastic on Treasury General Account balance — daily, 3-day, weekly</p>
+
+<div id="content">
+  <div class="loading">Fetching TGA data...</div>
+</div>
+
+<script>
+const LIQ_API = 'https://script.google.com/macros/s/AKfycbyeL8nGHmsRRG2uk7I3cuh2aWQ14RRKvJYwOblvOWw36_QIKyr9KaA4jXK1K5pyySNiBg/exec?action=liquidity';
+
+// ─── DSS Oscillator ───
+// DSS = Double Smoothed Stochastic
+// 1. Compute raw stochastic %K on the data
+// 2. Smooth %K with EMA (first smoothing)
+// 3. Compute stochastic of the smoothed series
+// 4. Smooth again with EMA (second smoothing) = DSS line
+// Parameters: stochLen (lookback), smoothLen (EMA period)
+
+function calcDSS(values, stochLen = 13, smoothLen = 8) {
+  const len = values.length;
+  const dss = [];
+  const mit = []; // intermediate smoothed stochastic
+
+  // Step 1: Raw Stochastic
+  const rawK = [];
+  for (let i = 0; i < len; i++) {
+    if (i < stochLen - 1) { rawK.push(null); continue; }
+    let hi = -Infinity, lo = Infinity;
+    for (let j = i - stochLen + 1; j <= i; j++) {
+      if (values[j] > hi) hi = values[j];
+      if (values[j] < lo) lo = values[j];
+    }
+    const range = hi - lo;
+    rawK.push(range === 0 ? 50 : ((values[i] - lo) / range) * 100);
+  }
+
+  // Step 2: EMA smooth of rawK
+  const smooth1 = emaSmooth(rawK, smoothLen);
+
+  // Step 3: Stochastic of smooth1
+  const rawK2 = [];
+  for (let i = 0; i < len; i++) {
+    if (smooth1[i] === null || i < stochLen - 1) { rawK2.push(null); continue; }
+    let hi = -Infinity, lo = Infinity;
+    let valid = true;
+    for (let j = i - stochLen + 1; j <= i; j++) {
+      if (smooth1[j] === null) { valid = false; break; }
+      if (smooth1[j] > hi) hi = smooth1[j];
+      if (smooth1[j] < lo) lo = smooth1[j];
+    }
+    if (!valid) { rawK2.push(null); continue; }
+    const range = hi - lo;
+    rawK2.push(range === 0 ? 50 : ((smooth1[i] - lo) / range) * 100);
+  }
+
+  // Step 4: EMA smooth of rawK2 = final DSS
+  const final = emaSmooth(rawK2, smoothLen);
+  return final;
+}
+
+function emaSmooth(arr, period) {
+  const result = [];
+  const k = 2 / (period + 1);
+  let ema = null;
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] === null) { result.push(null); continue; }
+    if (ema === null) { ema = arr[i]; }
+    else { ema = arr[i] * k + ema * (1 - k); }
+    result.push(ema);
+  }
+  return result;
+}
+
+// ─── Resample to N-day bars ───
+function resample(series, days) {
+  if (days <= 1) return series;
+  const bars = [];
+  for (let i = 0; i < series.length; i += days) {
+    const chunk = series.slice(i, i + days);
+    // Use last date, last balance as "close"
+    bars.push(chunk[chunk.length - 1]);
+  }
+  return bars;
+}
+
+// ─── Format ───
+function fmtB(v) {
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'T';
+  return '$' + (v / 1e3).toFixed(1) + 'B';
+}
+
+// ─── Draw DSS Chart ───
+function drawDSS(canvasId, dssValues, dates, label) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = rect.height;
+  const pad = { top: 8, right: 40, bottom: 20, left: 35 };
+  const plotW = w - pad.left - pad.right;
+  const plotH = h - pad.top - pad.bottom;
+
+  // Only plot non-null values
+  const validPairs = [];
+  for (let i = 0; i < dssValues.length; i++) {
+    if (dssValues[i] !== null) {
+      validPairs.push({ idx: i, val: dssValues[i], date: dates[i] });
+    }
+  }
+  if (validPairs.length < 2) return;
+
+  // Trim to last N points for display
+  const maxPts = label === 'Weekly' ? 52 : (label === '3-Day' ? 90 : 120);
+  const display = validPairs.slice(-maxPts);
+
+  const toX = i => pad.left + (i / (display.length - 1)) * plotW;
+  const toY = v => pad.top + plotH * (1 - Math.max(0, Math.min(100, v)) / 100);
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Overbought / oversold zones
+  ctx.fillStyle = 'rgba(224,85,69,0.06)';
+  ctx.fillRect(pad.left, toY(100), plotW, toY(80) - toY(100));
+  ctx.fillStyle = 'rgba(106,170,90,0.06)';
+  ctx.fillRect(pad.left, toY(20), plotW, toY(0) - toY(20));
+
+  // Grid lines at 0, 20, 50, 80, 100
+  [0, 20, 50, 80, 100].forEach(lv => {
+    const y = toY(lv);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(w - pad.right, y);
+    ctx.strokeStyle = lv === 80 ? 'rgba(224,85,69,0.25)' :
+                      lv === 20 ? 'rgba(106,170,90,0.25)' :
+                      'rgba(58,53,48,0.3)';
+    ctx.lineWidth = lv === 50 ? 0.8 : 0.5;
+    if (lv === 80 || lv === 20) ctx.setLineDash([4, 4]);
+    else ctx.setLineDash([]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Labels
+    ctx.fillStyle = '#6b6155';
+    ctx.font = '9px "Space Mono", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(lv, pad.left - 4, y + 3);
+  });
+
+  // Date labels
+  ctx.fillStyle = '#6b6155';
+  ctx.font = '8px "Space Mono", monospace';
+  ctx.textAlign = 'center';
+  const labelCount = Math.min(4, display.length);
+  for (let i = 0; i < labelCount; i++) {
+    const idx = Math.floor(i * (display.length - 1) / (labelCount - 1));
+    const d = display[idx].date;
+    if (d) {
+      const parts = d.split('-');
+      ctx.fillText(parts[1] + '-' + parts[2], toX(idx), h - 4);
+    }
+  }
+
+  // DSS line with color gradient segments
+  for (let i = 1; i < display.length; i++) {
+    const v0 = display[i-1].val, v1 = display[i].val;
+    const avg = (v0 + v1) / 2;
+    ctx.beginPath();
+    ctx.moveTo(toX(i-1), toY(v0));
+    ctx.lineTo(toX(i), toY(v1));
+    ctx.strokeStyle = avg >= 80 ? '#e05545' :
+                      avg <= 20 ? '#6aaa5a' : '#d4a94d';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // End dot
+  const last = display[display.length - 1];
+  ctx.beginPath();
+  ctx.arc(toX(display.length - 1), toY(last.val), 4, 0, Math.PI * 2);
+  ctx.fillStyle = last.val >= 80 ? '#e05545' :
+                  last.val <= 20 ? '#6aaa5a' : '#d4a94d';
+  ctx.fill();
+
+  // Current value label
+  ctx.fillStyle = '#e8dcc8';
+  ctx.font = '9px "Space Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(last.val.toFixed(1), toX(display.length - 1) + 8, toY(last.val) + 3);
+}
+
+// ─── Main ───
+async function init() {
+  let data;
+  try {
+    const resp = await fetch(LIQ_API + '&t=' + Date.now());
+    data = await resp.json();
+  } catch(e) {
+    document.getElementById('content').innerHTML =
+      '<div class="loading">Failed to fetch TGA data.</div>';
+    return;
+  }
+
+  if (!data || data.status !== 'ok' || !data.series || data.series.length < 30) {
+    document.getElementById('content').innerHTML =
+      '<div class="loading">Insufficient TGA data.</div>';
+    return;
+  }
+
+  const series = data.series; // [{date, balance}, ...]
+  const m = data.metrics;
+
+  // Extract balance values
+  const dailyVals = series.map(d => d.balance);
+  const dailyDates = series.map(d => d.date);
+
+  // Resample for 3-day and weekly
+  const series3d = resample(series, 3);
+  const vals3d = series3d.map(d => d.balance);
+  const dates3d = series3d.map(d => d.date);
+
+  const seriesW = resample(series, 5);
+  const valsW = seriesW.map(d => d.balance);
+  const datesW = seriesW.map(d => d.date);
+
+  // Compute DSS for each timeframe
+  const dssDaily = calcDSS(dailyVals, 13, 8);
+  const dss3d = calcDSS(vals3d, 13, 8);
+  const dssWeekly = calcDSS(valsW, 13, 8);
+
+  // Get current values
+  const curDaily = dssDaily[dssDaily.length - 1];
+  const cur3d = dss3d[dss3d.length - 1];
+  const curWeekly = dssWeekly[dssWeekly.length - 1];
+
+  function zoneClass(v) {
+    if (v === null) return 'neutral';
+    if (v >= 80) return 'ob';
+    if (v <= 20) return 'os';
+    return 'neutral';
+  }
+  function zoneLabel(v) {
+    if (v === null) return 'N/A';
+    if (v >= 80) return 'OVERBOUGHT';
+    if (v <= 20) return 'OVERSOLD';
+    return 'NEUTRAL';
+  }
+  function zoneBadgeClass(v) {
+    if (v === null) return 'neutral';
+    if (v >= 80) return 'overbought';
+    if (v <= 20) return 'oversold';
+    return 'neutral';
+  }
+
+  // Interpretation for TGA:
+  // DSS overbought (TGA high in range) = Treasury hoarding = liquidity drain = bearish
+  // DSS oversold (TGA low in range) = Treasury spending = liquidity injection = bullish
+  function interpret(v) {
+    if (v === null) return '';
+    if (v >= 80) return 'TGA at top of range — Treasury hoarding cash. Liquidity drain. Bearish for risk assets.';
+    if (v >= 60) return 'TGA elevated — mild headwind building.';
+    if (v >= 40) return 'TGA mid-range — neutral liquidity impact.';
+    if (v >= 20) return 'TGA dropping — liquidity flowing into markets. Mild tailwind.';
+    return 'TGA at bottom of range — Treasury spending aggressively. Max liquidity injection. Bullish.';
+  }
+
+  // Cross-timeframe summary
+  function crossSummary(d, t, w) {
+    const vals = [d, t, w].filter(v => v !== null);
+    if (vals.length === 0) return 'Insufficient data.';
+    const avg = vals.reduce((a,b) => a+b, 0) / vals.length;
+    const allOB = vals.every(v => v >= 80);
+    const allOS = vals.every(v => v <= 20);
+    const allBearish = vals.every(v => v >= 60);
+    const allBullish = vals.every(v => v <= 40);
+
+    if (allOB) return '🔴 All timeframes overbought — TGA at extreme highs across the board. Maximum liquidity drain. Strong bearish signal for risk assets.';
+    if (allOS) return '🟢 All timeframes oversold — TGA at extreme lows across the board. Maximum liquidity injection. Strong bullish signal for risk assets.';
+    if (allBearish) return '🔴 All timeframes elevated — consistent liquidity headwind. Bearish bias.';
+    if (allBullish) return '🟢 All timeframes low — consistent liquidity tailwind. Bullish bias.';
+
+    // Divergence
+    if (d !== null && w !== null && Math.abs(d - w) > 40) {
+      if (d < w) return '⚡ Daily turning down while weekly still high — potential liquidity shift incoming. Watch for weekly confirmation.';
+      return '⚡ Daily turning up while weekly still low — short-term drain within a longer spending trend.';
+    }
+
+    return '⚪ Mixed signals across timeframes — no strong directional bias. Wait for alignment.';
+  }
+
+  // Build HTML
+  const html = `
+    <div class="balance-panel">
+      <div class="balance-row">
+        <span class="balance-big">${m ? m.currentBalanceFormatted : '--'}</span>
+        <span class="balance-date">${m ? 'As of ' + m.currentDate : ''}</span>
+      </div>
+      <div class="insight">${m ? 'TGA Balance — the U.S. Treasury\'s checking account at the Fed. When it drains, liquidity flows into markets. When it fills, liquidity gets pulled out.' : ''}</div>
+    </div>
+
+    <div class="summary-panel">
+      <div class="summary-title">Cross-Timeframe Signal</div>
+      <div class="summary-text">${crossSummary(curDaily, cur3d, curWeekly)}</div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-title"><span class="tf">Daily</span> DSS(13,8)</div>
+        <div class="dss-value ${zoneClass(curDaily)}">${curDaily !== null ? curDaily.toFixed(1) : '--'}
+          <span class="zone-badge ${zoneBadgeClass(curDaily)}">${zoneLabel(curDaily)}</span>
+        </div>
+        <div class="signal-row">${interpret(curDaily)}</div>
+        <div class="chart-wrap"><canvas id="chart-daily"></canvas></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><span class="tf">3-Day</span> DSS(13,8)</div>
+        <div class="dss-value ${zoneClass(cur3d)}">${cur3d !== null ? cur3d.toFixed(1) : '--'}
+          <span class="zone-badge ${zoneBadgeClass(cur3d)}">${zoneLabel(cur3d)}</span>
+        </div>
+        <div class="signal-row">${interpret(cur3d)}</div>
+        <div class="chart-wrap"><canvas id="chart-3d"></canvas></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><span class="tf">Weekly</span> DSS(13,8)</div>
+        <div class="dss-value ${zoneClass(curWeekly)}">${curWeekly !== null ? curWeekly.toFixed(1) : '--'}
+          <span class="zone-badge ${zoneBadgeClass(curWeekly)}">${zoneLabel(curWeekly)}</span>
+        </div>
+        <div class="signal-row">${interpret(curWeekly)}</div>
+        <div class="chart-wrap"><canvas id="chart-weekly"></canvas></div>
+      </div>
+    </div>
+
+    <div class="insight" style="text-align:center; padding: 12px 0;">
+      DSS interpretation is <b>inverted</b> for TGA: overbought = Treasury hoarding = bearish for stocks. Oversold = Treasury spending = bullish.
+    </div>
+  `;
+
+  document.getElementById('content').innerHTML = html;
+
+  // Draw charts after DOM update
+  requestAnimationFrame(() => {
+    drawDSS('chart-daily', dssDaily, dailyDates, 'Daily');
+    drawDSS('chart-3d', dss3d, dates3d, '3-Day');
+    drawDSS('chart-weekly', dssWeekly, datesW, 'Weekly');
+  });
+}
+
+init();
+
+// Redraw on resize
+window.addEventListener('resize', () => {
+  // Re-init to redraw charts
+  init();
+});
+</script>
+</body>
+</html>
