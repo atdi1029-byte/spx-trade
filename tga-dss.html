@@ -370,13 +370,6 @@ function buildSection(prefix, label, color, data, nDaily, srcType) {
     <table class="info-table">
       <tr><th>TF</th><th>DSS</th><th>Signal</th><th>Tide</th><th>Zone</th></tr>
       <tr>
-        <td class="tf-label" style="color:${TF_COLORS['3D']}">${tfLabel3}</td>
-        <td class="${zoneBgClass(cur3)}">${fv(cur3)}</td>
-        <td style="color:${aboveSig3?'#00E676':'#FF1744'}">${aboveSig3?'▲ above':'▼ below'}</td>
-        <td class="${tide3up?'trend-up':'trend-down'}">${tide3up?'▲ RISING':'▼ FALLING'}</td>
-        <td class="${zoneLabelClass(cur3)}" style="font-weight:700;font-size:0.7rem">${zoneLabel(cur3)}</td>
-      </tr>
-      <tr>
         <td class="tf-label" style="color:${TF_COLORS.M}">Monthly</td>
         <td class="${zoneBgClass(curM)}">${fv(curM)}</td>
         <td style="color:${aboveSigM?'#00E676':'#FF1744'}">${aboveSigM?'▲ above':'▼ below'}</td>
@@ -384,14 +377,6 @@ function buildSection(prefix, label, color, data, nDaily, srcType) {
         <td class="${zoneLabelClass(curM)}" style="font-weight:700;font-size:0.7rem">${zoneLabel(curM)}</td>
       </tr>
     </table>
-    <div class="chart-section">
-      <div class="chart-header">
-        <span class="tf" style="color:${TF_COLORS['3D']}">${tfLabel3}</span>
-        <span>DSS(13,8) + Signal(5) + Tide(30)</span>
-        <span class="data-src">${data.s3.length} bars</span>
-      </div>
-      <div class="chart-wrap tall"><canvas id="${prefix}-3d"></canvas></div>
-    </div>
     <div class="chart-section">
       <div class="chart-header">
         <span class="tf" style="color:${TF_COLORS.M}">Monthly</span>
@@ -404,8 +389,6 @@ function buildSection(prefix, label, color, data, nDaily, srcType) {
 }
 
 function renderCharts(prefix, data) {
-  drawComposite(prefix+'-3d', data.raw3, data.sig3, data.trend3, data.d3, 1000);
-  setupTT(prefix+'-3d');
   drawComposite(prefix+'-m', data.rawM, data.sigM, data.trendM, data.dM, 500);
   setupTT(prefix+'-m');
   // Scroll to right (most recent)
