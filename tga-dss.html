@@ -318,131 +318,88 @@ function setupTT(id) {
   c.addEventListener('mouseleave',cl);c.addEventListener('touchend',cl);
 }
 
-// ─── Process a data source into DSS across timeframes ───
-// srcType: 'daily' = daily data (TGA), 'weekly' = weekly data (net/global from FRED)
+// ─── Process a data source — only 3-period and monthly DSS ───
 function processDSS(series, valKey, srcType) {
   const vals = series.map(d => d[valKey]);
-  const dates = series.map(d => d.date);
 
-  let dssD, s3, dss3, d3, sW, dssW, dW, sM, dssM, dM;
+  // 3-period: resample by 3 (3-day for daily, 3-week for weekly)
+  const s3 = resample(series, srcType === 'weekly' ? 3 : 3);
+  const raw3 = calcDSS(s3.map(d => d[valKey]), 13, 8);
+  const sig3 = ema(raw3, SIG_SMOOTH);
+  const trend3 = ema(raw3, TREND_LEN);
+  const d3 = s3.map(d => d.date);
 
-  if (srcType === 'weekly') {
-    // Source is already weekly — treat raw as "weekly"
-    // "Weekly" = raw data (1:1)
-    sW = series; dW = dates;
-    dssW = calcDSS(vals, 13, 8);
-    // "3-Week" displayed as "3D" slot — resample every 3 weeks
-    s3 = resample(series, 3);
-    dss3 = calcDSS(s3.map(d => d[valKey]), 13, 8);
-    d3 = s3.map(d => d.date);
-    // "Monthly" = resample every 4 weeks
-    sM = resample(series, 4);
-    dssM = calcDSS(sM.map(d => d[valKey]), 13, 8);
-    dM = sM.map(d => d.date);
-    // "Daily" slot = same as weekly (finest granularity available)
-    dssD = dssW;
-  } else {
-    // Daily source (TGA)
-    dssD = calcDSS(vals, 13, 8);
-    s3 = resample(series, 3);
-    dss3 = calcDSS(s3.map(d => d[valKey]), 13, 8);
-    d3 = s3.map(d => d.date);
-    sW = resample(series, 5);
-    dssW = calcDSS(sW.map(d => d[valKey]), 13, 8);
-    dW = sW.map(d => d.date);
-    sM = resample(series, 20);
-    dssM = calcDSS(sM.map(d => d[valKey]), 13, 8);
-    dM = sM.map(d => d.date);
-  }
+  // Monthly: resample by 4 weeks or 20 days
+  const sM = resample(series, srcType === 'weekly' ? 4 : 20);
+  const rawM = calcDSS(sM.map(d => d[valKey]), 13, 8);
+  const sigM = ema(rawM, SIG_SMOOTH);
+  const trendM = ema(rawM, TREND_LEN);
+  const dM = sM.map(d => d.date);
 
-  // Composite — align 3-period and weekly DSS to base dates
-  const a3 = alignToDaily(dates, dss3, d3);
-  const aW = alignToDaily(dates, dssW, dW);
-  const totalWt = WT_D + WT_3D + WT_W;
-  const rawComp = [];
-  const baseDss = srcType === 'weekly' ? dssW : dssD;
-  for (let i = 0; i < dates.length; i++) {
-    if (baseDss[i] === null || a3[i] === null || aW[i] === null) rawComp.push(null);
-    else rawComp.push((baseDss[i]*WT_D + a3[i]*WT_3D + aW[i]*WT_W) / totalWt);
-  }
-  const comp = ema(rawComp, COMP_SMOOTH);
-  const sig = ema(comp, SIG_SMOOTH);
-  const trend = ema(comp, TREND_LEN);
-
-  return { dssD, dates, dss3, d3, dssW, dW, dssM, dM, comp, sig, trend, s3, sW, sM };
+  return { raw3, sig3, trend3, d3, s3, rawM, sigM, trendM, dM, sM };
 }
 
 // ─── Build section HTML ───
 function buildSection(prefix, label, color, data, nDaily, srcType) {
   const fv = v => v !== null ? v.toFixed(1) : '—';
-  const cur = k => { const a = data[k]; return a[a.length-1]; };
-  const prev = k => { const a = data[k]; return a.length>1?a[a.length-2]:null; };
+  const last = (a) => a[a.length-1];
+  const prev = (a) => a.length>1 ? a[a.length-2] : null;
 
-  const curD = cur('dssD'), curC = cur('comp'), curS = cur('sig');
-  const curT = cur('trend'), prevT = data.trend.length>TREND_BARS ? data.trend[data.trend.length-1-TREND_BARS] : null;
-  const tideUp = curT!==null && prevT!==null && curT>prevT;
-  const compAboveSig = curC!==null && curS!==null && curC>curS;
+  const cur3 = last(data.raw3), curM = last(data.rawM);
+  const curSig3 = last(data.sig3), curSigM = last(data.sigM);
+  const curTrend3 = last(data.trend3), curTrendM = last(data.trendM);
+  const prevTrend3 = data.trend3.length>TREND_BARS ? data.trend3[data.trend3.length-1-TREND_BARS] : null;
+  const prevTrendM = data.trendM.length>TREND_BARS ? data.trendM[data.trendM.length-1-TREND_BARS] : null;
+  const tide3up = curTrend3!==null && prevTrend3!==null && curTrend3>prevTrend3;
+  const tideMup = curTrendM!==null && prevTrendM!==null && curTrendM>prevTrendM;
+  const aboveSig3 = cur3!==null && curSig3!==null && cur3>curSig3;
+  const aboveSigM = curM!==null && curSigM!==null && curM>curSigM;
 
-  const rows = srcType === 'weekly' ? [
-    ['W', cur('dssW'), prev('dssW'), WT_D+'%'],
-    ['3W', cur('dss3'), prev('dss3'), WT_3D+'%'],
-    ['M', cur('dssM'), prev('dssM'), WT_W+'%'],
-  ] : [
-    ['D', cur('dssD'), prev('dssD'), WT_D+'%'],
-    ['3D', cur('dss3'), prev('dss3'), WT_3D+'%'],
-    ['W', cur('dssW'), prev('dssW'), WT_W+'%'],
-    ['M', cur('dssM'), prev('dssM'), '—'],
-  ];
-
-  let tableRows = rows.map(([tf, c, p, wt]) => {
-    const [ar, ac] = trendArrow(c, p);
-    return `<tr><td class="tf-label" style="color:${TF_COLORS[tf]}">${tf}</td>
-    <td class="${zoneBgClass(c)}">${fv(c)}</td>
-    <td class="${ac}">${ar}</td>
-    <td class="${zoneLabelClass(c)}" style="font-weight:700;font-size:0.7rem">${zoneLabel(c)}</td>
-    <td style="color:#666">${wt}</td></tr>`;
-  }).join('');
-
-  const [arComp, arCompc] = trendArrow(curC, prev('comp'));
-  tableRows += `<tr style="border-top:2px solid #555">
-    <td class="tf-label" style="color:${compColor(curC)}">COMP</td>
-    <td class="${zoneBgClass(curC)}">${fv(curC)}</td>
-    <td class="${arCompc}">${arComp}</td>
-    <td class="${zoneLabelClass(curC)}" style="font-weight:700;font-size:0.7rem">${zoneLabel(curC)}</td>
-    <td class="${tideUp?'trend-up':'trend-down'}" style="font-size:0.65rem">${tideUp?'▲ RISING':'▼ FALLING'}</td></tr>`;
+  const tfLabel3 = srcType === 'weekly' ? '3-Week' : '3-Day';
+  const [ar3, ar3c] = trendArrow(cur3, prev(data.raw3));
+  const [arM, arMc] = trendArrow(curM, prev(data.rawM));
 
   return `
     <table class="info-table">
-      <tr><th>DSS</th><th>Value</th><th>Trend</th><th>Zone</th><th>Wt</th></tr>
-      ${tableRows}
+      <tr><th>TF</th><th>DSS</th><th>Signal</th><th>Tide</th><th>Zone</th></tr>
+      <tr>
+        <td class="tf-label" style="color:${TF_COLORS['3D']}">${tfLabel3}</td>
+        <td class="${zoneBgClass(cur3)}">${fv(cur3)}</td>
+        <td style="color:${aboveSig3?'#00E676':'#FF1744'}">${aboveSig3?'▲ above':'▼ below'}</td>
+        <td class="${tide3up?'trend-up':'trend-down'}">${tide3up?'▲ RISING':'▼ FALLING'}</td>
+        <td class="${zoneLabelClass(cur3)}" style="font-weight:700;font-size:0.7rem">${zoneLabel(cur3)}</td>
+      </tr>
+      <tr>
+        <td class="tf-label" style="color:${TF_COLORS.M}">Monthly</td>
+        <td class="${zoneBgClass(curM)}">${fv(curM)}</td>
+        <td style="color:${aboveSigM?'#00E676':'#FF1744'}">${aboveSigM?'▲ above':'▼ below'}</td>
+        <td class="${tideMup?'trend-up':'trend-down'}">${tideMup?'▲ RISING':'▼ FALLING'}</td>
+        <td class="${zoneLabelClass(curM)}" style="font-weight:700;font-size:0.7rem">${zoneLabel(curM)}</td>
+      </tr>
     </table>
-    <div class="chart-section composite">
+    <div class="chart-section">
       <div class="chart-header">
-        <span class="tf" style="color:${compColor(curC)}">Composite</span>
-        <span>${srcType==='weekly'?'W'+WT_D+'/3W'+WT_3D+'/M'+WT_W:'D'+WT_D+'/3D'+WT_3D+'/W'+WT_W} · EMA(${COMP_SMOOTH})</span>
-        <span style="color:${compAboveSig?'#00E676':'#FF1744'};font-size:0.7rem">${compAboveSig?'▲ above signal':'▼ below signal'}</span>
+        <span class="tf" style="color:${TF_COLORS['3D']}">${tfLabel3}</span>
+        <span>DSS(13,8) + Signal(5) + Tide(30)</span>
+        <span class="data-src">${data.s3.length} bars</span>
       </div>
-      <div class="chart-wrap tall"><canvas id="${prefix}-comp"></canvas></div>
+      <div class="chart-wrap tall"><canvas id="${prefix}-3d"></canvas></div>
     </div>
-    ${srcType === 'weekly' ? '' : `<div class="chart-section"><div class="chart-header"><span class="tf" style="color:${TF_COLORS.D}">Daily</span><span>DSS(13,8)</span><span class="data-src">${nDaily}d</span></div><div class="chart-wrap"><canvas id="${prefix}-d"></canvas></div></div>`}
-    <div class="chart-section"><div class="chart-header"><span class="tf" style="color:${TF_COLORS.W}">Weekly</span><span>DSS(13,8)</span><span class="data-src">${data.sW.length} bars</span></div><div class="chart-wrap"><canvas id="${prefix}-w"></canvas></div></div>
-    <div class="chart-section"><div class="chart-header"><span class="tf" style="color:${TF_COLORS['3D']}">3-Week</span><span>DSS(13,8)</span><span class="data-src">${data.s3.length} bars</span></div><div class="chart-wrap"><canvas id="${prefix}-3d"></canvas></div></div>
-    <div class="chart-section"><div class="chart-header"><span class="tf" style="color:${TF_COLORS.M}">Monthly</span><span>DSS(13,8)</span><span class="data-src">${data.sM.length} bars</span></div><div class="chart-wrap"><canvas id="${prefix}-m"></canvas></div></div>
+    <div class="chart-section">
+      <div class="chart-header">
+        <span class="tf" style="color:${TF_COLORS.M}">Monthly</span>
+        <span>DSS(13,8) + Signal(5) + Tide(30)</span>
+        <span class="data-src">${data.sM.length} bars</span>
+      </div>
+      <div class="chart-wrap tall"><canvas id="${prefix}-m"></canvas></div>
+    </div>
   `;
 }
 
 function renderCharts(prefix, data) {
-  drawComposite(prefix+'-comp', data.comp, data.sig, data.trend, data.dates, 500);
-  setupTT(prefix+'-comp');
-  if (document.getElementById(prefix+'-d')) {
-    drawChart(prefix+'-d', data.dssD, data.dates, 'D', 500);
-    setupTT(prefix+'-d');
-  }
-  drawChart(prefix+'-3d', data.dss3, data.d3, '3D', 350);
+  drawComposite(prefix+'-3d', data.raw3, data.sig3, data.trend3, data.d3, 350);
   setupTT(prefix+'-3d');
-  drawChart(prefix+'-w', data.dssW, data.dW, 'W', 350);
-  setupTT(prefix+'-w');
-  drawChart(prefix+'-m', data.dssM, data.dM, 'M', 100);
+  drawComposite(prefix+'-m', data.rawM, data.sigM, data.trendM, data.dM, 100);
   setupTT(prefix+'-m');
 }
 
