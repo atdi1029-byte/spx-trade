@@ -73,28 +73,12 @@ h1 { font-size: 1.4rem; color: #e8dcc8; margin-bottom: 4px; }
 
 .loading { color: #666; font-size: 0.85rem; padding: 40px; text-align: center; }
 
-/* Tabs */
-.tab-bar {
-  display: flex; gap: 2px; margin-bottom: 16px;
-}
-.tab-bar button {
-  background: #1A1A2E; border: 1px solid #333; color: #888;
-  padding: 6px 16px; font-family: inherit; font-size: 0.75rem;
-  cursor: pointer; border-radius: 4px 4px 0 0;
-}
-.tab-bar button.active {
-  background: #252240; color: #e8dcc8; border-bottom-color: #252240;
-}
-.tab-content { display: none; }
-.tab-content.active { display: block; }
 </style>
 </head>
 <body>
 
-<h1>Macro DSS Dashboard</h1>
-<p class="subtitle">DSS Bressert on TGA, Net Liquidity, Global Liquidity — Daily, 3-Day, Weekly, Monthly + Composite</p>
-
-<div class="tab-bar" id="tabs"></div>
+<h1>Liquidity DSS Dashboard</h1>
+<p class="subtitle">Net Liquidity (3-Day + Monthly) + TGA (3-Day) — DSS Bressert with Signal + Tide</p>
 <div id="content">
   <div class="loading">Fetching macro data...</div>
 </div>
@@ -427,86 +411,128 @@ function buildSection(prefix, label, color, data, nDaily, srcType) {
   `;
 }
 
-function renderCharts(prefix, data) {
-  drawComposite(prefix+'-3d', data.raw3, data.sig3, data.trend3, data.d3, 3000);
-  setupTT(prefix+'-3d');
-  drawComposite(prefix+'-m', data.rawM, data.sigM, data.trendM, data.dM, 500);
-  setupTT(prefix+'-m');
+function renderCharts(data) {
+  drawComposite('nl-3d', data.raw3, data.sig3, data.trend3, data.d3, 3000);
+  setupTT('nl-3d');
+  drawComposite('nl-m', data.rawM, data.sigM, data.trendM, data.dM, 500);
+  setupTT('nl-m');
   // Scroll to right (most recent)
-  const wraps = document.querySelectorAll('#tab-'+prefix+' .chart-wrap');
-  wraps.forEach(w => w.scrollLeft = w.scrollWidth);
+  document.querySelectorAll('.chart-wrap').forEach(w => w.scrollLeft = w.scrollWidth);
 }
 
 // ─── Main ───
 async function init() {
   const el = document.getElementById('content');
-  const tabBar = document.getElementById('tabs');
 
-  // Load pre-built historical data (FRED + Treasury.gov, 2 years)
-  let tgaSeries=[], netSeries=[], globalSeries=[];
+  let netSeries = [], tgaSeries = [];
   try {
     const data = await fetch('macro-data.json?t='+Date.now()).then(r=>r.json());
-    tgaSeries = data.tga || [];
     netSeries = data.netLiq || [];
-    globalSeries = data.globalLiq || [];
+    tgaSeries = data.tga || [];
   } catch(e) {
     el.innerHTML = '<div class="loading">Failed to load macro-data.json</div>';
     return;
   }
 
-  // Process each — TGA is daily, net/global are weekly from FRED
-  const tgaData = tgaSeries.length > 30 ? processDSS(tgaSeries, 'balance', 'daily') : null;
-  const netData = netSeries.length > 30 ? processDSS(netSeries, 'netLiq', 'weekly') : null;
-  const globalData = globalSeries.length > 30 ? processDSS(globalSeries, 'globalLiq', 'weekly') : null;
-
-  // Build tabs
-  const tabs = [];
-  if (tgaData) tabs.push({id:'tga', label:'TGA', data:tgaData, n:tgaSeries.length, color:'#e8a04c', srcType:'daily',
-    header:`$${(tgaSeries[tgaSeries.length-1].balance/1e3).toFixed(1)}B`, hdate:tgaSeries[tgaSeries.length-1].date,
-    note:'OB = hoarding = bearish | OS = spending = bullish'});
-  if (netData) { const last=netSeries[netSeries.length-1]; tabs.push({id:'net', label:'Net Liquidity', data:netData, n:netSeries.length, color:'#FF9800', srcType:'weekly',
-    header:`$${(last.netLiq/1e6).toFixed(2)}T`, hdate:last.date,
-    note:'Fed Balance Sheet − TGA − Reverse Repo (weekly from FRED)'}); }
-  if (globalData) { const last=globalSeries[globalSeries.length-1]; tabs.push({id:'global', label:'Global Liquidity', data:globalData, n:globalSeries.length, color:'#BB86FC', srcType:'weekly',
-    header:`$${(last.globalLiq/1e6).toFixed(2)}T`, hdate:last.date,
-    note:'Fed + ECB + BOJ (weekly from FRED)'}); }
-
-  if (tabs.length === 0) {
-    el.innerHTML = '<div class="loading">No data available.</div>';
+  if (netSeries.length < 30) {
+    el.innerHTML = '<div class="loading">Insufficient data.</div>';
     return;
   }
 
-  // Render tab buttons
-  tabBar.innerHTML = tabs.map((t,i) =>
-    `<button onclick="switchTab('${t.id}')" class="${i===0?'active':''}" id="btn-${t.id}">${t.label}</button>`
-  ).join('');
+  const netData = processDSS(netSeries, 'netLiq', 'weekly');
+  const tgaData = tgaSeries.length > 30 ? processDSS(tgaSeries, 'balance', 'daily') : null;
+  const lastNet = netSeries[netSeries.length - 1];
+  const lastTga = tgaSeries.length > 0 ? tgaSeries[tgaSeries.length - 1] : null;
 
-  // Render tab contents
-  el.innerHTML = tabs.map((t,i) => `
-    <div class="tab-content ${i===0?'active':''}" id="tab-${t.id}">
-      <div class="section-header">
-        <span class="val" style="color:${t.color}">${t.header}</span>
-        <span class="date">As of ${t.hdate}</span>
-        <span style="font-size:0.65rem;color:#666;font-style:italic">${t.note}</span>
+  // Net liquidity info
+  const fv = v => v !== null ? v.toFixed(1) : '—';
+  const last = a => a[a.length-1];
+  const prev = a => a.length>1 ? a[a.length-2] : null;
+
+  const curNet3 = last(netData.raw3), curNetM = last(netData.rawM);
+  const sigNet3 = last(netData.sig3), sigNetM = last(netData.sigM);
+  const trendNet3 = last(netData.trend3), prevTrendNet3 = netData.trend3.length>TREND_BARS ? netData.trend3[netData.trend3.length-1-TREND_BARS] : null;
+  const trendNetM = last(netData.trendM), prevTrendNetM = netData.trendM.length>TREND_BARS ? netData.trendM[netData.trendM.length-1-TREND_BARS] : null;
+  const tide3up = trendNet3!==null && prevTrendNet3!==null && trendNet3>prevTrendNet3;
+  const tideMup = trendNetM!==null && prevTrendNetM!==null && trendNetM>prevTrendNetM;
+  const aboveSig3 = curNet3!==null && sigNet3!==null && curNet3>sigNet3;
+  const aboveSigM = curNetM!==null && sigNetM!==null && curNetM>sigNetM;
+
+  // TGA info
+  let tgaRow = '', tgaChart = '';
+  if (tgaData) {
+    const curTga3 = last(tgaData.raw3), sigTga3 = last(tgaData.sig3);
+    const trendTga3 = last(tgaData.trend3), prevTrendTga3 = tgaData.trend3.length>TREND_BARS ? tgaData.trend3[tgaData.trend3.length-1-TREND_BARS] : null;
+    const tideTga3up = trendTga3!==null && prevTrendTga3!==null && trendTga3>prevTrendTga3;
+    const aboveSigTga3 = curTga3!==null && sigTga3!==null && curTga3>sigTga3;
+    tgaRow = `<tr>
+      <td class="tf-label" style="color:#e8a04c">TGA 3-Day</td>
+      <td class="${zoneBgClass(curTga3)}">${fv(curTga3)}</td>
+      <td style="color:${aboveSigTga3?'#00E676':'#FF1744'}">${aboveSigTga3?'▲ above':'▼ below'}</td>
+      <td class="${tideTga3up?'trend-up':'trend-down'}">${tideTga3up?'▲ RISING':'▼ FALLING'}</td>
+      <td class="${zoneLabelClass(curTga3)}" style="font-weight:700;font-size:0.7rem">${zoneLabel(curTga3)}</td>
+    </tr>`;
+    tgaChart = `<div class="chart-section">
+      <div class="chart-header">
+        <span class="tf" style="color:#e8a04c">TGA 3-Day</span>
+        <span>DSS(13,8) + Signal(5) + Tide(30)</span>
+        <span class="data-src">${tgaData.s3.length} bars</span>
       </div>
-      ${buildSection(t.id, t.label, t.color, t.data, t.n, t.srcType)}
+      <div class="chart-wrap tall"><canvas id="tga-3d"></canvas></div>
+    </div>`;
+  }
+
+  el.innerHTML = `
+    <div class="section-header">
+      <span class="val" style="color:#FF9800">$${(lastNet.netLiq/1e6).toFixed(2)}T</span>
+      <span class="date">As of ${lastNet.date}</span>
+      ${lastTga ? '<span style="color:#e8a04c;font-size:0.85rem;margin-left:12px">TGA $'+(lastTga.balance/1e3).toFixed(1)+'B</span>' : ''}
     </div>
-  `).join('');
+    <table class="info-table">
+      <tr><th>TF</th><th>DSS</th><th>Signal</th><th>Tide</th><th>Zone</th></tr>
+      <tr>
+        <td class="tf-label" style="color:${TF_COLORS['3D']}">Net Liq 3-Day</td>
+        <td class="${zoneBgClass(curNet3)}">${fv(curNet3)}</td>
+        <td style="color:${aboveSig3?'#00E676':'#FF1744'}">${aboveSig3?'▲ above':'▼ below'}</td>
+        <td class="${tide3up?'trend-up':'trend-down'}">${tide3up?'▲ RISING':'▼ FALLING'}</td>
+        <td class="${zoneLabelClass(curNet3)}" style="font-weight:700;font-size:0.7rem">${zoneLabel(curNet3)}</td>
+      </tr>
+      <tr>
+        <td class="tf-label" style="color:${TF_COLORS.M}">Net Liq Monthly</td>
+        <td class="${zoneBgClass(curNetM)}">${fv(curNetM)}</td>
+        <td style="color:${aboveSigM?'#00E676':'#FF1744'}">${aboveSigM?'▲ above':'▼ below'}</td>
+        <td class="${tideMup?'trend-up':'trend-down'}">${tideMup?'▲ RISING':'▼ FALLING'}</td>
+        <td class="${zoneLabelClass(curNetM)}" style="font-weight:700;font-size:0.7rem">${zoneLabel(curNetM)}</td>
+      </tr>
+      ${tgaRow}
+    </table>
+    <div class="chart-section">
+      <div class="chart-header">
+        <span class="tf" style="color:${TF_COLORS['3D']}">Net Liquidity 3-Day</span>
+        <span>DSS(13,8) + Signal(5) + Tide(30)</span>
+        <span class="data-src">${netData.s3.length} bars (interpolated)</span>
+      </div>
+      <div class="chart-wrap tall"><canvas id="nl-3d"></canvas></div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-header">
+        <span class="tf" style="color:${TF_COLORS.M}">Net Liquidity Monthly</span>
+        <span>DSS(13,8) + Signal(5) + Tide(30)</span>
+        <span class="data-src">${netData.sM.length} bars</span>
+      </div>
+      <div class="chart-wrap tall"><canvas id="nl-m"></canvas></div>
+    </div>
+    ${tgaChart}
+  `;
 
-  // Draw active tab charts
-  requestAnimationFrame(() => renderCharts(tabs[0].id, tabs[0].data));
-
-  // Store for tab switching
-  window._tabData = {};
-  tabs.forEach(t => window._tabData[t.id] = t.data);
-}
-
-function switchTab(id) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-bar button').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  document.getElementById('btn-'+id).classList.add('active');
-  requestAnimationFrame(() => renderCharts(id, window._tabData[id]));
+  requestAnimationFrame(() => {
+    renderCharts(netData);
+    if (tgaData) {
+      drawComposite('tga-3d', tgaData.raw3, tgaData.sig3, tgaData.trend3, tgaData.d3, 500);
+      setupTT('tga-3d');
+    }
+    document.querySelectorAll('.chart-wrap').forEach(w => w.scrollLeft = w.scrollWidth);
+  });
 }
 
 init();
