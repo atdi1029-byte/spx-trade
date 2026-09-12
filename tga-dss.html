@@ -230,12 +230,17 @@ function drawComposite(id, comp, sig, trend, dates, maxPts) {
     ctx.fillStyle=(disp[i-1].v+disp[i].v)/2>(disp[i-1].s+disp[i].s)/2?'rgba(0,230,118,0.12)':'rgba(255,23,68,0.10)';
     ctx.fill();
   }
-  // Trend EMA
-  ctx.beginPath(); let ts=false;
-  for (let i=0;i<disp.length;i++){if(disp[i].t===null)continue;const x=toX(i),y=toY(disp[i].t);!ts?(ctx.moveTo(x,y),ts=true):ctx.lineTo(x,y);}
-  if(ts){const lt=disp[disp.length-1].t,pt=disp.length>TREND_BARS?disp[disp.length-1-TREND_BARS].t:null;
-  ctx.strokeStyle=(lt!==null&&pt!==null&&lt>pt)?'rgba(0,230,118,0.35)':'rgba(255,23,68,0.35)';
-  ctx.lineWidth=2;ctx.setLineDash([6,3]);ctx.stroke();ctx.setLineDash([]);}
+  // Trend EMA — segment by segment, green when rising, red when falling
+  ctx.setLineDash([6,3]); ctx.lineWidth=2;
+  for (let i=1;i<disp.length;i++){
+    if(disp[i].t===null||disp[i-1].t===null) continue;
+    ctx.beginPath();
+    ctx.moveTo(toX(i-1),toY(disp[i-1].t));
+    ctx.lineTo(toX(i),toY(disp[i].t));
+    ctx.strokeStyle = disp[i].t > disp[i-1].t ? 'rgba(0,230,118,0.45)' : 'rgba(255,23,68,0.45)';
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
   // Signal line
   ctx.beginPath();
   for(let i=0;i<disp.length;i++){const x=toX(i),y=toY(disp[i].s);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
