@@ -90,7 +90,7 @@ h1 { font-size: 1.4rem; color: #e8dcc8; margin-bottom: 4px; }
 <body>
 
 <h1>TGA DSS Bressert</h1>
-<p class="subtitle">Double Smoothed Stochastic on Treasury General Account — Inverted (high = bullish for stocks) — Composite + Daily, 3-Day, Weekly</p>
+<p class="subtitle">Double Smoothed Stochastic on Treasury General Account — Composite + Daily, 3-Day, Weekly</p>
 
 <div id="content">
   <div class="loading">Fetching TGA data from Treasury.gov...</div>
@@ -536,14 +536,14 @@ async function init() {
   // ─── Compute DSS per timeframe ───
   const dVals = series.map(d => d.balance);
   const dDates = series.map(d => d.date);
-  const dssD = invertDSS(calcDSS(dVals, 13, 8));
+  const dssD = calcDSS(dVals, 13, 8);
 
   const s3 = resample(series, 3);
-  const dss3 = invertDSS(calcDSS(s3.map(d => d.balance), 13, 8));
+  const dss3 = calcDSS(s3.map(d => d.balance), 13, 8);
   const dates3 = s3.map(d => d.date);
 
   const sW = resample(series, 5);
-  const dssW = invertDSS(calcDSS(sW.map(d => d.balance), 13, 8));
+  const dssW = calcDSS(sW.map(d => d.balance), 13, 8);
   const datesW = sW.map(d => d.date);
 
   // ─── Align 3D and W to daily dates (forward-fill) ───
@@ -594,7 +594,7 @@ async function init() {
     <div class="balance-bar">
       <span class="balance-big">${balFmt}</span>
       <span class="balance-date">As of ${bal.date}</span>
-      <span class="balance-note">INVERTED: High = Treasury spending = bullish &nbsp;|&nbsp; Low = Treasury hoarding = bearish</span>
+      <span class="balance-note">OB = Treasury hoarding = bearish &nbsp;|&nbsp; OS = Treasury spending = bullish</span>
     </div>
 
     <table class="info-table">
