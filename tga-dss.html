@@ -422,19 +422,15 @@ async function init() {
   const el = document.getElementById('content');
   const tabBar = document.getElementById('tabs');
 
-  // Fetch all 3 sources in parallel
+  // Load pre-built historical data (FRED + Treasury.gov, 2 years)
   let tgaSeries=[], netSeries=[], globalSeries=[];
   try {
-    const [tgaResp, netResp, globalResp] = await Promise.all([
-      fetch(TREASURY_API).then(r=>r.json()),
-      fetch(BASE+'?action=net_liquidity&t='+Date.now()).then(r=>r.json()),
-      fetch(BASE+'?action=global_liquidity&t='+Date.now()).then(r=>r.json()),
-    ]);
-    tgaSeries = tgaResp.data.map(d => ({date:d.record_date, balance:parseFloat(d.open_today_bal)}));
-    if(netResp.status==='ok') netSeries = netResp.series.map(d => ({date:d.date, netLiq:d.netLiq}));
-    if(globalResp.status==='ok') globalSeries = globalResp.series.map(d => ({date:d.date, globalLiq:d.globalLiq}));
+    const data = await fetch('macro-data.json?t='+Date.now()).then(r=>r.json());
+    tgaSeries = data.tga || [];
+    netSeries = data.netLiq || [];
+    globalSeries = data.globalLiq || [];
   } catch(e) {
-    el.innerHTML = '<div class="loading">Failed to fetch data.</div>';
+    el.innerHTML = '<div class="loading">Failed to load macro-data.json</div>';
     return;
   }
 
@@ -448,12 +444,12 @@ async function init() {
   if (tgaData) tabs.push({id:'tga', label:'TGA', data:tgaData, n:tgaSeries.length, color:'#e8a04c',
     header:`$${(tgaSeries[tgaSeries.length-1].balance/1e3).toFixed(1)}B`, hdate:tgaSeries[tgaSeries.length-1].date,
     note:'OB = hoarding = bearish | OS = spending = bullish'});
-  if (netData) tabs.push({id:'net', label:'Net Liquidity', data:netData, n:netSeries.length, color:'#FF9800',
-    header:`$${(netSeries[netSeries.length-1].netLiq/1e6).toFixed(2)}T`, hdate:netSeries[netSeries.length-1].date,
-    note:'Fed Balance Sheet − TGA − Reverse Repo'});
-  if (globalData) tabs.push({id:'global', label:'Global Liquidity', data:globalData, n:globalSeries.length, color:'#BB86FC',
-    header:`$${(globalSeries[globalSeries.length-1].globalLiq/1e6).toFixed(2)}T`, hdate:globalSeries[globalSeries.length-1].date,
-    note:'Fed + ECB + BOJ'});
+  if (netData) { const last=netSeries[netSeries.length-1]; tabs.push({id:'net', label:'Net Liquidity', data:netData, n:netSeries.length, color:'#FF9800',
+    header:`$${(last.netLiq/1e6).toFixed(2)}T`, hdate:last.date,
+    note:'Fed Balance Sheet − TGA − Reverse Repo (weekly from FRED)'}); }
+  if (globalData) { const last=globalSeries[globalSeries.length-1]; tabs.push({id:'global', label:'Global Liquidity', data:globalData, n:globalSeries.length, color:'#BB86FC',
+    header:`$${(last.globalLiq/1e6).toFixed(2)}T`, hdate:last.date,
+    note:'Fed + ECB + BOJ (weekly from FRED)'}); }
 
   if (tabs.length === 0) {
     el.innerHTML = '<div class="loading">No data available.</div>';
