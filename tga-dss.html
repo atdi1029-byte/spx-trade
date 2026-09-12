@@ -242,10 +242,6 @@ function drawComposite(id, comp, sig, trend, dates, maxPts) {
     ctx.stroke();
   }
   ctx.setLineDash([]);
-  // Signal line
-  ctx.beginPath();
-  for(let i=0;i<disp.length;i++){const x=toX(i),y=toY(disp[i].s);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
-  ctx.strokeStyle='rgba(35,38,51,0.3)';ctx.lineWidth=1;ctx.stroke();
   // DSS line
   ctx.beginPath();
   for(let i=0;i<disp.length;i++){const x=toX(i),y=toY(disp[i].v);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
@@ -253,10 +249,8 @@ function drawComposite(id, comp, sig, trend, dates, maxPts) {
   // End dots
   const last=disp[disp.length-1];
   ctx.beginPath();ctx.arc(toX(disp.length-1),toY(last.v),5,0,Math.PI*2);ctx.fillStyle=compColor(last.v);ctx.fill();
-  ctx.beginPath();ctx.arc(toX(disp.length-1),toY(last.s),3,0,Math.PI*2);ctx.fillStyle=MUTED;ctx.fill();
   ctx.font='10px system-ui,-apple-system,"Helvetica Neue",sans-serif';ctx.textAlign='left';
   ctx.fillStyle=compColor(last.v);ctx.fillText(last.v.toFixed(1),w-pad.right+6,toY(last.v)+4);
-  ctx.fillStyle=MUTED;ctx.fillText(last.s.toFixed(1),w-pad.right+6,toY(last.s)+4);
 }
 
 function drawGrid(ctx,w,h,pad,pw,ph,toX,toY,disp) {
