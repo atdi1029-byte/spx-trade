@@ -15,6 +15,7 @@ body {
 h1 { font-size: 1.4rem; color: #e8dcc8; margin-bottom: 4px; }
 .subtitle { font-size: 0.75rem; color: #888; margin-bottom: 24px; }
 
+/* Info table */
 .info-table {
   border-collapse: collapse; margin-bottom: 20px; font-size: 0.8rem;
 }
@@ -40,9 +41,13 @@ h1 { font-size: 1.4rem; color: #e8dcc8; margin-bottom: 4px; }
 .trend-up   { color: #00E676; font-weight: 700; }
 .trend-down { color: #FF1744; font-weight: 700; }
 
+/* Charts */
 .chart-section {
   background: #1A1A2E; border: 1px solid #333;
   border-radius: 8px; padding: 16px; margin-bottom: 20px;
+}
+.chart-section.composite {
+  border: 1px solid #555;
 }
 .chart-header {
   font-size: 0.85rem; color: #888; margin-bottom: 12px;
@@ -51,8 +56,10 @@ h1 { font-size: 1.4rem; color: #e8dcc8; margin-bottom: 4px; }
 .chart-header .tf { font-weight: 700; }
 .chart-header .data-src { font-size: 0.65rem; color: #555; margin-left: auto; }
 .chart-wrap { position: relative; height: 220px; }
+.chart-wrap.tall { height: 280px; }
 .chart-wrap canvas { width: 100%; height: 100%; cursor: crosshair; }
 
+/* Tooltip */
 .chart-tooltip {
   position: absolute; background: rgba(15,15,26,0.92);
   border: 1px solid #444; border-radius: 4px;
@@ -63,6 +70,7 @@ h1 { font-size: 1.4rem; color: #e8dcc8; margin-bottom: 4px; }
 .chart-tooltip .tt-val { font-weight: 700; font-size: 0.85rem; }
 .chart-tooltip .tt-zone { font-size: 0.7rem; margin-top: 2px; }
 
+/* Balance bar */
 .balance-bar {
   display: flex; align-items: baseline; gap: 16px;
   margin-bottom: 20px; flex-wrap: wrap;
@@ -71,20 +79,32 @@ h1 { font-size: 1.4rem; color: #e8dcc8; margin-bottom: 4px; }
 .balance-date { font-size: 0.75rem; color: #666; }
 .balance-note { font-size: 0.7rem; color: #666; font-style: italic; }
 .loading { color: #666; font-size: 0.85rem; padding: 40px; text-align: center; }
+
+/* Regime badge */
+.regime-badge {
+  display: inline-block; font-size: 0.7rem; padding: 2px 8px;
+  border-radius: 4px; font-weight: 700; margin-left: 8px;
+}
 </style>
 </head>
 <body>
 
 <h1>TGA DSS Bressert</h1>
-<p class="subtitle">Double Smoothed Stochastic on Treasury General Account — Daily, 3-Day, Weekly</p>
+<p class="subtitle">Double Smoothed Stochastic on Treasury General Account — Inverted (high = bullish for stocks) — Composite + Daily, 3-Day, Weekly</p>
 
 <div id="content">
   <div class="loading">Fetching TGA data from Treasury.gov...</div>
 </div>
 
 <script>
-// Treasury fiscal data API — daily TGA, CORS enabled, 2 years
 const TREASURY_API = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/dts/operating_cash_balance?fields=record_date,open_today_bal&filter=account_type:eq:Treasury%20General%20Account%20(TGA)%20Closing%20Balance,record_date:gte:2024-09-01&sort=record_date&page%5Bsize%5D=600';
+
+// Composite weights (match Pine)
+const WT_D = 20, WT_3D = 50, WT_W = 30;
+const COMP_SMOOTH = 15;  // EMA smoothing on composite
+const SIG_SMOOTH = 5;    // signal line EMA
+const TREND_EMA_LEN = 30;
+const TREND_SLOPE_BARS = 3;
 
 function calcDSS(values, stochLen, smoothLen) {
   const len = values.length;
@@ -127,6 +147,12 @@ function ema(arr, period) {
   return out;
 }
 
+// Invert DSS: 100 - val, so chart tracks stock direction
+// High = TGA draining = bullish, Low = TGA hoarding = bearish
+function invertDSS(arr) {
+  return arr.map(v => v === null ? null : 100 - v);
+}
+
 function resample(series, days) {
   if (days <= 1) return series;
   const bars = [];
@@ -135,6 +161,24 @@ function resample(series, days) {
     bars.push(chunk[chunk.length - 1]);
   }
   return bars;
+}
+
+// Align shorter arrays to daily length via forward-fill
+function alignToDaily(dailyDates, tfDss, tfDates) {
+  const aligned = [];
+  let tfIdx = 0;
+  let lastVal = null;
+  for (let i = 0; i < dailyDates.length; i++) {
+    // Advance tfIdx while next tf date <= current daily date
+    while (tfIdx < tfDates.length - 1 && tfDates[tfIdx + 1] <= dailyDates[i]) {
+      tfIdx++;
+    }
+    if (tfDates[tfIdx] <= dailyDates[i] && tfDss[tfIdx] !== null) {
+      lastVal = tfDss[tfIdx];
+    }
+    aligned.push(lastVal);
+  }
+  return aligned;
 }
 
 const OB = 80, OS = 20;
@@ -156,14 +200,34 @@ function zoneColor(v) {
   if (v > OB) return '#FF1744'; if (v < OS) return '#00E676';
   if (v > 65) return '#FF9800'; if (v < 35) return '#00BCD4'; return '#888';
 }
+// Gradient color for composite (green → yellow → red)
+function compColor(v) {
+  if (v === null) return '#888';
+  if (v < 50) {
+    const t = Math.max(0, Math.min(1, (v - OS) / (50 - OS)));
+    return lerpColor('#00E676', '#FFD700', t);
+  } else {
+    const t = Math.max(0, Math.min(1, (v - 50) / (OB - 50)));
+    return lerpColor('#FFD700', '#FF1744', t);
+  }
+}
+function lerpColor(a, b, t) {
+  const pa = [parseInt(a.slice(1,3),16), parseInt(a.slice(3,5),16), parseInt(a.slice(5,7),16)];
+  const pb = [parseInt(b.slice(1,3),16), parseInt(b.slice(3,5),16), parseInt(b.slice(5,7),16)];
+  const r = Math.round(pa[0]+(pb[0]-pa[0])*t);
+  const g = Math.round(pa[1]+(pb[1]-pa[1])*t);
+  const bl = Math.round(pa[2]+(pb[2]-pa[2])*t);
+  return '#'+[r,g,bl].map(c=>c.toString(16).padStart(2,'0')).join('');
+}
 function trendArrow(cur, prev) {
   if (cur === null || prev === null) return ['—', 'zc-mid'];
   return cur > prev ? [' ▲', 'trend-up'] : [' ▼', 'trend-down'];
 }
 
-const TF_COLORS = { 'D': '#00BCD4', '3D': '#FF9800', 'W': '#BB86FC' };
+const TF_COLORS = { 'D': '#00BCD4', '3D': '#FF9800', 'W': '#BB86FC', 'COMP': '#FFD700' };
 const chartStates = {};
 
+// ─── Draw single-line chart (for individual TFs) ───
 function drawChart(canvasId, dssVals, dates, tfKey, maxPts) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -184,41 +248,12 @@ function drawChart(canvasId, dssVals, dates, tfKey, maxPts) {
   }
   if (pts.length < 2) return;
   const display = pts.slice(-maxPts);
-
   chartStates[canvasId] = { display, pad, w, h, pw, ph, tfKey };
 
   const toX = i => pad.left + (i / (display.length - 1)) * pw;
   const toY = v => pad.top + ph * (1 - Math.max(0, Math.min(100, v)) / 100);
-
   ctx.clearRect(0, 0, w, h);
-
-  // OB/OS fills
-  ctx.fillStyle = 'rgba(255,23,68,0.08)';
-  ctx.fillRect(pad.left, toY(100), pw, toY(OB) - toY(100));
-  ctx.fillStyle = 'rgba(0,230,118,0.08)';
-  ctx.fillRect(pad.left, toY(OS), pw, toY(0) - toY(OS));
-
-  // Grid
-  [0, OS, 50, OB, 100].forEach(lv => {
-    const y = toY(lv);
-    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y);
-    if (lv === OB) { ctx.strokeStyle = 'rgba(255,23,68,0.35)'; ctx.setLineDash([5,4]); }
-    else if (lv === OS) { ctx.strokeStyle = 'rgba(0,230,118,0.35)'; ctx.setLineDash([5,4]); }
-    else if (lv === 50) { ctx.strokeStyle = 'rgba(102,102,102,0.4)'; ctx.setLineDash([3,5]); }
-    else { ctx.strokeStyle = 'rgba(68,68,68,0.25)'; ctx.setLineDash([]); }
-    ctx.lineWidth = 0.8; ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = '#666'; ctx.font = '9px "Space Mono", monospace';
-    ctx.textAlign = 'right'; ctx.fillText(lv, pad.left - 5, y + 3);
-  });
-
-  // Dates
-  ctx.fillStyle = '#555'; ctx.font = '8px "Space Mono", monospace'; ctx.textAlign = 'center';
-  const nLabels = Math.min(7, display.length);
-  for (let i = 0; i < nLabels; i++) {
-    const idx = Math.floor(i * (display.length - 1) / (nLabels - 1));
-    const d = display[idx].d;
-    if (d) { const p = d.split('-'); ctx.fillText(p[0].slice(2)+'-'+p[1]+'-'+p[2], toX(idx), h-4); }
-  }
+  drawGridAndZones(ctx, w, h, pad, pw, ph, toX, toY, display);
 
   // Line
   const lineColor = TF_COLORS[tfKey] || '#00BCD4';
@@ -232,6 +267,148 @@ function drawChart(canvasId, dssVals, dates, tfKey, maxPts) {
   ctx.stroke();
 
   // Fill
+  drawFill(ctx, display, toX, toY, h, pad, lineColor);
+
+  // End dot + label
+  drawEndDot(ctx, display, toX, toY, w, pad, lineColor);
+}
+
+// ─── Draw composite chart (gradient line + signal + trend EMA + fill) ───
+function drawComposite(canvasId, compVals, sigVals, trendVals, dates, maxPts) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = rect.height;
+  const pad = { top: 10, right: 45, bottom: 22, left: 38 };
+  const pw = w - pad.left - pad.right;
+  const ph = h - pad.top - pad.bottom;
+
+  // Build display array
+  const pts = [];
+  for (let i = 0; i < compVals.length; i++) {
+    if (compVals[i] !== null && sigVals[i] !== null) {
+      pts.push({ v: compVals[i], s: sigVals[i], t: trendVals[i], d: dates[i] });
+    }
+  }
+  if (pts.length < 2) return;
+  const display = pts.slice(-maxPts);
+  chartStates[canvasId] = { display, pad, w, h, pw, ph, tfKey: 'COMP', isComposite: true };
+
+  const toX = i => pad.left + (i / (display.length - 1)) * pw;
+  const toY = v => pad.top + ph * (1 - Math.max(0, Math.min(100, v)) / 100);
+  ctx.clearRect(0, 0, w, h);
+  drawGridAndZones(ctx, w, h, pad, pw, ph, toX, toY, display);
+
+  // Fill between composite and signal line
+  for (let i = 1; i < display.length; i++) {
+    const x0 = toX(i-1), x1 = toX(i);
+    const cy0 = toY(display[i-1].v), cy1 = toY(display[i].v);
+    const sy0 = toY(display[i-1].s), sy1 = toY(display[i].s);
+    const above = (display[i-1].v + display[i].v) / 2 > (display[i-1].s + display[i].s) / 2;
+    ctx.beginPath();
+    ctx.moveTo(x0, cy0); ctx.lineTo(x1, cy1);
+    ctx.lineTo(x1, sy1); ctx.lineTo(x0, sy0);
+    ctx.closePath();
+    ctx.fillStyle = above ? 'rgba(0,230,118,0.12)' : 'rgba(255,23,68,0.10)';
+    ctx.fill();
+  }
+
+  // Trend EMA line (thick, behind composite)
+  ctx.beginPath();
+  let tStarted = false;
+  for (let i = 0; i < display.length; i++) {
+    if (display[i].t === null) continue;
+    const x = toX(i), y = toY(display[i].t);
+    if (!tStarted) { ctx.moveTo(x, y); tStarted = true; }
+    else ctx.lineTo(x, y);
+  }
+  if (tStarted) {
+    // Color based on slope
+    const lastT = display[display.length - 1].t;
+    const prevT = display.length > TREND_SLOPE_BARS ? display[display.length - 1 - TREND_SLOPE_BARS].t : null;
+    const tUp = lastT !== null && prevT !== null && lastT > prevT;
+    ctx.strokeStyle = tUp ? 'rgba(0,230,118,0.35)' : 'rgba(255,23,68,0.35)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Signal line (thin gray)
+  ctx.beginPath();
+  for (let i = 0; i < display.length; i++) {
+    const x = toX(i), y = toY(display[i].s);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = 'rgba(136,136,136,0.5)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Composite line — gradient colored segments
+  for (let i = 1; i < display.length; i++) {
+    const v0 = display[i-1].v, v1 = display[i].v;
+    ctx.beginPath();
+    ctx.moveTo(toX(i-1), toY(v0));
+    ctx.lineTo(toX(i), toY(v1));
+    ctx.strokeStyle = compColor((v0 + v1) / 2);
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  // End dots
+  const last = display[display.length - 1];
+  // Composite dot
+  ctx.beginPath();
+  ctx.arc(toX(display.length - 1), toY(last.v), 5, 0, Math.PI * 2);
+  ctx.fillStyle = compColor(last.v); ctx.fill();
+  // Signal dot
+  ctx.beginPath();
+  ctx.arc(toX(display.length - 1), toY(last.s), 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#888'; ctx.fill();
+
+  // Value labels
+  ctx.font = '10px "Space Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = compColor(last.v);
+  ctx.fillText(last.v.toFixed(1), w - pad.right + 6, toY(last.v) + 4);
+  ctx.fillStyle = '#888';
+  ctx.fillText(last.s.toFixed(1), w - pad.right + 6, toY(last.s) + 4);
+}
+
+// ─── Shared helpers ───
+function drawGridAndZones(ctx, w, h, pad, pw, ph, toX, toY, display) {
+  ctx.fillStyle = 'rgba(255,23,68,0.08)';
+  ctx.fillRect(pad.left, toY(100), pw, toY(OB) - toY(100));
+  ctx.fillStyle = 'rgba(0,230,118,0.08)';
+  ctx.fillRect(pad.left, toY(OS), pw, toY(0) - toY(OS));
+
+  [0, OS, 50, OB, 100].forEach(lv => {
+    const y = toY(lv);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y);
+    if (lv === OB) { ctx.strokeStyle = 'rgba(255,23,68,0.35)'; ctx.setLineDash([5,4]); }
+    else if (lv === OS) { ctx.strokeStyle = 'rgba(0,230,118,0.35)'; ctx.setLineDash([5,4]); }
+    else if (lv === 50) { ctx.strokeStyle = 'rgba(102,102,102,0.4)'; ctx.setLineDash([3,5]); }
+    else { ctx.strokeStyle = 'rgba(68,68,68,0.25)'; ctx.setLineDash([]); }
+    ctx.lineWidth = 0.8; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#666'; ctx.font = '9px "Space Mono", monospace';
+    ctx.textAlign = 'right'; ctx.fillText(lv, pad.left - 5, y + 3);
+  });
+
+  ctx.fillStyle = '#555'; ctx.font = '8px "Space Mono", monospace'; ctx.textAlign = 'center';
+  const nLabels = Math.min(7, display.length);
+  for (let i = 0; i < nLabels; i++) {
+    const idx = Math.floor(i * (display.length - 1) / (nLabels - 1));
+    const d = display[idx].d;
+    if (d) { const p = d.split('-'); ctx.fillText(p[0].slice(2)+'-'+p[1]+'-'+p[2], toX(idx), h-4); }
+  }
+}
+
+function drawFill(ctx, display, toX, toY, h, pad, lineColor) {
   ctx.beginPath();
   for (let i = 0; i < display.length; i++) {
     const x = toX(i), y = toY(display[i].v);
@@ -244,8 +421,9 @@ function drawChart(canvasId, dssVals, dates, tfKey, maxPts) {
   grad.addColorStop(0, lineColor + '18');
   grad.addColorStop(1, lineColor + '03');
   ctx.fillStyle = grad; ctx.fill();
+}
 
-  // End dot
+function drawEndDot(ctx, display, toX, toY, w, pad, lineColor) {
   const last = display[display.length - 1];
   ctx.beginPath();
   ctx.arc(toX(display.length - 1), toY(last.v), 4, 0, Math.PI * 2);
@@ -259,7 +437,7 @@ function drawChart(canvasId, dssVals, dates, tfKey, maxPts) {
 function drawCrosshair(canvasId, mouseX) {
   const state = chartStates[canvasId];
   if (!state) return;
-  const { display, pad, w, h, pw, ph, tfKey } = state;
+  const { display, pad, w, h, pw, ph, tfKey, isComposite } = state;
   const canvas = document.getElementById(canvasId);
   const tooltip = document.getElementById('tt-' + canvasId);
   if (!canvas || !tooltip) return;
@@ -275,7 +453,11 @@ function drawCrosshair(canvasId, mouseX) {
   const px = toX(clamped), py = toY(pt.v);
 
   // Redraw base
-  drawChart(canvasId, display.map(p=>p.v), display.map(p=>p.d), tfKey, display.length);
+  if (isComposite) {
+    drawComposite(canvasId, display.map(p=>p.v), display.map(p=>p.s), display.map(p=>p.t), display.map(p=>p.d), display.length);
+  } else {
+    drawChart(canvasId, display.map(p=>p.v), display.map(p=>p.d), tfKey, display.length);
+  }
 
   // Crosshair
   const ctx = canvas.getContext('2d');
@@ -291,16 +473,20 @@ function drawCrosshair(canvasId, mouseX) {
   ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2);
   ctx.fillStyle = '#fff'; ctx.fill();
   ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2);
-  ctx.fillStyle = TF_COLORS[tfKey]; ctx.fill();
+  ctx.fillStyle = isComposite ? compColor(pt.v) : TF_COLORS[tfKey]; ctx.fill();
 
-  // Tooltip
+  // Tooltip content
   const zl = zoneLabel(pt.v), zc = zoneColor(pt.v);
-  tooltip.innerHTML = `<div class="tt-date">${pt.d}</div><div class="tt-val" style="color:${zc}">${pt.v.toFixed(1)}</div><div class="tt-zone" style="color:${zc}">${zl}</div>`;
+  let ttHtml = `<div class="tt-date">${pt.d}</div><div class="tt-val" style="color:${isComposite ? compColor(pt.v) : zc}">${pt.v.toFixed(1)}</div><div class="tt-zone" style="color:${zc}">${zl}</div>`;
+  if (isComposite && pt.s !== undefined) {
+    ttHtml += `<div style="color:#888;font-size:0.65rem;margin-top:2px">sig: ${pt.s.toFixed(1)}</div>`;
+  }
+  tooltip.innerHTML = ttHtml;
   tooltip.style.display = 'block';
   let ttLeft = px + 12;
-  if (ttLeft + 120 > pw + pad.left + pad.right) ttLeft = px - 120;
+  if (ttLeft + 130 > pw + pad.left + pad.right) ttLeft = px - 130;
   tooltip.style.left = ttLeft + 'px';
-  tooltip.style.top = Math.max(0, py - 30) + 'px';
+  tooltip.style.top = Math.max(0, py - 40) + 'px';
 }
 
 function setupTooltip(canvasId) {
@@ -318,7 +504,9 @@ function setupTooltip(canvasId) {
   canvas.addEventListener('touchmove', e => { e.preventDefault(); drawCrosshair(canvasId, getX(e)); }, { passive: false });
   const clear = () => {
     const s = chartStates[canvasId];
-    if (s) drawChart(canvasId, s.display.map(p=>p.v), s.display.map(p=>p.d), s.tfKey, s.display.length);
+    if (!s) return;
+    if (s.isComposite) drawComposite(canvasId, s.display.map(p=>p.v), s.display.map(p=>p.s), s.display.map(p=>p.t), s.display.map(p=>p.d), s.display.length);
+    else drawChart(canvasId, s.display.map(p=>p.v), s.display.map(p=>p.d), s.tfKey, s.display.length);
     tt.style.display = 'none';
   };
   canvas.addEventListener('mouseleave', clear);
@@ -328,7 +516,6 @@ function setupTooltip(canvasId) {
 // ─── Main ───
 async function init() {
   const el = document.getElementById('content');
-
   let series = [];
   try {
     const resp = await fetch(TREASURY_API);
@@ -341,31 +528,52 @@ async function init() {
     el.innerHTML = '<div class="loading">Failed to fetch TGA data from Treasury.gov</div>';
     return;
   }
-
   if (series.length < 30) {
     el.innerHTML = '<div class="loading">Insufficient TGA data.</div>';
     return;
   }
 
-  // Daily DSS — all 500+ daily points
+  // ─── Compute DSS per timeframe ───
   const dVals = series.map(d => d.balance);
   const dDates = series.map(d => d.date);
-  const dssD = calcDSS(dVals, 13, 8);
+  const dssD = invertDSS(calcDSS(dVals, 13, 8));
 
-  // 3-Day DSS — resample daily to 3-day bars
   const s3 = resample(series, 3);
-  const dss3 = calcDSS(s3.map(d => d.balance), 13, 8);
+  const dss3 = invertDSS(calcDSS(s3.map(d => d.balance), 13, 8));
   const dates3 = s3.map(d => d.date);
 
-  // Weekly DSS — resample daily to 5-day bars
   const sW = resample(series, 5);
-  const dssW = calcDSS(sW.map(d => d.balance), 13, 8);
+  const dssW = invertDSS(calcDSS(sW.map(d => d.balance), 13, 8));
   const datesW = sW.map(d => d.date);
 
-  // Current values
+  // ─── Align 3D and W to daily dates (forward-fill) ───
+  const aligned3d = alignToDaily(dDates, dss3, dates3);
+  const alignedW = alignToDaily(dDates, dssW, datesW);
+
+  // ─── Composite: weighted blend, EMA smoothed ───
+  const totalW = WT_D + WT_3D + WT_W;
+  const rawComp = [];
+  for (let i = 0; i < dDates.length; i++) {
+    if (dssD[i] === null || aligned3d[i] === null || alignedW[i] === null) {
+      rawComp.push(null);
+    } else {
+      rawComp.push((dssD[i] * WT_D + aligned3d[i] * WT_3D + alignedW[i] * WT_W) / totalW);
+    }
+  }
+  const composite = ema(rawComp, COMP_SMOOTH);
+  const sigLine = ema(composite, SIG_SMOOTH);
+  const trendEma = ema(composite, TREND_EMA_LEN);
+
+  // ─── Current values ───
   const curD = dssD[dssD.length - 1], prevD = dssD[dssD.length - 2];
   const cur3 = dss3[dss3.length - 1], prev3 = dss3[dss3.length - 2];
   const curW = dssW[dssW.length - 1], prevW = dssW[dssW.length - 2];
+  const curComp = composite[composite.length - 1];
+  const curSig = sigLine[sigLine.length - 1];
+  const curTrend = trendEma[trendEma.length - 1];
+  const prevTrend = trendEma.length > TREND_SLOPE_BARS ? trendEma[trendEma.length - 1 - TREND_SLOPE_BARS] : null;
+  const tideUp = curTrend !== null && prevTrend !== null && curTrend > prevTrend;
+  const compAboveSig = curComp !== null && curSig !== null && curComp > curSig;
 
   const bal = series[series.length - 1];
   const balFmt = bal.balance >= 1e6
@@ -375,46 +583,67 @@ async function init() {
   const [arD, arDc] = trendArrow(curD, prevD);
   const [ar3, ar3c] = trendArrow(cur3, prev3);
   const [arW, arWc] = trendArrow(curW, prevW);
+  const [arComp, arCompc] = trendArrow(curComp, composite[composite.length - 2]);
   const fv = v => v !== null ? v.toFixed(1) : '—';
 
-  const totalDays = series.length;
-  const bars3d = s3.length;
-  const barsW = sW.length;
+  // Tide display
+  const tideText = tideUp ? '▲ RISING' : '▼ FALLING';
+  const tideClass = tideUp ? 'trend-up' : 'trend-down';
 
   el.innerHTML = `
     <div class="balance-bar">
       <span class="balance-big">${balFmt}</span>
       <span class="balance-date">As of ${bal.date}</span>
-      <span class="balance-note">OB = Treasury hoarding = bearish &nbsp;|&nbsp; OS = Treasury spending = bullish</span>
+      <span class="balance-note">INVERTED: High = Treasury spending = bullish &nbsp;|&nbsp; Low = Treasury hoarding = bearish</span>
     </div>
 
     <table class="info-table">
-      <tr><th>DSS</th><th>Value</th><th>Trend</th><th>Zone</th></tr>
+      <tr><th>DSS</th><th>Value</th><th>Trend</th><th>Zone</th><th>Weight</th></tr>
       <tr>
-        <td class="tf-label" style="color:${TF_COLORS['D']}">D ★</td>
+        <td class="tf-label" style="color:${TF_COLORS['D']}">D</td>
         <td class="${zoneBgClass(curD)}">${fv(curD)}</td>
         <td class="${arDc}">${arD}</td>
         <td class="zone-cell ${zoneLabelClass(curD)}">${zoneLabel(curD)}</td>
+        <td style="color:#666">${WT_D}%</td>
       </tr>
       <tr>
         <td class="tf-label" style="color:${TF_COLORS['3D']}">3D</td>
         <td class="${zoneBgClass(cur3)}">${fv(cur3)}</td>
         <td class="${ar3c}">${ar3}</td>
         <td class="zone-cell ${zoneLabelClass(cur3)}">${zoneLabel(cur3)}</td>
+        <td style="color:#666">${WT_3D}%</td>
       </tr>
       <tr>
         <td class="tf-label" style="color:${TF_COLORS['W']}">W</td>
         <td class="${zoneBgClass(curW)}">${fv(curW)}</td>
         <td class="${arWc}">${arW}</td>
         <td class="zone-cell ${zoneLabelClass(curW)}">${zoneLabel(curW)}</td>
+        <td style="color:#666">${WT_W}%</td>
+      </tr>
+      <tr style="border-top:2px solid #555">
+        <td class="tf-label" style="color:${compColor(curComp)}">COMP ★</td>
+        <td class="${zoneBgClass(curComp)}">${fv(curComp)}</td>
+        <td class="${arCompc}">${arComp}</td>
+        <td class="zone-cell ${zoneLabelClass(curComp)}">${zoneLabel(curComp)}</td>
+        <td class="${tideClass}" style="font-size:0.7rem">${tideText}</td>
       </tr>
     </table>
+
+    <div class="chart-section composite">
+      <div class="chart-header">
+        <span class="tf" style="color:${compColor(curComp)}">Composite</span>
+        <span>D${WT_D}/3D${WT_3D}/W${WT_W} · EMA(${COMP_SMOOTH})</span>
+        <span style="color:${compAboveSig ? '#00E676' : '#FF1744'}; font-size:0.75rem">${compAboveSig ? '▲ above signal' : '▼ below signal'}</span>
+        <span class="data-src">${series.length}d from Treasury.gov</span>
+      </div>
+      <div class="chart-wrap tall"><canvas id="c-comp"></canvas></div>
+    </div>
 
     <div class="chart-section">
       <div class="chart-header">
         <span class="tf" style="color:${TF_COLORS['D']}">Daily</span>
         <span>DSS(13,8)</span>
-        <span class="data-src">${totalDays}d from Treasury.gov</span>
+        <span class="data-src">${series.length}d</span>
       </div>
       <div class="chart-wrap"><canvas id="c-d"></canvas></div>
     </div>
@@ -423,7 +652,7 @@ async function init() {
       <div class="chart-header">
         <span class="tf" style="color:${TF_COLORS['3D']}">3-Day</span>
         <span>DSS(13,8)</span>
-        <span class="data-src">${bars3d} bars</span>
+        <span class="data-src">${s3.length} bars</span>
       </div>
       <div class="chart-wrap"><canvas id="c-3d"></canvas></div>
     </div>
@@ -432,13 +661,15 @@ async function init() {
       <div class="chart-header">
         <span class="tf" style="color:${TF_COLORS['W']}">Weekly</span>
         <span>DSS(13,8)</span>
-        <span class="data-src">${barsW} bars</span>
+        <span class="data-src">${sW.length} bars</span>
       </div>
       <div class="chart-wrap"><canvas id="c-w"></canvas></div>
     </div>
   `;
 
   requestAnimationFrame(() => {
+    drawComposite('c-comp', composite, sigLine, trendEma, dDates, 500);
+    setupTooltip('c-comp');
     drawChart('c-d', dssD, dDates, 'D', 500);
     setupTooltip('c-d');
     drawChart('c-3d', dss3, dates3, '3D', 170);
