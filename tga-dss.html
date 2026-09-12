@@ -319,28 +319,51 @@ function setupTT(id) {
 }
 
 // ─── Process a data source into DSS across timeframes ───
-function processDSS(series, valKey) {
+// srcType: 'daily' = daily data (TGA), 'weekly' = weekly data (net/global from FRED)
+function processDSS(series, valKey, srcType) {
   const vals = series.map(d => d[valKey]);
   const dates = series.map(d => d.date);
-  const dssD = calcDSS(vals, 13, 8);
-  const s3 = resample(series, 3);
-  const dss3 = calcDSS(s3.map(d => d[valKey]), 13, 8);
-  const d3 = s3.map(d => d.date);
-  const sW = resample(series, 5);
-  const dssW = calcDSS(sW.map(d => d[valKey]), 13, 8);
-  const dW = sW.map(d => d.date);
-  const sM = resample(series, 20);
-  const dssM = calcDSS(sM.map(d => d[valKey]), 13, 8);
-  const dM = sM.map(d => d.date);
 
-  // Composite
+  let dssD, s3, dss3, d3, sW, dssW, dW, sM, dssM, dM;
+
+  if (srcType === 'weekly') {
+    // Source is already weekly — treat raw as "weekly"
+    // "Weekly" = raw data (1:1)
+    sW = series; dW = dates;
+    dssW = calcDSS(vals, 13, 8);
+    // "3-Week" displayed as "3D" slot — resample every 3 weeks
+    s3 = resample(series, 3);
+    dss3 = calcDSS(s3.map(d => d[valKey]), 13, 8);
+    d3 = s3.map(d => d.date);
+    // "Monthly" = resample every 4 weeks
+    sM = resample(series, 4);
+    dssM = calcDSS(sM.map(d => d[valKey]), 13, 8);
+    dM = sM.map(d => d.date);
+    // "Daily" slot = same as weekly (finest granularity available)
+    dssD = dssW;
+  } else {
+    // Daily source (TGA)
+    dssD = calcDSS(vals, 13, 8);
+    s3 = resample(series, 3);
+    dss3 = calcDSS(s3.map(d => d[valKey]), 13, 8);
+    d3 = s3.map(d => d.date);
+    sW = resample(series, 5);
+    dssW = calcDSS(sW.map(d => d[valKey]), 13, 8);
+    dW = sW.map(d => d.date);
+    sM = resample(series, 20);
+    dssM = calcDSS(sM.map(d => d[valKey]), 13, 8);
+    dM = sM.map(d => d.date);
+  }
+
+  // Composite — align 3-period and weekly DSS to base dates
   const a3 = alignToDaily(dates, dss3, d3);
   const aW = alignToDaily(dates, dssW, dW);
-  const totalW = WT_D + WT_3D + WT_W;
+  const totalWt = WT_D + WT_3D + WT_W;
   const rawComp = [];
+  const baseDss = srcType === 'weekly' ? dssW : dssD;
   for (let i = 0; i < dates.length; i++) {
-    if (dssD[i] === null || a3[i] === null || aW[i] === null) rawComp.push(null);
-    else rawComp.push((dssD[i]*WT_D + a3[i]*WT_3D + aW[i]*WT_W) / totalW);
+    if (baseDss[i] === null || a3[i] === null || aW[i] === null) rawComp.push(null);
+    else rawComp.push((baseDss[i]*WT_D + a3[i]*WT_3D + aW[i]*WT_W) / totalWt);
   }
   const comp = ema(rawComp, COMP_SMOOTH);
   const sig = ema(comp, SIG_SMOOTH);
@@ -350,7 +373,7 @@ function processDSS(series, valKey) {
 }
 
 // ─── Build section HTML ───
-function buildSection(prefix, label, color, data, nDaily) {
+function buildSection(prefix, label, color, data, nDaily, srcType) {
   const fv = v => v !== null ? v.toFixed(1) : '—';
   const cur = k => { const a = data[k]; return a[a.length-1]; };
   const prev = k => { const a = data[k]; return a.length>1?a[a.length-2]:null; };
@@ -360,7 +383,11 @@ function buildSection(prefix, label, color, data, nDaily) {
   const tideUp = curT!==null && prevT!==null && curT>prevT;
   const compAboveSig = curC!==null && curS!==null && curC>curS;
 
-  const rows = [
+  const rows = srcType === 'weekly' ? [
+    ['W', cur('dssW'), prev('dssW'), WT_D+'%'],
+    ['3W', cur('dss3'), prev('dss3'), WT_3D+'%'],
+    ['M', cur('dssM'), prev('dssM'), WT_W+'%'],
+  ] : [
     ['D', cur('dssD'), prev('dssD'), WT_D+'%'],
     ['3D', cur('dss3'), prev('dss3'), WT_3D+'%'],
     ['W', cur('dssW'), prev('dssW'), WT_W+'%'],
@@ -392,14 +419,14 @@ function buildSection(prefix, label, color, data, nDaily) {
     <div class="chart-section composite">
       <div class="chart-header">
         <span class="tf" style="color:${compColor(curC)}">Composite</span>
-        <span>D${WT_D}/3D${WT_3D}/W${WT_W} · EMA(${COMP_SMOOTH})</span>
+        <span>${srcType==='weekly'?'W'+WT_D+'/3W'+WT_3D+'/M'+WT_W:'D'+WT_D+'/3D'+WT_3D+'/W'+WT_W} · EMA(${COMP_SMOOTH})</span>
         <span style="color:${compAboveSig?'#00E676':'#FF1744'};font-size:0.7rem">${compAboveSig?'▲ above signal':'▼ below signal'}</span>
       </div>
       <div class="chart-wrap tall"><canvas id="${prefix}-comp"></canvas></div>
     </div>
-    <div class="chart-section"><div class="chart-header"><span class="tf" style="color:${TF_COLORS.D}">Daily</span><span>DSS(13,8)</span><span class="data-src">${nDaily}d</span></div><div class="chart-wrap"><canvas id="${prefix}-d"></canvas></div></div>
-    <div class="chart-section"><div class="chart-header"><span class="tf" style="color:${TF_COLORS['3D']}">3-Day</span><span>DSS(13,8)</span><span class="data-src">${data.s3.length} bars</span></div><div class="chart-wrap"><canvas id="${prefix}-3d"></canvas></div></div>
+    ${srcType === 'weekly' ? '' : `<div class="chart-section"><div class="chart-header"><span class="tf" style="color:${TF_COLORS.D}">Daily</span><span>DSS(13,8)</span><span class="data-src">${nDaily}d</span></div><div class="chart-wrap"><canvas id="${prefix}-d"></canvas></div></div>`}
     <div class="chart-section"><div class="chart-header"><span class="tf" style="color:${TF_COLORS.W}">Weekly</span><span>DSS(13,8)</span><span class="data-src">${data.sW.length} bars</span></div><div class="chart-wrap"><canvas id="${prefix}-w"></canvas></div></div>
+    <div class="chart-section"><div class="chart-header"><span class="tf" style="color:${TF_COLORS['3D']}">3-Week</span><span>DSS(13,8)</span><span class="data-src">${data.s3.length} bars</span></div><div class="chart-wrap"><canvas id="${prefix}-3d"></canvas></div></div>
     <div class="chart-section"><div class="chart-header"><span class="tf" style="color:${TF_COLORS.M}">Monthly</span><span>DSS(13,8)</span><span class="data-src">${data.sM.length} bars</span></div><div class="chart-wrap"><canvas id="${prefix}-m"></canvas></div></div>
   `;
 }
@@ -407,13 +434,15 @@ function buildSection(prefix, label, color, data, nDaily) {
 function renderCharts(prefix, data) {
   drawComposite(prefix+'-comp', data.comp, data.sig, data.trend, data.dates, 500);
   setupTT(prefix+'-comp');
-  drawChart(prefix+'-d', data.dssD, data.dates, 'D', 500);
-  setupTT(prefix+'-d');
-  drawChart(prefix+'-3d', data.dss3, data.d3, '3D', 170);
+  if (document.getElementById(prefix+'-d')) {
+    drawChart(prefix+'-d', data.dssD, data.dates, 'D', 500);
+    setupTT(prefix+'-d');
+  }
+  drawChart(prefix+'-3d', data.dss3, data.d3, '3D', 350);
   setupTT(prefix+'-3d');
-  drawChart(prefix+'-w', data.dssW, data.dW, 'W', 104);
+  drawChart(prefix+'-w', data.dssW, data.dW, 'W', 350);
   setupTT(prefix+'-w');
-  drawChart(prefix+'-m', data.dssM, data.dM, 'M', 50);
+  drawChart(prefix+'-m', data.dssM, data.dM, 'M', 100);
   setupTT(prefix+'-m');
 }
 
@@ -434,20 +463,20 @@ async function init() {
     return;
   }
 
-  // Process each
-  const tgaData = tgaSeries.length > 30 ? processDSS(tgaSeries, 'balance') : null;
-  const netData = netSeries.length > 30 ? processDSS(netSeries, 'netLiq') : null;
-  const globalData = globalSeries.length > 30 ? processDSS(globalSeries, 'globalLiq') : null;
+  // Process each — TGA is daily, net/global are weekly from FRED
+  const tgaData = tgaSeries.length > 30 ? processDSS(tgaSeries, 'balance', 'daily') : null;
+  const netData = netSeries.length > 30 ? processDSS(netSeries, 'netLiq', 'weekly') : null;
+  const globalData = globalSeries.length > 30 ? processDSS(globalSeries, 'globalLiq', 'weekly') : null;
 
   // Build tabs
   const tabs = [];
-  if (tgaData) tabs.push({id:'tga', label:'TGA', data:tgaData, n:tgaSeries.length, color:'#e8a04c',
+  if (tgaData) tabs.push({id:'tga', label:'TGA', data:tgaData, n:tgaSeries.length, color:'#e8a04c', srcType:'daily',
     header:`$${(tgaSeries[tgaSeries.length-1].balance/1e3).toFixed(1)}B`, hdate:tgaSeries[tgaSeries.length-1].date,
     note:'OB = hoarding = bearish | OS = spending = bullish'});
-  if (netData) { const last=netSeries[netSeries.length-1]; tabs.push({id:'net', label:'Net Liquidity', data:netData, n:netSeries.length, color:'#FF9800',
+  if (netData) { const last=netSeries[netSeries.length-1]; tabs.push({id:'net', label:'Net Liquidity', data:netData, n:netSeries.length, color:'#FF9800', srcType:'weekly',
     header:`$${(last.netLiq/1e6).toFixed(2)}T`, hdate:last.date,
     note:'Fed Balance Sheet − TGA − Reverse Repo (weekly from FRED)'}); }
-  if (globalData) { const last=globalSeries[globalSeries.length-1]; tabs.push({id:'global', label:'Global Liquidity', data:globalData, n:globalSeries.length, color:'#BB86FC',
+  if (globalData) { const last=globalSeries[globalSeries.length-1]; tabs.push({id:'global', label:'Global Liquidity', data:globalData, n:globalSeries.length, color:'#BB86FC', srcType:'weekly',
     header:`$${(last.globalLiq/1e6).toFixed(2)}T`, hdate:last.date,
     note:'Fed + ECB + BOJ (weekly from FRED)'}); }
 
@@ -469,7 +498,7 @@ async function init() {
         <span class="date">As of ${t.hdate}</span>
         <span style="font-size:0.65rem;color:#666;font-style:italic">${t.note}</span>
       </div>
-      ${buildSection(t.id, t.label, t.color, t.data, t.n)}
+      ${buildSection(t.id, t.label, t.color, t.data, t.n, t.srcType)}
     </div>
   `).join('');
 
