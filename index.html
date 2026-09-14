@@ -180,7 +180,7 @@
             <span class="status-live"><span class="status-dot loading" id="statusDot"></span><span id="statusText">Connecting...</span></span>
             <span class="status-live" id="lastUpdate"></span>
             <span class="status-live" id="scriptVersion" style="opacity:0.6;font-size:0.6rem"></span>
-            <button class="refresh-btn" onclick="fetchData()">Refresh</button>
+            <button class="refresh-btn" onclick="fetchData(true)" title="Re-read the sheet, bypassing the script cache">Refresh</button>
             <button class="refresh-btn" onclick="showAddTradeModal()" style="background:rgba(34,120,60,0.3);border-color:var(--green-candle);color:var(--green-bright)">+ Trade</button>
         </div>
     </div>
@@ -245,8 +245,6 @@
     <div class="open-trades-filters">
         <input type="text" class="ot-search" id="otSearch" placeholder="Search..." oninput="filterOpenTrades()">
         <button class="filter-btn active" onclick="setOpenFilter('all',this)">All</button>
-        <button class="filter-btn" onclick="setOpenFilter('no-0x0',this)">No OxO</button>
-        <button class="filter-btn" onclick="setOpenFilter('no-tp',this)">No TP</button>
         <button class="filter-btn need-4day-btn" onclick="setOpenFilter('need-4day',this)">Need 4 Day</button>
     </div>
     <div class="action-list" id="openTradesList" style="max-height:420px;overflow-y:auto">

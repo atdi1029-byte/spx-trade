@@ -1,18 +1,20 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-09-08b-upgrades';
+const DASH_VERSION = 'v2026-09-14c';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
 const API_URL = 'https://script.google.com/macros/s/AKfycbyeL8nGHmsRRG2uk7I3cuh2aWQ14RRKvJYwOblvOWw36_QIKyr9KaA4jXK1K5pyySNiBg/exec?action=dashboard';
 const REFRESH_INTERVAL = 60000; // 60 seconds
+const DASH_FETCH_TIMEOUT_MS = 45000; // give up on a dashboard read after this so the refresh loop can never wedge
 
 // Optional shared secret. Leave '' until you set API_KEY in the Apps Script's Script Properties
 // (see apps_script_additions.gs); once both sides have it, writes without the key are rejected.
 const API_KEY = '';
 
-// Outcome recorded when a trade is closed at exactly $0.00. 'TP Hit' counts it as a win; switch to
-// 'Closed' once the script treats 'Closed' as a closed, neutral outcome (check status + streak logic first).
-const ZERO_CLOSE_OUTCOME = 'TP Hit';
+// The one word the Close button writes to the Outcome column. Win/loss is carried by the sign of the P&L
+// in the profit column. The Apps Script must treat this word as "closed" and count it in the stats; if it
+// still keys on the old pair, set this back to 'TP Hit' / 'Stopped Out' by sign (see closeTrade).
+const CLOSE_OUTCOME = 'Closed';
 
 // Uniform SL/TP levels (same as crypto — guardrails, not overfitted per-ticker)
 const BT_DEFAULTS = { buy: { sl:14.5, tp:15, halfTp:7 }, sell: { sl:20, tp:13, halfTp:7 } };
@@ -94,6 +96,7 @@ let lastGoodData = null;      // last successful dashboard payload (never fall b
 const DASH_CACHE_KEY = 'spx_dashboard_cache';
 let fetchInFlight = false;
 let fetchQueued = false;
+let fetchForceQueued = false;
 let allTickers = [];
 
 // "$1,234.56" / "-$12.30" / 12.3 -> number (strips every comma, not just the first)
@@ -247,18 +250,24 @@ function isActed(ticker, signal, price) {
 }
 
 // ====== FETCH DATA ======
-async function fetchData() {
-    if (fetchInFlight) { fetchQueued = true; return; }
+async function fetchData(force) {
+    force = force === true; // setTimeout / scheduleRefresh pass nothing
+    if (fetchInFlight) { fetchQueued = true; if (force) fetchForceQueued = true; return; }
     fetchInFlight = true;
+    if (fetchForceQueued) { force = true; fetchForceQueued = false; }
+    const t0 = Date.now();
     if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
     const dot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
     dot.className = 'status-dot loading';
-    statusText.textContent = 'Fetching...';
+    // While the last real numbers are on screen say so; "Fetching..." only when there is nothing to show yet
+    statusText.textContent = lastGoodData ? 'Updating\u2026' : 'Fetching...';
 
     let renderError = null;
+    const ctrl = ('AbortController' in window) ? new AbortController() : null;
+    const abortTimer = setTimeout(() => ctrl && ctrl.abort(), DASH_FETCH_TIMEOUT_MS);
     try {
-        const resp = await fetch(API_URL, { cache: 'no-store' });
+        const resp = await fetch(API_URL + (force ? '&nocache=1' : ''), { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined });
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
         if (data.status !== 'ok') throw new Error(data.message || 'Bad response');
@@ -270,10 +279,19 @@ async function fetchData() {
 
         dot.className = 'status-dot';
         statusText.textContent = 'Live';
-        document.getElementById('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString();
+        const secs = ((Date.now() - t0) / 1000).toFixed(1);
+        const lu = document.getElementById('lastUpdate');
+        lu.textContent = 'Updated ' + new Date().toLocaleTimeString() + ' \u00b7 ' + secs + 's';
+        const c = data._cache;
+        lu.title = c ? (c.hit ? 'Served from the script cache (built ' + new Date(c.builtAt).toLocaleTimeString() + '). Refresh forces a rebuild.'
+                             : 'Rebuilt by the script in ' + ((c.buildMs || 0) / 1000).toFixed(1) + 's')
+                     : 'Sheet round-trip ' + secs + 's (no script cache - dashboard_additions.gs not deployed)';
+        if (data._stats_engine) lu.title += '\nStats engine: ' + data._stats_engine;
+        if (data._stats_engine && /^error/.test(data._stats_engine)) showToast('Stats engine: ' + data._stats_engine, 'error', 8000);
         if (renderError) showBanner('Data loaded but part of the page failed to draw: ' + renderError.message);
         else hideBanner();
     } catch (err) {
+        if (err && err.name === 'AbortError') err = new Error('Sheet did not answer within ' + (DASH_FETCH_TIMEOUT_MS / 1000) + 's');
         console.error('Dashboard error:', err);
         if (!lastGoodData) {
             // Nothing real to show yet - render the empty placeholder so the page isn't blank
@@ -288,6 +306,7 @@ async function fetchData() {
         dot.className = 'status-dot';
         showBanner('Could not load the sheet: ' + err.message);
     } finally {
+        clearTimeout(abortTimer);
         document.getElementById('loading').className = 'loading-overlay hidden';
         fetchInFlight = false;
         if (fetchQueued) { fetchQueued = false; scheduleRefresh(500); }
@@ -791,8 +810,9 @@ async function checkScriptVersion() {
     if (!el) return;
     const r = await apiGet(POST_URL + '?action=version', { beacon: false, timeoutMs: 12000 });
     const v = r.data && r.data.script_version;
-    el.textContent = v ? 'script ' + v : 'script: no version endpoint';
-    el.style.color = v ? '' : 'var(--pumpkin-glow)';
+    el.textContent = v ? 'script \u2713' : 'script \u2717';
+    el.title = v ? 'Apps Script ' + v + (r.data.auth ? ' (key required)' : '') : 'No ?action=version endpoint - the Apps Script additions are not deployed at this URL';
+    el.style.color = v ? 'var(--green-bright)' : 'var(--pumpkin-glow)';
     if (v && r.data.auth && !API_KEY) showToast('The script requires an API key but API_KEY is empty in index.html - writes will be rejected', 'error', 10000);
 }
 
@@ -851,14 +871,11 @@ async function pullState() {
 // After a close / partial TP we remember what the sheet should show next. When a refresh comes back
 // and the sheet disagrees, say so instead of leaving a silently-unchanged P&L.
 const pendingCloses = {};    // key ticker_side -> { ts, pnl, netBefore, label }
-const pendingPartials = {};  // key ticker_side -> { ts, total }
 const WATCHDOG_MIN_AGE = 12000, WATCHDOG_MAX_AGE = 10 * 60 * 1000;
 function sideOf(signal) { return ['sell', 'reduce'].includes(String(signal || '').toLowerCase()) ? 'sell' : 'buy'; }
 function checkPendingWrites(openTrades, stats) {
     const now = Date.now();
     const openKeys = new Set(openTrades.map(t => String(t.ticker).toUpperCase() + '_' + t.side));
-    const byKey = {};
-    openTrades.forEach(t => { byKey[String(t.ticker).toUpperCase() + '_' + t.side] = t; });
     Object.keys(pendingCloses).forEach(k => {
         const pc = pendingCloses[k];
         const age = now - pc.ts;
@@ -867,20 +884,9 @@ function checkPendingWrites(openTrades, stats) {
         if (openKeys.has(k)) {
             showToast(pc.label + ' still shows OPEN on the sheet after Close - the update_position write did not match its row', 'error', 9000);
         } else if (Math.abs(pc.pnl) >= 0.005 && Math.abs(parseDollar(stats.netPnl) - pc.netBefore) < 0.005) {
-            showToast(pc.label + ' closed on the sheet, but Net P&L did not move (' + fmtSigned(pc.pnl) + ' expected) - check how the script sums profitLocked for "' + pc.outcome + '"', 'error', 9000);
+                            showToast(pc.label + ' closed on the sheet, but Net P&L did not move (' + fmtSigned(pc.pnl) + ' expected) - the script is not counting "' + pc.outcome + '" rows', 'error', 9000);
         }
         delete pendingCloses[k];
-    });
-    Object.keys(pendingPartials).forEach(k => {
-        const pp = pendingPartials[k];
-        const age = now - pp.ts;
-        if (age > WATCHDOG_MAX_AGE) { delete pendingPartials[k]; return; }
-        if (age < WATCHDOG_MIN_AGE) return;
-        const t = byKey[k];
-        if (t && parseDollar(t.profitLocked) + 0.005 < pp.total) {
-            showToast(k.replace('_', ' ') + ': sheet shows locked $' + parseDollar(t.profitLocked).toFixed(2) + ' but you recorded $' + pp.total.toFixed(2) + ' - partial_profit is not being stored', 'error', 9000);
-        }
-        delete pendingPartials[k];
     });
 }
 
@@ -928,81 +934,25 @@ async function markAction(ticker, signal, price, value, elemId) {
 // and every button on that card threw before doing anything.)
 const openTradeById = new Map();
 
-async function markOutcome(elemId, value) {
-    const t = openTradeById.get(elemId);
-    const el = document.getElementById(elemId);
-    if (!t || !el) { showToast('Card is stale - refreshing'); scheduleRefresh(0); return; }
-    const ticker = t.ticker, signal = t.lastSignal || '', price = t.price || 0;
-    const key = String(ticker).toUpperCase() + '_' + t.side;
-    const profitInput = document.getElementById(elemId + '-profit');
-    const inputVal = profitInput ? parseDollar(profitInput.value) : 0;
-    const badge = document.getElementById(elemId + '-badge');
-    const closeBtn = document.getElementById(elemId + '-close');
-    const prevTotal = parseFloat(el.dataset.pnl) || 0;
-
-    if (value === 'Won') {
-        // Hit TP — add to running total, keep card open
-        const newTotal = Math.round((prevTotal + inputVal) * 100) / 100;
-        el.dataset.pnl = newTotal;
-        el.dataset.status = 'tp';
-        el.style.borderLeftColor = 'var(--green-candle)';
-        badge.style.display = 'inline-block';
-        badge.className = 'pnl-badge positive';
-        badge.textContent = 'TP +$' + newTotal.toFixed(2);
-        if (closeBtn) closeBtn.style.display = 'inline-block';
-        if (profitInput) profitInput.value = '';
-        // Save partial profit to sheet (doesn't close trade)
-        const r = await apiGet(buildUpdateUrl({ ticker, signal, price, field: 'partial_profit', value: newTotal.toFixed(2) }));
-        if (r.ok === false) {
-            showToast(ticker + ' partial TP was not saved: ' + writeErr(r), 'error', 7000);
-            el.dataset.pnl = prevTotal;
-            badge.textContent = prevTotal > 0 ? 'TP +$' + prevTotal.toFixed(2) : '';
-            if (prevTotal <= 0) { badge.style.display = 'none'; el.dataset.status = ''; el.style.borderLeftColor = ''; }
-            return;
-        }
-        pendingPartials[key] = { ts: Date.now(), total: newTotal };
-        showToast(ticker + ' TP +$' + inputVal.toFixed(2) + ' recorded (running total ' + fmtSigned(newTotal) + ')', 'success', 2500);
-        return;
-    }
-
-    if (value === '0x0') {
-        // Safe — stop moved to breakeven, trade still open
-        el.dataset.status = '0x0';
-        el.style.borderLeftColor = '#1f6feb';
-        badge.style.display = 'inline-block';
-        badge.className = 'pnl-badge neutral';
-        badge.textContent = 'OxO';
-        const r = await apiGet(buildUpdateUrl({ ticker, signal, price, field: 'outcome', value: '0x0' }));
-        if (r.ok === false) showToast(ticker + ' OxO was not saved: ' + writeErr(r), 'error', 7000);
-        return;
-    }
-
-    // Lost — stopped out, final close, send to sheet
-    // Auto-negate positive input for losses (user enters 0.34, we record -0.34)
-    const adjustedInput = inputVal > 0 ? -inputVal : inputVal;
-    const grandTotal = Math.round((prevTotal + adjustedInput) * 100) / 100;
-    await finalizeClose(el, t, 'Stopped Out', grandTotal);
-}
-
-// Close trade — adds any remaining input P&L to total, finalizes, sends to sheet
+// Close — the only exit. Type the P&L with its sign (-0.34 for a loss). The Outcome column gets
+// CLOSE_OUTCOME; the sign of the profit column says whether it was a win or a loss.
 async function closeTrade(elemId) {
     const t = openTradeById.get(elemId);
     const el = document.getElementById(elemId);
     if (!t || !el) { showToast('Card is stale - refreshing'); scheduleRefresh(0); return; }
     const profitInput = document.getElementById(elemId + '-profit');
-    const inputVal = profitInput ? parseDollar(profitInput.value) : 0;
-    const prevTotal = parseFloat(el.dataset.pnl) || 0;
-    const grandTotal = Math.round((prevTotal + inputVal) * 100) / 100;
-    if (!confirm('Close ' + t.ticker + ' with total P&L ' + fmtSigned(grandTotal) + '?')) return;
-    const outcomeValue = grandTotal === 0 ? ZERO_CLOSE_OUTCOME : grandTotal > 0 ? 'TP Hit' : 'Stopped Out';
-    await finalizeClose(el, t, outcomeValue, grandTotal);
-}
+    const raw = profitInput ? profitInput.value.trim() : '';
+    const inputVal = parseDollar(raw);
+    const locked = parseDollar(t.profitLocked); // anything already banked on the sheet for this trade
+    const grandTotal = Math.round((locked + inputVal) * 100) / 100;
+    if (raw === '' && locked === 0 && !confirm('No P&L entered. Close ' + displayName(t.ticker) + ' at $0.00?')) return;
+    const verdict = grandTotal > 0 ? 'WIN' : grandTotal < 0 ? 'LOSS' : 'BREAKEVEN';
+    if (!confirm('Close ' + displayName(t.ticker) + ' as ' + verdict + ' ' + fmtSigned(grandTotal) + (locked ? ' (includes ' + fmtSigned(locked) + ' already banked)' : '') + '?')) return;
+    // Legacy pair, if the script ever needs it back: grandTotal > 0 ? 'TP Hit' : 'Stopped Out'
+    const outcomeValue = CLOSE_OUTCOME;
 
-// Shared final-close path: write, verify, then update the UI and arm the watchdog
-async function finalizeClose(el, t, outcomeValue, grandTotal) {
     const ticker = t.ticker, signal = t.lastSignal || '', price = t.price || 0;
     const key = String(ticker).toUpperCase() + '_' + t.side;
-    const badge = document.getElementById(el.id + '-badge');
     const buttons = el.querySelectorAll('.action-btn');
     buttons.forEach(b => b.disabled = true);
     const netBefore = parseDollar(lastGoodData && lastGoodData.stats ? lastGoodData.stats.netPnl : 0);
@@ -1013,18 +963,12 @@ async function finalizeClose(el, t, outcomeValue, grandTotal) {
         showToast(ticker + ' close was NOT saved: ' + writeErr(r), 'error', 9000);
         return;
     }
-    if (badge) {
-        badge.style.display = 'inline-block';
-        badge.className = grandTotal >= 0 ? 'pnl-badge positive' : 'pnl-badge negative';
-        badge.textContent = fmtSigned(grandTotal);
-    }
+    el.style.borderLeftColor = grandTotal >= 0 ? 'var(--green-candle)' : 'var(--red-bright)';
     el.style.opacity = '0';
     setTimeout(() => el.remove(), 600);
     openTradeById.delete(el.id);
-    delete pendingPartials[key];
     pendingCloses[key] = { ts: Date.now(), pnl: grandTotal, netBefore, outcome: outcomeValue, label: displayName(ticker) + ' ' + t.side.toUpperCase() };
     showToast(displayName(ticker) + ' closed ' + fmtSigned(grandTotal) + (r.verified ? ' - saved to sheet' : ' - sent (unconfirmed)'), r.verified ? 'success' : 'error', 3500);
-    // Pull fresh stats now, and again shortly after in case the sheet's dashboard is cached
     scheduleRefresh(1500);
     setTimeout(() => scheduleRefresh(0), WATCHDOG_MIN_AGE + 3000);
 }
@@ -1054,12 +998,8 @@ function filterOpenTrades() {
     const search = (document.getElementById('otSearch').value || '').toUpperCase().trim();
     document.querySelectorAll('#openTradesList .action-item').forEach(el => {
         const ticker = (el.dataset.ticker || '').toUpperCase();
-        const status = (el.dataset.status || '').toLowerCase();
         const matchSearch = !search || ticker.includes(search);
-        let matchFilter = true;
-        if (openTradeFilter === 'no-0x0' && status === '0x0') matchFilter = false;
-        else if (openTradeFilter === 'no-tp' && status === 'tp') matchFilter = false;
-        el.style.display = (matchSearch && matchFilter) ? '' : 'none';
+        el.style.display = matchSearch ? '' : 'none';
     });
 }
 
@@ -1092,27 +1032,18 @@ function renderOpenTrades(trades) {
         openTradeById.set(id, t);
         const logo = logoUrl(t.ticker);
         const pnl = parseDollar(t.profitLocked);
-        const outcome = (t.outcome || '').toLowerCase();
-        const initStatus = outcome === '0x0' ? '0x0' : (pnl > 0 ? 'tp' : '');
-        const initBorder = outcome === '0x0' ? 'border-left-color:#1f6feb' : (pnl > 0 ? 'border-left-color:var(--green-candle)' : '');
-        const badgeDisplay = (outcome === '0x0' || pnl > 0) ? 'inline-block' : 'none';
-        const badgeClass = outcome === '0x0' ? 'pnl-badge neutral' : (pnl > 0 ? 'pnl-badge positive' : 'pnl-badge neutral');
-        const badgeText = outcome === '0x0' ? 'OxO' : (pnl > 0 ? 'TP +$' + pnl.toFixed(2) : '');
         return `
-            <div class="action-item" id="${id}" data-ticker="${esc(t.ticker)}" data-side="${t.side}" data-pnl="${pnl}" data-status="${initStatus}" style="${initBorder}">
+            <div class="action-item" id="${id}" data-ticker="${esc(t.ticker)}" data-side="${t.side}" data-pnl="${pnl}">
                 <div>
                     <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem">
                         <img src="${logo}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" style="margin-right:0">
                         <span class="stock-logo-fallback" style="display:none;margin-right:0">${esc(displayName(t.ticker).slice(0,2))}</span>
                         <span class="ticker-badge" style="margin-right:0">${esc(displayName(t.ticker))}</span>
                         <span class="signal-badge ${signalClass(t.lastSignal)}" style="font-size:0.4rem;padding:1px 4px;opacity:0.7">${signalLabel(t.lastSignal)}</span>
-                        <span class="${badgeClass}" id="${id}-badge" style="display:${badgeDisplay};font-size:0.4rem;padding:1px 4px;opacity:0.7;margin-left:auto">${badgeText}</span>
+                        ${pnl ? `<span class="pnl-badge ${pnl > 0 ? 'positive' : 'negative'}" style="font-size:0.4rem;padding:1px 4px;opacity:0.7;margin-left:auto" title="Already banked on the sheet - added to whatever you close with">banked ${fmtSigned(pnl)}</span>` : ''}
                     </div>
                     <div class="action-buttons">
-                        <input type="text" class="entry-input" placeholder="P&L $" id="${id}-profit">
-                        <button class="action-btn won" onclick="markOutcome('${id}','Won')">Hit TP</button>
-                        <button class="action-btn lost" onclick="markOutcome('${id}','Lost')">Lost</button>
-                        <button class="action-btn zero" onclick="markOutcome('${id}','0x0')">OxO</button>
+                        <input type="text" class="entry-input" placeholder="P&L $ (- for loss)" id="${id}-profit" inputmode="decimal">
                         <button class="action-btn won" id="${id}-close" onclick="closeTrade('${id}')">Close</button>
                         <button class="action-btn four-day-btn" id="${id}-4day" onclick="toggle4DayCheck('${id}')">4 Day</button>
                     </div>
@@ -1662,15 +1593,10 @@ filterOpenTrades = function() {
     const fourDays = 4 * 24 * 60 * 60 * 1000;
     const search = (document.getElementById('otSearch').value || '').toUpperCase().trim();
     document.querySelectorAll('#openTradesList .action-item').forEach(el => {
-        const status = (el.dataset.status || '').toLowerCase();
         const ticker = (el.dataset.ticker || '').toUpperCase();
         const matchSearch = !search || ticker.includes(search);
         let matchFilter = true;
-        if (openTradeFilter === 'no-0x0' && status === '0x0') {
-            matchFilter = false;
-        } else if (openTradeFilter === 'no-tp' && status === 'tp') {
-            matchFilter = false;
-        } else if (openTradeFilter === 'need-4day') {
+        if (openTradeFilter === 'need-4day') {
             const ts = el.dataset.ticker;
             const tsState = ts && states[ts];
             matchFilter = tsState && (fourDays - (Date.now() - tsState)) <= 0;
@@ -1988,14 +1914,10 @@ function renderPokemon(stats) {
     const quarterKellyDollar = halfKellyDollar / 2;
     const eighthKellyDollar = halfKellyDollar / 4;
     const sixteenthKellyDollar = halfKellyDollar / 8;
-    const thirtysecondKellyDollar = halfKellyDollar / 16;
-    const sixtyfourthKellyDollar = halfKellyDollar / 32;
     const perStockHalf = tickerCount > 0 ? halfKellyDollar / tickerCount : 0;
     const perStockQuarter = tickerCount > 0 ? quarterKellyDollar / tickerCount : 0;
     const perStockEighth = tickerCount > 0 ? eighthKellyDollar / tickerCount : 0;
     const perStockSixteenth = tickerCount > 0 ? sixteenthKellyDollar / tickerCount : 0;
-    const perStock32 = tickerCount > 0 ? thirtysecondKellyDollar / tickerCount : 0;
-    const perStock64 = tickerCount > 0 ? sixtyfourthKellyDollar / tickerCount : 0;
 
     let html = `<div class="pokemon-header">
         <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}</div>
@@ -2023,16 +1945,6 @@ function renderPokemon(stats) {
                     <div class="kelly-size-label">\uD83C\uDFAB <span style="font-size:0.85rem">1/16</span> Kelly</div>
                     <div class="kelly-size-val">$${perStockSixteenth.toFixed(2)}</div>
                     <div class="kelly-size-per">budget $${sixteenthKellyDollar.toFixed(0)}</div>
-                </div>
-                <div class="kelly-size-card thirtysecond-k">
-                    <div class="kelly-size-label">\uD83D\uDD2C <span style="font-size:0.85rem">1/32</span> Kelly</div>
-                    <div class="kelly-size-val">$${perStock32.toFixed(2)}</div>
-                    <div class="kelly-size-per">budget $${thirtysecondKellyDollar.toFixed(0)}</div>
-                </div>
-                <div class="kelly-size-card sixtyfourth-k">
-                    <div class="kelly-size-label">\uD83E\uDDA0 <span style="font-size:0.85rem">1/64</span> Kelly</div>
-                    <div class="kelly-size-val">$${perStock64.toFixed(2)}</div>
-                    <div class="kelly-size-per">budget $${sixtyfourthKellyDollar.toFixed(0)}</div>
                 </div>
             </div>
         </div>` : ''}
@@ -2189,9 +2101,6 @@ async function showAddTradeModal() {
             </label>
             <label style="color:var(--text-dim);font-size:0.75rem;cursor:pointer">
                 <input type="radio" name="at-outcome" value="Stopped Out"> Stopped Out
-            </label>
-            <label style="color:var(--text-dim);font-size:0.75rem;cursor:pointer">
-                <input type="radio" name="at-outcome" value="0x0"> 0x0
             </label>
             <label style="color:var(--text-dim);font-size:0.75rem;cursor:pointer">
                 <input type="radio" name="at-outcome" value="Closed"> Closed
@@ -2416,8 +2325,7 @@ function renderKelly(stats) {
 // 2. Live data, weekly tasks, cross-device state, script version
 fetchData();
 fetchWeeklyTasks();
-pullState();
-checkScriptVersion();
+setTimeout(() => { pullState(); checkScriptVersion(); }, 1500);
 
 // ====== SERVICE WORKER ======
 if ('serviceWorker' in navigator) {
