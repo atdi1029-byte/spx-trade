@@ -345,6 +345,13 @@ function processDSS(series, valKey, srcType) {
   const trend3 = ema(raw3, TREND_LEN);
   const d3 = s3.map(d => d.date);
 
+  // Weekly: resample by 5 days (or use raw weekly data directly)
+  const sW = srcType === 'weekly' ? series : resample(dailySeries, 5);
+  const rawW = calcDSS(sW.map(d => d[valKey]), 13, 8);
+  const sigW = ema(rawW, SIG_SMOOTH);
+  const trendW = ema(rawW, TREND_LEN);
+  const dW = sW.map(d => d.date);
+
   // Monthly: resample by 4 weeks or 20 days
   const sM = resample(series, srcType === 'weekly' ? 4 : 20);
   const rawM = calcDSS(sM.map(d => d[valKey]), 13, 8);
@@ -352,7 +359,7 @@ function processDSS(series, valKey, srcType) {
   const trendM = ema(rawM, TREND_LEN);
   const dM = sM.map(d => d.date);
 
-  return { raw3, sig3, trend3, d3, s3, rawM, sigM, trendM, dM, sM };
+  return { raw3, sig3, trend3, d3, s3, rawW, sigW, trendW, dW, sW, rawM, sigM, trendM, dM, sM };
 }
 
 // ─── Build section HTML ───
@@ -425,11 +432,12 @@ function renderCharts(data) {
 async function init() {
   const el = document.getElementById('content');
 
-  let netSeries = [], tgaSeries = [];
+  let netSeries = [], tgaSeries = [], m2Series = [];
   try {
     const data = await fetch('macro-data.json?t='+Date.now()).then(r=>r.json());
     netSeries = data.netLiq || [];
     tgaSeries = data.tga || [];
+    m2Series = data.m2 || [];
   } catch(e) {
     el.innerHTML = '<div class="loading">Failed to load macro-data.json</div>';
     return;
@@ -455,6 +463,18 @@ async function init() {
     const tga3 = readingState(tgaData.raw3, tgaData.sig3, tgaData.trend3);
     html += cardHTML('tga-3d', 'TGA', '3-day', fmtUSD(lastTga.balance), tga3, `as of ${fmtDate(lastTga.date)}, ${tgaData.s3.length} bars`);
   }
+
+  const m2Data = m2Series.length > 30 ? processDSS(m2Series, 'm2', 'weekly') : null;
+  if (m2Data) {
+    const lastM2 = m2Series[m2Series.length - 1];
+    const m2Head = '$' + (lastM2.m2 / 1000).toFixed(2) + 'T';
+    const m2_3d = readingState(m2Data.raw3, m2Data.sig3, m2Data.trend3);
+    const m2_w  = readingState(m2Data.rawW, m2Data.sigW, m2Data.trendW);
+    const m2_m  = readingState(m2Data.rawM, m2Data.sigM, m2Data.trendM);
+    html += cardHTML('m2-3d', 'M2 Money Supply', '3-day', m2Head, m2_3d, `as of ${fmtDate(lastM2.date)}, ${m2Data.s3.length} bars interpolated`);
+    html += cardHTML('m2-w',  'M2 Money Supply', 'weekly', m2Head, m2_w,  `as of ${fmtDate(lastM2.date)}, ${m2Data.sW.length} bars`);
+    html += cardHTML('m2-m',  'M2 Money Supply', 'monthly', m2Head, m2_m, `as of ${fmtDate(lastM2.date)}, ${m2Data.sM.length} bars`);
+  }
   el.innerHTML = html;
 
   requestAnimationFrame(() => {
@@ -462,6 +482,14 @@ async function init() {
     if (tgaData) {
       drawComposite('tga-3d', tgaData.raw3, tgaData.sig3, tgaData.trend3, tgaData.d3, 500);
       setupTT('tga-3d');
+    }
+    if (m2Data) {
+      drawComposite('m2-3d', m2Data.raw3, m2Data.sig3, m2Data.trend3, m2Data.d3, 3000);
+      setupTT('m2-3d');
+      drawComposite('m2-w', m2Data.rawW, m2Data.sigW, m2Data.trendW, m2Data.dW, 1000);
+      setupTT('m2-w');
+      drawComposite('m2-m', m2Data.rawM, m2Data.sigM, m2Data.trendM, m2Data.dM, 500);
+      setupTT('m2-m');
     }
     document.querySelectorAll('.chart-wrap').forEach(w => w.scrollLeft = w.scrollWidth);
   });
