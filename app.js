@@ -2121,8 +2121,13 @@ async function showAddTradeModal() {
         const ticker = box.querySelector('#at-ticker').value.trim().toUpperCase();
         const signal = box.querySelector('input[name="at-signal"]:checked').value;
         const outcome = box.querySelector('input[name="at-outcome"]:checked').value;
-        const profit = box.querySelector('#at-profit').value.trim();
+        let profit = box.querySelector('#at-profit').value.trim();
         if (!ticker) { showToast('Ticker required'); return; }
+        // Stopped Out = loss: force profit negative
+        if (outcome === 'Stopped Out' && profit) {
+            let v = parseFloat(profit);
+            if (!isNaN(v) && v > 0) profit = String(-v);
+        }
         overlay.remove();
         const params = new URLSearchParams({
             action: 'add_trade', ticker, signal, outcome,
