@@ -1042,7 +1042,7 @@ body {
 }
 
 /* ============ LIQUIDITY SECTION ============ */
-.liquidity-section { margin: 1.5rem 0; }
+.liquidity-section { display: none; margin: 1.5rem 0; }
 .liquidity-box {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -1190,7 +1190,7 @@ body {
 }
 
 /* ============ NET LIQUIDITY SECTION ============ */
-.netliq-section { margin: 1rem 0; }
+.netliq-section { display: none; margin: 1rem 0; }
 .netliq-box {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -1312,7 +1312,7 @@ body {
 }
 
 /* ============ GLOBAL LIQUIDITY SECTION ============ */
-.globliq-section { margin: 1rem 0; }
+.globliq-section { display: none; margin: 1rem 0; }
 .globliq-box {
     background: var(--bg-card);
     border: 1px solid var(--border);
