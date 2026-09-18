@@ -1897,7 +1897,7 @@ function renderPokemon(stats) {
 
     const needStr = nextLevel ? '$' + (nextLevel.min - activePnl).toFixed(2) + ' to Evolve' : '';
 
-    // Per-stock sizing: Half-Kelly $ / concurrent positions
+    // Per-stock sizing: Kelly fractions with pokeball chips (matching crypto dashboard)
     const tickerCount = stockCount;
     const wins = parseInt(stats.wins) || 0;
     const losses = parseInt(stats.losses) || 0;
@@ -1909,7 +1909,7 @@ function renderPokemon(stats) {
     const wr = tradeTotal > 0 ? wins / tradeTotal : 0;
     const rr = avgLoss > 0 ? avgWin / avgLoss : 0;
     const kellyF = rr > 0 ? (rr * wr - (1 - wr)) / rr : 0;
-    const kellyBankroll = Math.max(0, dcaTotal + pnl); // deposits + trading P&L (activePnl already contains dcaTotal in DCA mode)
+    const kellyBankroll = Math.max(0, dcaTotal + pnl);
     const halfKellyDollar = Math.max(0, kellyBankroll * kellyF / 2);
     const quarterKellyDollar = halfKellyDollar / 2;
     const eighthKellyDollar = halfKellyDollar / 4;
@@ -1919,35 +1919,44 @@ function renderPokemon(stats) {
     const perStockEighth = tickerCount > 0 ? eighthKellyDollar / tickerCount : 0;
     const perStockSixteenth = tickerCount > 0 ? sixteenthKellyDollar / tickerCount : 0;
 
+    // Pokeball SVGs
+    const pokeballSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path class="ball-top" d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle class="ball-center" cx="10" cy="10" r="3"/></svg>`;
+    const greatBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#42a5f5"/><path d="M2.5,7.5 A8,8 0 0 1 17.5,7.5" fill="#ef5350" stroke="none"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle class="ball-center" cx="10" cy="10" r="3"/></svg>`;
+    const ultraBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#333"/><path d="M3,8 h14" stroke="#fdd835" stroke-width="2" fill="none"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#fdd835" stroke="#333" stroke-width="1.5"/></svg>`;
+    const masterBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#7e57c2"/><text x="10" y="8" text-anchor="middle" fill="#e1bee7" font-size="6" font-weight="900">M</text><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#e1bee7" stroke="#333" stroke-width="1.5"/></svg>`;
+    const duskBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#2e7d32"/><path d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z" fill="#1a1a1a"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#66bb6a" stroke="#333" stroke-width="1.5"/></svg>`;
+    const timerBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#e53935"/><line x1="10" y1="2" x2="10" y2="5" stroke="#fff" stroke-width="1"/><line x1="10" y1="2" x2="10" y2="5" stroke="#fff" stroke-width="1" transform="rotate(90 10 10)"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle class="ball-center" cx="10" cy="10" r="3"/></svg>`;
+    const netBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#0097a7"/><path d="M3,5 L17,5 M5,3 L5,10 M10,2 L10,10 M15,3 L15,10" stroke="#4dd0e1" stroke-width="0.5" fill="none"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#4dd0e1" stroke="#333" stroke-width="1.5"/></svg>`;
+    const quickBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#1565c0"/><path d="M5,5 L15,8 M4,7 L16,4" stroke="#fdd835" stroke-width="1.2" fill="none"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#fdd835" stroke="#333" stroke-width="1.5"/></svg>`;
+    const ballSvgs = [ultraBallSvg, masterBallSvg, greatBallSvg, timerBallSvg, netBallSvg, duskBallSvg, quickBallSvg, pokeballSvg];
+
+    // Kelly fraction sizes (same as crypto dashboard)
+    const _kellyBudget = Math.floor(kellyBankroll * Math.max(0, kellyF / 2));
+    const _exposureBudget = Math.floor(kellyBankroll * 0.25);
+    const _avgBudget = Math.floor((_exposureBudget + _kellyBudget) / 2);
+    const _totalSlots = tickerCount > 0 ? tickerCount : 1;
+    const kellySizes = [
+        { label: 'Avg', amt: _totalSlots > 0 ? (_avgBudget / _totalSlots) : 0, cls: 'lead' },
+        { label: 'K', amt: _totalSlots > 0 ? (_kellyBudget / _totalSlots) : 0, cls: 'lead' },
+        { label: '\u{1F525}', amt: _totalSlots > 0 ? ((_kellyBudget / 2) / _totalSlots) : 0, cls: 'mid' },
+        { label: '\u{26A1}', amt: _totalSlots > 0 ? ((_kellyBudget / 4) / _totalSlots) : 0, cls: 'mid' },
+        { label: '\u{1F331}', amt: _totalSlots > 0 ? ((_kellyBudget / 8) / _totalSlots) : 0, cls: 'half' },
+        { label: '\u{1F4A9}', amt: _totalSlots > 0 ? ((_kellyBudget / 16) / _totalSlots) : 0, cls: 'mud' },
+        { label: '\u{1FAA8}', amt: _totalSlots > 0 ? ((_kellyBudget / 32) / _totalSlots) : 0, cls: 'dust' },
+        { label: '\u{1F47B}', amt: _totalSlots > 0 ? ((_kellyBudget / 64) / _totalSlots) : 0, cls: 'ghost' },
+    ];
+    let sizeChips = '';
+    const usedSlots = JSON.parse(localStorage.getItem('spx_pokeball_used') || '[false,false,false,false,false,false,false,false]');
+    for (let i = 0; i < 8; i++) {
+        const cls = usedSlots[i] ? 'used' : kellySizes[i].cls;
+        sizeChips += `<span class="pokemon-size-chip ${cls}" onclick="togglePokeball(${i})" style="cursor:pointer">${ballSvgs[i]}<span class="ball-amt">${kellySizes[i].label} $${kellySizes[i].amt.toFixed(2)}</span></span>`;
+    }
+
     let html = `<div class="pokemon-header">
         <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}</div>
         <img class="pokemon-sprite" src="${POKE_SPRITE(level.pokeId)}" alt="${level.pokemon}">
         <div class="pokemon-pnl ${pnlClass}">P&L: ${pnlStr}${needStr ? ' <span style="color:var(--pumpkin-glow);font-size:0.85rem">&middot; ' + needStr + '</span>' : ''}</div>
-        ${tradeTotal >= 5 && perStockHalf > 0 ? `<div style="margin-top:0.5rem;text-align:center">
-            <div style="font-size:0.55rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.4rem">Per Trade / ${tickerCount} positions</div>
-            <div class="kelly-sizes-grid">
-                <div class="kelly-size-card half-k">
-                    <div class="kelly-size-label"><span style="font-size:1.2rem">\u00bd</span> Kelly</div>
-                    <div class="kelly-size-val">$${perStockHalf.toFixed(2)}</div>
-                    <div class="kelly-size-per">budget $${halfKellyDollar.toFixed(0)}</div>
-                </div>
-                <div class="kelly-size-card quarter-k">
-                    <div class="kelly-size-label"><span style="font-size:1.2rem">\ud83d\udc14</span> <span style="font-size:1.2rem">\u00bc</span> Kelly</div>
-                    <div class="kelly-size-val">$${perStockQuarter.toFixed(2)}</div>
-                    <div class="kelly-size-per">budget $${quarterKellyDollar.toFixed(0)}</div>
-                </div>
-                <div class="kelly-size-card eighth-k">
-                    <div class="kelly-size-label"><span style="font-size:1.2rem">\ud83c\udfb0</span> <span style="font-size:1.2rem">\u215b</span> Kelly</div>
-                    <div class="kelly-size-val">$${perStockEighth.toFixed(2)}</div>
-                    <div class="kelly-size-per">budget $${eighthKellyDollar.toFixed(0)}</div>
-                </div>
-                <div class="kelly-size-card sixteenth-k">
-                    <div class="kelly-size-label">\uD83C\uDFAB <span style="font-size:0.85rem">1/16</span> Kelly</div>
-                    <div class="kelly-size-val">$${perStockSixteenth.toFixed(2)}</div>
-                    <div class="kelly-size-per">budget $${sixteenthKellyDollar.toFixed(0)}</div>
-                </div>
-            </div>
-        </div>` : ''}
+        ${tradeTotal >= 5 && kellyF > 0 ? `<div class="pokemon-sizes">${sizeChips}</div>` : ''}
     </div>`;
 
     // DCA health
@@ -2149,6 +2158,13 @@ async function showAddTradeModal() {
 }
 
 // ====== KELLY EDGE OPTIMIZER ======
+function togglePokeball(idx) {
+    const used = JSON.parse(localStorage.getItem('spx_pokeball_used') || '[false,false,false,false,false,false,false,false]');
+    used[idx] = !used[idx];
+    localStorage.setItem('spx_pokeball_used', JSON.stringify(used));
+    if (window._lastStats) renderPokemon(window._lastStats);
+}
+
 function renderKelly(stats) {
     const box = document.getElementById('kellyBox');
     if (!box) return;
