@@ -1930,7 +1930,7 @@ function renderPokemon(stats) {
     const quickBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#1565c0"/><path d="M5,5 L15,8 M4,7 L16,4" stroke="#fdd835" stroke-width="1.2" fill="none"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#fdd835" stroke="#333" stroke-width="1.5"/></svg>`;
     const healBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#ec407a"/><path d="M7,6 h6 v2 h-6z" fill="#fff" opacity="0.6"/><path d="M9,4 h2 v6 h-2z" fill="#fff" opacity="0.6"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#f8bbd0" stroke="#333" stroke-width="1.5"/></svg>`;
     const luxuryBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#212121"/><path d="M3,6 Q10,3 17,6" stroke="#f44336" stroke-width="1.2" fill="none"/><path d="M3,8 Q10,5 17,8" stroke="#f44336" stroke-width="1.2" fill="none"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#f44336" stroke="#333" stroke-width="1.5"/></svg>`;
-    const ballSvgs = [ultraBallSvg, masterBallSvg, greatBallSvg, timerBallSvg, netBallSvg, duskBallSvg, quickBallSvg, pokeballSvg, healBallSvg, luxuryBallSvg];
+    const ballSvgs = [ultraBallSvg, masterBallSvg, greatBallSvg, timerBallSvg, healBallSvg, luxuryBallSvg, netBallSvg, duskBallSvg, quickBallSvg, pokeballSvg];
 
     // Kelly fraction sizes (same as crypto dashboard)
     const _kellyBudget = Math.floor(kellyBankroll * Math.max(0, kellyF / 2));
@@ -1942,12 +1942,12 @@ function renderPokemon(stats) {
         { label: 'K', amt: _totalSlots > 0 ? (_kellyBudget / _totalSlots) : 0, cls: 'lead' },
         { label: '\u{1F525}', amt: _totalSlots > 0 ? ((_kellyBudget / 2) / _totalSlots) : 0, cls: 'mid' },
         { label: '\u{26A1}', amt: _totalSlots > 0 ? ((_kellyBudget / 4) / _totalSlots) : 0, cls: 'mid' },
+        { label: '\u{1FA78}', amt: _totalSlots > 0 ? ((_kellyBudget / 128) / _totalSlots) : 0, cls: 'half' },
+        { label: '\u{2728}', amt: _totalSlots > 0 ? ((_kellyBudget / 256) / _totalSlots) : 0, cls: 'half' },
         { label: '\u{1F331}', amt: _totalSlots > 0 ? ((_kellyBudget / 8) / _totalSlots) : 0, cls: 'half' },
         { label: '\u{1F4A9}', amt: _totalSlots > 0 ? ((_kellyBudget / 16) / _totalSlots) : 0, cls: 'mud' },
         { label: '\u{1FAA8}', amt: _totalSlots > 0 ? ((_kellyBudget / 32) / _totalSlots) : 0, cls: 'dust' },
         { label: '\u{1F47B}', amt: _totalSlots > 0 ? ((_kellyBudget / 64) / _totalSlots) : 0, cls: 'ghost' },
-        { label: '\u{1FA78}', amt: _totalSlots > 0 ? ((_kellyBudget / 128) / _totalSlots) : 0, cls: 'ghost' },
-        { label: '\u{2728}', amt: _totalSlots > 0 ? ((_kellyBudget / 256) / _totalSlots) : 0, cls: 'ghost' },
     ];
     let sizeChips = '';
     const usedSlots = JSON.parse(localStorage.getItem('spx_pokeball_used') || '[false,false,false,false,false,false,false,false,false,false]');
