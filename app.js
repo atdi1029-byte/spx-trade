@@ -330,6 +330,10 @@ function renderDashboard(data) {
     actionNeeded = actionNeeded.filter(a => !isActed(a.ticker || '', a.signal || '', a.price || ''));
 
     // --- Quick Stats ---
+    const trEl = document.getElementById('statTrades');
+    const trN = parseInt(stats.totalTrades) || 0;
+    trEl.textContent = trN;
+    trEl.title = (parseInt(stats.wins) || 0) + ' wins / ' + (parseInt(stats.losses) || 0) + ' losses' + (stats.statsStartDate ? ' since ' + stats.statsStartDate : '');
     document.getElementById('statOpen').textContent = stats.openPositions || 0;
     const wrEl = document.getElementById('statWinRate');
     wrEl.textContent = stats.winRate || '0%';
