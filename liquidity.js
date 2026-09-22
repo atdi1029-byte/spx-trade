@@ -1,7 +1,7 @@
 // SPX Trade Dashboard - TGA / Net / Global liquidity charts (split out of index.html).
 // Self-contained apart from POST_URL, which app.js defines; keep this tag after app.js.
 // ====== TGA LIQUIDITY ======
-const LIQ_API = 'https://script.google.com/macros/s/AKfycbyeL8nGHmsRRG2uk7I3cuh2aWQ14RRKvJYwOblvOWw36_QIKyr9KaA4jXK1K5pyySNiBg/exec?action=liquidity';
+const LIQ_API = 'https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec?action=liquidity';
 let liqCache = null;
 
 async function fetchLiquidity() {
