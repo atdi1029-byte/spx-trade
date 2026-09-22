@@ -333,7 +333,8 @@ function renderDashboard(data) {
     const trEl = document.getElementById('statTrades');
     const trN = parseInt(stats.totalTrades) || 0;
     trEl.textContent = trN;
-    trEl.title = (parseInt(stats.wins) || 0) + ' wins / ' + (parseInt(stats.losses) || 0) + ' losses' + (stats.statsStartDate ? ' since ' + stats.statsStartDate : '');
+    const beN = parseInt(stats.breakeven) || 0;
+    trEl.title = (parseInt(stats.wins) || 0) + ' wins / ' + (parseInt(stats.losses) || 0) + ' losses' + (beN ? ' / ' + beN + ' breakeven' : '') + (stats.statsStartDate ? ' since ' + stats.statsStartDate : '');
     document.getElementById('statOpen').textContent = stats.openPositions || 0;
     const wrEl = document.getElementById('statWinRate');
     wrEl.textContent = stats.winRate || '0%';
