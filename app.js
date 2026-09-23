@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-09-14c';
+const DASH_VERSION = 'v2026-09-22a';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -939,15 +939,20 @@ async function markAction(ticker, signal, price, value, elemId) {
 // and every button on that card threw before doing anything.)
 const openTradeById = new Map();
 
-// Close — the only exit. Type the P&L with its sign (-0.34 for a loss). The Outcome column gets
+// Close — type the P&L with its sign (-0.34 for a loss). The Outcome column gets
 // CLOSE_OUTCOME; the sign of the profit column says whether it was a win or a loss.
-async function closeTrade(elemId) {
+// Stop Out passes forceLoss: the typed amount is made negative (Android's decimal keypad has no minus key).
+async function closeTrade(elemId, forceLoss) {
     const t = openTradeById.get(elemId);
     const el = document.getElementById(elemId);
     if (!t || !el) { showToast('Card is stale - refreshing'); scheduleRefresh(0); return; }
     const profitInput = document.getElementById(elemId + '-profit');
     const raw = profitInput ? profitInput.value.trim() : '';
-    const inputVal = parseDollar(raw);
+    let inputVal = parseDollar(raw);
+    if (forceLoss) {
+        if (raw === '') { showToast('Enter the loss amount first', 'error', 3000); if (profitInput) profitInput.focus(); return; }
+        inputVal = -Math.abs(inputVal);
+    }
     const locked = parseDollar(t.profitLocked); // anything already banked on the sheet for this trade
     const grandTotal = Math.round((locked + inputVal) * 100) / 100;
     if (raw === '' && locked === 0 && !confirm('No P&L entered. Close ' + displayName(t.ticker) + ' at $0.00?')) return;
@@ -1050,6 +1055,7 @@ function renderOpenTrades(trades) {
                     <div class="action-buttons">
                         <input type="text" class="entry-input" placeholder="P&L $ (- for loss)" id="${id}-profit" inputmode="decimal">
                         <button class="action-btn won" id="${id}-close" onclick="closeTrade('${id}')">Close</button>
+                        <button class="action-btn stopped-out" id="${id}-stop" onclick="closeTrade('${id}', true)">Stop Out</button>
                         <button class="action-btn four-day-btn" id="${id}-4day" onclick="toggle4DayCheck('${id}')">4 Day</button>
                     </div>
                 </div>
