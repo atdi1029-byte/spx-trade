@@ -3,7 +3,7 @@ const DASH_VERSION = 'v2026-09-22c';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
-const API_URL = 'https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec?action=dashboard';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyeL8nGHmsRRG2uk7I3cuh2aWQ14RRKvJYwOblvOWw36_QIKyr9KaA4jXK1K5pyySNiBg/exec?action=dashboard';
 const REFRESH_INTERVAL = 60000; // 60 seconds
 const DASH_FETCH_TIMEOUT_MS = 45000; // give up on a dashboard read after this so the refresh loop can never wedge
 
@@ -739,7 +739,7 @@ function promptStatsDate() {
 }
 
 // ====== API WRITE FUNCTIONS ======
-const POST_URL = 'https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec';
+const POST_URL = 'https://script.google.com/macros/s/AKfycbyeL8nGHmsRRG2uk7I3cuh2aWQ14RRKvJYwOblvOWw36_QIKyr9KaA4jXK1K5pyySNiBg/exec';
 
 function buildUpdateUrl(params) {
     const url = new URL(POST_URL);

@@ -57,7 +57,7 @@ CUSTOMIZATION
 
 API ENDPOINT
 ------------
-URL: https://script.google.com/macros/s/AKfycbwVwBpJsq5kybfAuo8DpvODludwPehRWeT81bRe1PftdSuYCXv90FnewvIsZtCZIUv6Cg/exec
+URL: https://script.google.com/macros/s/AKfycbyeL8nGHmsRRG2uk7I3cuh2aWQ14RRKvJYwOblvOWw36_QIKyr9KaA4jXK1K5pyySNiBg/exec
   ?action=dashboard          → returns JSON dashboard data (includes badge grades + effective sizes)
   ?action=tasks              → returns weekly tasks from "Weekly Tasks" tab
   ?action=add_portfolio&amount=300 → allocates paycheck to Grade 3+ buy-side tickers
