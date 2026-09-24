@@ -930,7 +930,14 @@ async function markAction(ticker, signal, price, value, elemId) {
             el.style.display = ''; el.style.opacity = '1';
             return;
         }
-        scheduleRefresh(1500);
+        if (value === 'Entered') {
+            // Bypass the script cache so the new trade shows in Open Trades. A dashboard build that
+            // started before this write can re-cache stale data, so check again a bit later too.
+            setTimeout(() => fetchData(true), 1500);
+            setTimeout(() => fetchData(true), 12000);
+        } else {
+            scheduleRefresh(1500);
+        }
     });
 }
 
