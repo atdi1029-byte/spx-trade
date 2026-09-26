@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-09-26a';
+const DASH_VERSION = 'v2026-09-26b';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -1951,8 +1951,8 @@ function renderPokemon(stats) {
         { label: 'K', amt: _totalSlots > 0 ? (_kellyBudget / _totalSlots) : 0, cls: 'lead' },
         { label: '\u{1F525}', amt: _totalSlots > 0 ? ((_kellyBudget / 2) / _totalSlots) : 0, cls: 'mid' },
         { label: '\u{26A1}', amt: _totalSlots > 0 ? ((_kellyBudget / 4) / _totalSlots) : 0, cls: 'mid' },
-        { label: '\u{1FA78}', amt: _totalSlots > 0 ? ((_kellyBudget / 128) / _totalSlots) : 0, cls: 'half' },
-        { label: '\u{2728}', amt: _totalSlots > 0 ? ((_kellyBudget / 256) / _totalSlots) : 0, cls: 'half' },
+        { label: '\u{1FA78}', amt: _totalSlots > 0 ? ((_kellyBudget / 128) / _totalSlots) : 0, cls: 'ghost' },
+        { label: '\u{2728}', amt: _totalSlots > 0 ? ((_kellyBudget / 256) / _totalSlots) : 0, cls: 'ghost' },
         { label: '\u{1F331}', amt: _totalSlots > 0 ? ((_kellyBudget / 8) / _totalSlots) : 0, cls: 'half' },
         { label: '\u{1F4A9}', amt: _totalSlots > 0 ? ((_kellyBudget / 16) / _totalSlots) : 0, cls: 'mud' },
         { label: '\u{1FAA8}', amt: _totalSlots > 0 ? ((_kellyBudget / 32) / _totalSlots) : 0, cls: 'dust' },
@@ -1961,7 +1961,9 @@ function renderPokemon(stats) {
     ];
     let sizeChips = '';
     const usedSlots = JSON.parse(localStorage.getItem('spx_pokeball_used') || '[false,false,false,false,false,false,false,false,false,false,false]');
-    for (let i = 0; i < kellySizes.length; i++) {
+    // Show chips biggest to smallest; i stays the original index so the used flags and balls don't shift
+    const chipOrder = kellySizes.map((_, i) => i).sort((a, b) => kellySizes[b].amt - kellySizes[a].amt);
+    for (const i of chipOrder) {
         const cls = usedSlots[i] ? 'used' : kellySizes[i].cls;
         sizeChips += `<span class="pokemon-size-chip ${cls}" onclick="togglePokeball(${i})" style="cursor:pointer">${ballImgs[i]}<span class="ball-amt">${kellySizes[i].label} $${kellySizes[i].amt.toFixed(2)}</span></span>`;
     }
