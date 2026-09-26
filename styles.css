@@ -885,18 +885,13 @@ body {
     display: grid; grid-template-columns: repeat(4, auto); gap: 0.35rem;
     margin-top: 0.5rem; justify-content: center;
 }
-.pokeball-svg { width: 32px; height: 32px; flex-shrink: 0; }
-.pokeball-svg .ball-top { fill: #ef5350; }
-.pokeball-svg .ball-bottom { fill: #fff; }
-.pokeball-svg .ball-line { stroke: #333; stroke-width: 1.5; fill: none; }
-.pokeball-svg .ball-center { fill: #fff; stroke: #333; stroke-width: 1.5; }
-.pokeball-svg .ball-outline { fill: none; stroke: #333; stroke-width: 1.5; }
+.pokeball { width: 40px; height: 40px; flex-shrink: 0; image-rendering: pixelated; margin: -4px 0; }
 .pokemon-size-chip.mid { color: var(--pumpkin); border-color: var(--pumpkin); }
 .pokemon-size-chip.mud { color: #8d6e63; border-color: #8d6e63; }
 .pokemon-size-chip.dust { color: #7e57c2; border-color: #7e57c2; }
 .pokemon-size-chip.ghost { color: #546e7a; border-color: #546e7a; }
 .pokemon-size-chip.used { color: var(--text-dim); border-color: var(--border); opacity: 0.35; }
-.pokemon-size-chip.used .pokeball-svg { opacity: 0.4; filter: saturate(0); }
+.pokemon-size-chip.used .pokeball { opacity: 0.4; filter: saturate(0); }
 .pokemon-size-chip.used .ball-amt { text-decoration: line-through; }
 
 /* ============ KELLY EDGE OPTIMIZER ============ */
@@ -1540,7 +1535,7 @@ body {
     .pokemon-xp-bar { max-width: 100%; }
     .pokemon-sizes { gap: 0.3rem; }
     .pokemon-size-chip { font-size: 0.6rem; padding: 0.15rem 0.4rem 0.15rem 0.2rem; }
-    .pokeball-svg { width: 20px; height: 20px; }
+    .pokeball { width: 20px; height: 20px; margin: 0; }
     .pokemon-sizes { gap: 0.25rem; display: grid; grid-template-columns: repeat(4, auto); padding: 0 0.2rem; justify-content: center; }
     .kelly-grid { grid-template-columns: repeat(2, 1fr); gap: 0.35rem; }
     .kelly-stat .kval { font-size: 0.9rem; }

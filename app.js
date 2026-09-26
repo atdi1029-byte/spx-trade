@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-09-22c';
+const DASH_VERSION = 'v2026-09-26a';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -1937,19 +1937,9 @@ function renderPokemon(stats) {
     const perStockEighth = tickerCount > 0 ? eighthKellyDollar / tickerCount : 0;
     const perStockSixteenth = tickerCount > 0 ? sixteenthKellyDollar / tickerCount : 0;
 
-    // Pokeball SVGs
-    const pokeballSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path class="ball-top" d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle class="ball-center" cx="10" cy="10" r="3"/></svg>`;
-    const greatBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#42a5f5"/><path d="M2.5,7.5 A8,8 0 0 1 17.5,7.5" fill="#ef5350" stroke="none"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle class="ball-center" cx="10" cy="10" r="3"/></svg>`;
-    const ultraBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#333"/><path d="M3,8 h14" stroke="#fdd835" stroke-width="2" fill="none"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#fdd835" stroke="#333" stroke-width="1.5"/></svg>`;
-    const masterBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#7e57c2"/><text x="10" y="8" text-anchor="middle" fill="#e1bee7" font-size="6" font-weight="900">M</text><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#e1bee7" stroke="#333" stroke-width="1.5"/></svg>`;
-    const duskBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#2e7d32"/><path d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z" fill="#1a1a1a"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#66bb6a" stroke="#333" stroke-width="1.5"/></svg>`;
-    const timerBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#e53935"/><line x1="10" y1="2" x2="10" y2="5" stroke="#fff" stroke-width="1"/><line x1="10" y1="2" x2="10" y2="5" stroke="#fff" stroke-width="1" transform="rotate(90 10 10)"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle class="ball-center" cx="10" cy="10" r="3"/></svg>`;
-    const netBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#0097a7"/><path d="M3,5 L17,5 M5,3 L5,10 M10,2 L10,10 M15,3 L15,10" stroke="#4dd0e1" stroke-width="0.5" fill="none"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#4dd0e1" stroke="#333" stroke-width="1.5"/></svg>`;
-    const quickBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#1565c0"/><path d="M5,5 L15,8 M4,7 L16,4" stroke="#fdd835" stroke-width="1.2" fill="none"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#fdd835" stroke="#333" stroke-width="1.5"/></svg>`;
-    const healBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#ec407a"/><path d="M7,6 h6 v2 h-6z" fill="#fff" opacity="0.6"/><path d="M9,4 h2 v6 h-2z" fill="#fff" opacity="0.6"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#f8bbd0" stroke="#333" stroke-width="1.5"/></svg>`;
-    const luxuryBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#212121"/><path d="M3,6 Q10,3 17,6" stroke="#f44336" stroke-width="1.2" fill="none"/><path d="M3,8 Q10,5 17,8" stroke="#f44336" stroke-width="1.2" fill="none"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line class="ball-line" x1="1" y1="10" x2="19" y2="10"/><circle cx="10" cy="10" r="3" fill="#f44336" stroke="#333" stroke-width="1.5"/></svg>`;
-    const premierBallSvg = `<svg class="pokeball-svg" viewBox="0 0 20 20"><circle class="ball-outline" cx="10" cy="10" r="9"/><path d="M1.3,10 A8.7,8.7 0 0 1 18.7,10 Z" fill="#f5f5f5"/><path class="ball-bottom" d="M1.3,10 A8.7,8.7 0 0 0 18.7,10 Z"/><line x1="1" y1="10" x2="19" y2="10" stroke="#e53935" stroke-width="1.5"/><circle cx="10" cy="10" r="3" fill="#fff" stroke="#e53935" stroke-width="1.5"/></svg>`;
-    const ballSvgs = [ultraBallSvg, masterBallSvg, greatBallSvg, timerBallSvg, healBallSvg, luxuryBallSvg, netBallSvg, duskBallSvg, quickBallSvg, pokeballSvg, premierBallSvg];
+    // Pokeball sprites (PokeAPI item sprites, cropped to 20x20 in balls/)
+    const ballImgs = ['ultra-ball', 'master-ball', 'great-ball', 'timer-ball', 'heal-ball', 'luxury-ball', 'net-ball', 'dusk-ball', 'quick-ball', 'poke-ball', 'premier-ball']
+        .map(b => `<img class="pokeball" src="balls/${b}.png" alt="">`);
 
     // Kelly fraction sizes (same as crypto dashboard)
     const _kellyBudget = Math.floor(kellyBankroll * Math.max(0, kellyF / 2));
@@ -1973,7 +1963,7 @@ function renderPokemon(stats) {
     const usedSlots = JSON.parse(localStorage.getItem('spx_pokeball_used') || '[false,false,false,false,false,false,false,false,false,false,false]');
     for (let i = 0; i < kellySizes.length; i++) {
         const cls = usedSlots[i] ? 'used' : kellySizes[i].cls;
-        sizeChips += `<span class="pokemon-size-chip ${cls}" onclick="togglePokeball(${i})" style="cursor:pointer">${ballSvgs[i]}<span class="ball-amt">${kellySizes[i].label} $${kellySizes[i].amt.toFixed(2)}</span></span>`;
+        sizeChips += `<span class="pokemon-size-chip ${cls}" onclick="togglePokeball(${i})" style="cursor:pointer">${ballImgs[i]}<span class="ball-amt">${kellySizes[i].label} $${kellySizes[i].amt.toFixed(2)}</span></span>`;
     }
 
     let html = `<div class="pokemon-header">
