@@ -141,8 +141,10 @@ const TV_LOGO_MAP = {
     'SNDK': 'sandisk', 'TSLA': 'tesla', 'USAR': 'usa-rare-earth',
     'PALLADIUM': 'metal/palladium', 'USOIL': 'crude-oil'
 };
-// Korean stocks use numeric tickers — map to readable names
-const KR_NAME_MAP = {
+// Asian stocks use numeric tickers — map to readable names.
+// Keys as TradingView shows them (KRX 6-digit, HKEX, SSE/SZSE).
+const NAME_MAP = {
+    // Korea (KRX)
     '005930': 'Samsung', '000660': 'SK Hynix',
     '005380': 'Hyundai Motor', '005490': 'POSCO',
     '035420': 'Naver', '035720': 'Kakao',
@@ -164,10 +166,23 @@ const KR_NAME_MAP = {
     '015760': 'Korea Electric', '047050': 'Posco Intl',
     '326030': 'SK Biopharm', '068270': 'Celltrion',
     '207940': 'Samsung Bio', '302440': 'SK Bioscience',
-    '011760': 'Hyundai Corp', '11760': 'Hyundai Corp'
+    '011760': 'Hyundai Corp', '042700': 'Hanmi Semi',
+    '069500': 'KODEX 200',
+    // Hong Kong (HKEX)
+    '100': 'MiniMax', '625': 'Shein',
+    '1211': 'BYD', '1810': 'Xiaomi',
+    '2513': 'Zhipu AI', '3986': 'GigaDevice',
+    '7709': 'SK Hynix 2x', '7747': 'Samsung 2x',
+    '9992': 'Pop Mart',
+    // China A-shares (SSE/SZSE)
+    '300308': 'Innolight', '688825': 'CXMT'
 };
+// The sheet drops leading zeros (005930 arrives as 5930), so match on the stripped form
+const NAME_BY_NUM = {};
+Object.keys(NAME_MAP).forEach(k => { NAME_BY_NUM[k.replace(/^0+/, '')] = NAME_MAP[k]; });
 function displayName(ticker) {
-    return KR_NAME_MAP[ticker] || ticker;
+    const t = String(ticker || '');
+    return NAME_MAP[t] || NAME_BY_NUM[t.replace(/^0+/, '')] || t;
 }
 function logoUrl(ticker) {
     const tv = TV_LOGO_MAP[ticker.toUpperCase()];
@@ -208,14 +223,14 @@ function checkNewSignals(data) {
             const [ticker, sig] = k.split('|');
             if (navigator.serviceWorker && navigator.serviceWorker.ready) {
                 navigator.serviceWorker.ready.then(reg => {
-                    reg.showNotification('Trade Alert: ' + ticker, {
+                    reg.showNotification('Trade Alert: ' + displayName(ticker), {
                         body: (sig || '').toUpperCase() + ' signal',
                         icon: 'icon-192.png',
                         tag: k
                     });
                 });
             } else {
-                new Notification('Trade Alert: ' + ticker, {
+                new Notification('Trade Alert: ' + displayName(ticker), {
                     body: (sig || '').toUpperCase() + ' signal',
                     icon: 'icon-192.png',
                     tag: k
@@ -380,7 +395,7 @@ function renderDashboard(data) {
         actionList.innerHTML = newSignals.map((a, i) => {
             const id = 'action-' + i;
             const logo = logoUrl(a.ticker);
-            const logoHtml = `<img src="${logo}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="stock-logo-fallback" style="display:none">${esc(a.ticker.slice(0,2))}</span>`;
+            const logoHtml = `<img src="${logo}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="stock-logo-fallback" style="display:none">${esc(displayName(a.ticker).slice(0,2))}</span>`;
             // Find effective size from tickers data
             const isBuy = ['buy','add'].includes((a.signal || '').toLowerCase());
             const matchTicker = tickers.find(t => t.ticker.toUpperCase() === a.ticker.toUpperCase());
@@ -410,7 +425,7 @@ function renderDashboard(data) {
             const btSide = isBuy ? 'buy' : 'sell';
             const bt = btFor(a.ticker, btSide);
             const btDataAttr = `data-sl="${bt.sl}" data-tp="${bt.tp}" data-half="${bt.halfTp}" data-side="${btSide}"`;
-            const noEdgeHtml = bt.noEdge ? `<div style="background:#c44b3f22;border:1px solid #c44b3f55;border-radius:4px;padding:4px 8px;margin:4px 0;font-size:0.65rem;color:var(--red-bright)">&#9888; Backtest found no profitable ${btSide.toUpperCase()} config for ${esc(a.ticker)} — consider skipping</div>` : '';
+            const noEdgeHtml = bt.noEdge ? `<div style="background:#c44b3f22;border:1px solid #c44b3f55;border-radius:4px;padding:4px 8px;margin:4px 0;font-size:0.65rem;color:var(--red-bright)">&#9888; Backtest found no profitable ${btSide.toUpperCase()} config for ${esc(displayName(a.ticker))} — consider skipping</div>` : '';
             // Stale-signal guard: age of the signal and how far price has moved since it fired
             const staleInfo = signalStaleness(a, matchTicker, p);
             let btLevelsHtml = '';
@@ -443,7 +458,7 @@ function renderDashboard(data) {
             return `
                 <div class="action-item" id="${id}"${staleInfo.stale ? ' style="opacity:0.75"' : ''}>
                     <div>
-                        <div>${logoHtml}<span class="ticker-badge">${esc(a.ticker)}</span><span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span>${isAlreadyOpen ? '<span class="ao-badge" style="margin-left:0.5rem">A.O.</span>' : ''}${staleInfo.stale ? '<span class="ao-badge" style="margin-left:0.5rem;background:#5a4a30;color:var(--pumpkin-glow)">STALE</span>' : ''}<span style="margin-left:0.5rem;font-size:0.65rem;color:var(--green-bright);font-weight:700">${effSizeStr !== 'SIT OUT' ? 'Enter at $' + effSizeStr : 'SIT OUT'}</span></div>
+                        <div>${logoHtml}<span class="ticker-badge">${esc(displayName(a.ticker))}</span><span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span>${isAlreadyOpen ? '<span class="ao-badge" style="margin-left:0.5rem">A.O.</span>' : ''}${staleInfo.stale ? '<span class="ao-badge" style="margin-left:0.5rem;background:#5a4a30;color:var(--pumpkin-glow)">STALE</span>' : ''}<span style="margin-left:0.5rem;font-size:0.65rem;color:var(--green-bright);font-weight:700">${effSizeStr !== 'SIT OUT' ? 'Enter at $' + effSizeStr : 'SIT OUT'}</span></div>
                         <div class="meta">@ $${p}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}${staleInfo.ageLabel ? ' &middot; ' + staleInfo.ageLabel + ' ago' : ''}</div>
                         ${staleInfo.driftHtml}
                         ${btLevelsHtml}
@@ -1117,7 +1132,7 @@ function renderTickerCard(t, i) {
              data-sell-data='${JSON.stringify(sellData).replace(/'/g, "&#39;")}'>
             <div class="ticker-card-header">
                 <div style="display:flex;align-items:center;gap:0.5rem">
-                    <img src="${logoUrl(t.ticker)}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="stock-logo-fallback" style="display:none">${esc(t.ticker.slice(0,2))}</span>
+                    <img src="${logoUrl(t.ticker)}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="stock-logo-fallback" style="display:none">${esc(displayName(t.ticker).slice(0,2))}</span>
                     <span class="ticker-name">${esc(displayName(t.ticker))}</span>
                     <span class="ticker-status ${statusClass}">${esc(sd.status || 'IDLE')}</span>
                 </div>
