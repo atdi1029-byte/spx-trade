@@ -458,7 +458,7 @@ function renderDashboard(data) {
             return `
                 <div class="action-item" id="${id}"${staleInfo.stale ? ' style="opacity:0.75"' : ''}>
                     <div>
-                        <div>${logoHtml}<span class="ticker-badge">${esc(displayName(a.ticker))}</span><span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span>${isAlreadyOpen ? '<span class="ao-badge" style="margin-left:0.5rem">A.O.</span>' : ''}${staleInfo.stale ? '<span class="ao-badge" style="margin-left:0.5rem;background:#5a4a30;color:var(--pumpkin-glow)">STALE</span>' : ''}<span style="margin-left:0.5rem;font-size:0.65rem;color:var(--green-bright);font-weight:700">${effSizeStr !== 'SIT OUT' ? 'Enter at $' + effSizeStr : 'SIT OUT'}</span></div>
+                        <div>${logoHtml}<span class="ticker-badge">${esc(displayName(a.ticker))}</span><span class="signal-badge ${signalClass(a.signal)}" style="margin-left:0.5rem">${signalLabel(a.signal)}</span>${isAlreadyOpen ? '<span class="ao-badge" style="margin-left:0.5rem">A.O.</span>' : ''}${staleInfo.stale ? '<span class="ao-badge" style="margin-left:0.5rem;background:#5a4a30;color:var(--pumpkin-glow)">STALE</span>' : ''}${effSizeStr === 'SIT OUT' ? '<span style="margin-left:0.5rem;font-size:0.65rem;color:var(--green-bright);font-weight:700">SIT OUT</span>' : ''}</div>
                         <div class="meta">@ $${p}${a.timestamp ? ' &middot; ' + esc(a.timestamp) : ''}${staleInfo.ageLabel ? ' &middot; ' + staleInfo.ageLabel + ' ago' : ''}</div>
                         ${staleInfo.driftHtml}
                         ${btLevelsHtml}
@@ -1081,7 +1081,7 @@ function renderOpenTrades(trades) {
                         <button class="action-btn four-day-btn" id="${id}-4day" onclick="toggle4DayCheck('${id}')">4 Day</button>
                     </div>
                 </div>
-                <div class="meta">${esc(t.phase || '')} · ${t.side === 'sell' ? 'SHORT ' : ''}$${parseDollar(t.price).toFixed(2)} · Next: $${t.nextSize === 'SIT OUT' ? 'SIT OUT' : parseDollar(t.nextSize).toFixed(2)}</div>
+                <div class="meta">${t.side === 'sell' ? 'SHORT ' : ''}$${parseDollar(t.price).toFixed(2)} · Next: $${t.nextSize === 'SIT OUT' ? 'SIT OUT' : parseDollar(t.nextSize).toFixed(2)}</div>
             </div>`;
     }).join('');
 }
@@ -1150,7 +1150,6 @@ function renderTickerCard(t, i) {
                 <dt>Locked Profit</dt><dd class="side-locked ${lockedClass}">${sd.locked > 0 ? '$' + sd.locked.toFixed(2) : '$0.00'}</dd>
                 <dt>Stop-outs</dt><dd class="side-stops ${stopClass}">${sd.stopouts || 0}</dd>
             </dl>
-            <div class="ticker-phase">${esc(sd.phase || 'No data')}</div>
             ${sd.nextAction ? '<div class="ticker-action">' + esc(sd.nextAction) + '</div>' : ''}
             ${(sd.status === 'PROFIT' || sd.status === 'STOPPED') && sd.lastSignal ? `<div style="margin-top:0.4rem"><button class="reopen-btn" onclick="reopenTrade('${esc(t.ticker)}','${esc(sd.lastSignal)}')">↺ Reopen</button></div>` : ''}
             <div class="ticker-links">
