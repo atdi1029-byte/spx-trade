@@ -1,0 +1,88 @@
+/* Pokemon card effects. The same file lives in the crypto and SPX trade apps (poke-fx.js
+   sets --poke / --poke-rgb / --poke-light to the Pokemon's type color). */
+.pokemon-box, .levelup-overlay { --poke: #f0a030; --poke-rgb: 240,160,48; --poke-light: #f6c678; }
+
+/* Card: type-colored frame, name, glow and XP bar */
+.pokemon-box {
+    border-image: linear-gradient(135deg, rgba(var(--poke-rgb),0.95), var(--border-light), rgba(var(--poke-rgb),0.95)) 1;
+    box-shadow: 0 0 22px rgba(var(--poke-rgb),0.3), inset 0 0 30px rgba(0,0,0,0.3);
+}
+.pokemon-box .pokemon-level-name {
+    color: var(--poke-light);
+    text-shadow: 0 0 15px rgba(var(--poke-rgb),0.9), 0 0 30px rgba(var(--poke-rgb),0.45);
+}
+.poke-type-badge {
+    display: inline-block; vertical-align: middle;
+    margin-left: 0.4rem; padding: 0.12rem 0.5rem;
+    border-radius: 10px; background: var(--poke); color: #111;
+    font-size: 0.55rem; font-weight: 900; letter-spacing: 1.5px;
+    text-transform: uppercase; text-shadow: none;
+}
+.pokemon-box .pokemon-xp-fill {
+    background: linear-gradient(90deg, rgba(var(--poke-rgb),0.6), var(--poke-light));
+    box-shadow: 0 0 10px rgba(var(--poke-rgb),0.9), 0 0 20px rgba(var(--poke-rgb),0.3);
+}
+.pokemon-box .pokemon-next-evolve { color: var(--poke-light); text-shadow: 0 0 8px rgba(var(--poke-rgb),0.45); }
+
+/* The Pokemon itself: animated sprite that bobs over its shadow */
+.poke-stage {
+    position: relative;
+    display: flex; align-items: flex-end; justify-content: center;
+    height: 200px; margin: 0.3rem 0 0.2rem;
+}
+.pokemon-box .pokemon-sprite {
+    position: relative; z-index: 1;
+    width: 240px; height: 170px; margin: 0 0 16px;
+    object-fit: contain; image-rendering: pixelated;
+    filter: drop-shadow(0 0 14px rgba(var(--poke-rgb),0.9));
+    animation: pokeFloat 2.4s ease-in-out infinite;
+}
+.poke-ground {
+    position: absolute; bottom: 8px; left: 50%;
+    width: 120px; height: 18px; margin-left: -60px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.65), transparent 70%);
+    animation: pokeGround 2.4s ease-in-out infinite;
+}
+@keyframes pokeFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes pokeGround { 0%, 100% { transform: scaleX(1); opacity: 0.9; } 50% { transform: scaleX(0.7); opacity: 0.5; } }
+
+/* "Who's that Pokemon?": the next one as a silhouette */
+.poke-next-shadow {
+    width: 40px; height: 40px; margin: -10px 0.3rem -12px 0;
+    vertical-align: middle; image-rendering: pixelated;
+    filter: brightness(0) drop-shadow(0 0 3px rgba(var(--poke-rgb),0.9));
+}
+
+/* Level-up: silhouette first, then the flash and the Pokemon in color with confetti */
+.levelup-overlay {
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 45%, rgba(var(--poke-rgb),0.4), transparent 60%), rgba(0,0,0,0.92);
+}
+.levelup-overlay .levelup-pokemon {
+    width: 190px; height: 170px; object-fit: contain;
+    filter: drop-shadow(0 0 20px rgba(var(--poke-rgb),1)) drop-shadow(0 0 40px rgba(var(--poke-rgb),0.4));
+}
+.levelup-overlay.poke-hidden .levelup-pokemon { filter: brightness(0) drop-shadow(0 0 14px #fff); }
+.levelup-overlay.poke-hidden .levelup-pokename,
+.levelup-overlay.poke-hidden .levelup-detail,
+.levelup-overlay.poke-hidden .levelup-sizes { visibility: hidden; }
+.levelup-overlay.poke-hidden .levelup-title { font-size: clamp(1.1rem, 5.4vw, 2rem); letter-spacing: 2px; }
+.levelup-overlay .levelup-pokename { color: var(--poke-light); text-shadow: 0 0 14px rgba(var(--poke-rgb),0.9); }
+.poke-confetti {
+    position: absolute; top: -14px;
+    width: 8px; height: 13px; border-radius: 2px;
+    pointer-events: none;
+    animation: pokeConfettiFall linear forwards;
+}
+@keyframes pokeConfettiFall { to { transform: translateY(110vh) rotate(720deg); } }
+
+@media (max-width: 768px) {
+    .poke-stage { height: 150px; }
+    .pokemon-box .pokemon-sprite { width: 180px; height: 125px; margin-bottom: 12px; }
+    .poke-ground { width: 90px; height: 14px; margin-left: -45px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pokemon-box .pokemon-sprite, .poke-ground { animation: none; }
+    .poke-confetti { display: none; }
+}

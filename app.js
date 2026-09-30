@@ -1880,17 +1880,33 @@ function showLevelUp(level) {
     const sprite = document.getElementById('levelupSprite');
     const detail = document.getElementById('levelupDetail');
     const pokename = document.getElementById('levelupPokename');
-    sprite.src = POKE_SPRITE(level.pokeId);
-    sprite.className = 'levelup-pokemon evolving';
+    const title = document.getElementById('levelupTitle');
+
+    // "Who's that Pokemon?": the silhouette first, then the flash reveals it
+    pokeColors(overlay, level.pokeId);
+    sprite.onerror = () => pokeFallback(sprite, level.pokeId);
+    sprite.src = pokeAnim(level.pokeId);
+    sprite.className = 'levelup-pokemon';
+    overlay.classList.add('poke-hidden');
+    title.textContent = 'WHO\u2019S THAT POK\u00c9MON?';
     const sizes = getStockSizes(level.min);
     detail.innerHTML = `Profit hit <span style="color:var(--green-bright);font-weight:700">$${level.min}</span><br>Trade sizes: <span style="color:var(--pumpkin-glow);font-weight:700">${sizes.map(v => '$' + v).join(' / ')}</span>`;
     pokename.textContent = level.pokemon;
     overlay.style.display = 'flex';
-    setTimeout(() => { sprite.className = 'levelup-pokemon'; }, 1500);
+    clearTimeout(window._pokeRevealTimer);
+    window._pokeRevealTimer = setTimeout(() => {
+        overlay.classList.remove('poke-hidden');
+        sprite.className = 'levelup-pokemon evolving';
+        title.textContent = 'EVOLUTION!';
+        pokeConfetti(overlay, 60);
+        setTimeout(() => { sprite.className = 'levelup-pokemon'; }, 1500);
+    }, 1800);
 }
 
 function dismissLevelUp() {
     const overlay = document.getElementById('levelupOverlay');
+    clearTimeout(window._pokeRevealTimer);
+    overlay.classList.remove('poke-hidden');
     overlay.style.transition = 'opacity 0.4s';
     overlay.style.opacity = '0';
     setTimeout(() => {
@@ -1984,8 +2000,11 @@ function renderPokemon(stats) {
     }
 
     let html = `<div class="pokemon-header">
-        <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}</div>
-        <img class="pokemon-sprite" src="${POKE_SPRITE(level.pokeId)}" alt="${level.pokemon}">
+        <div class="pokemon-level-name">${dcaMode ? 'DCA ' : ''}Lv.${levelIdx} \u2014 ${level.pokemon}<span class="poke-type-badge">${pokeType(level.pokeId)}</span></div>
+        <div class="poke-stage">
+            <img class="pokemon-sprite" src="${pokeAnim(level.pokeId)}" onerror="pokeFallback(this, ${level.pokeId})" alt="${level.pokemon}">
+            <div class="poke-ground"></div>
+        </div>
         <div class="pokemon-pnl ${pnlClass}">P&L: ${pnlStr}${needStr ? ' <span style="color:var(--pumpkin-glow);font-size:0.85rem">&middot; ' + needStr + '</span>' : ''}</div>
         ${tradeTotal >= 5 && kellyF > 0 ? `<div class="pokemon-sizes">${sizeChips}</div>` : ''}
     </div>`;
@@ -2029,7 +2048,7 @@ function renderPokemon(stats) {
     </div>`;
 
     if (nextLevel) {
-        html += `<div class="pokemon-next-evolve">${level.pokemon} evolves at $${nextLevel.min.toLocaleString()} profit</div>`;
+        html += `<div class="pokemon-next-evolve"><img class="poke-next-shadow" src="${pokeStill(nextLevel.pokeId)}" alt="">${level.pokemon} evolves at $${nextLevel.min.toLocaleString()} profit</div>`;
     } else {
         html += `<div class="pokemon-next-evolve">MAX LEVEL \u2014 You are the very best!</div>`;
     }
@@ -2039,6 +2058,7 @@ function renderPokemon(stats) {
         box.style.setProperty('--location-bg', `url('${LOCATION_BG[level.location]}')`);
     }
 
+    pokeColors(box, level.pokeId);
     box.innerHTML = html;
     checkPokemonLevelUp(activePnl);
 }
