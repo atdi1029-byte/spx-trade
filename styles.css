@@ -428,6 +428,16 @@ body {
     border: 1px solid rgba(232, 160, 76, 0.5);
     text-shadow: 0 0 6px rgba(232, 160, 76, 0.7);
 }
+.new-entry-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.5rem; font-weight: 700;
+    padding: 1px 5px; border-radius: 3px;
+    letter-spacing: 1px;
+    color: var(--green-bright);
+    background: rgba(106, 170, 90, 0.12);
+    border: 1px solid rgba(106, 170, 90, 0.5);
+}
+.action-item.just-entered { border-left-color: var(--green-bright); }
 .filter-btn {
     font-family: 'Space Mono', monospace; font-size: 0.55rem; font-weight: 700; padding: 4px 12px;
     border-radius: 3px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-dim);

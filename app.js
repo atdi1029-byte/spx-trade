@@ -93,6 +93,7 @@ let stockCount = parseInt(localStorage.getItem('spx_stock_count')) || 25;
 
 let refreshTimer = null;
 let lastGoodData = null;      // last successful dashboard payload (never fall back to sample data once we have real data)
+let lastGoodDataReqAt = 0;    // when the fetch that produced lastGoodData was sent
 const DASH_CACHE_KEY = 'spx_dashboard_cache';
 let fetchInFlight = false;
 let fetchQueued = false;
@@ -264,6 +265,23 @@ function isActed(ticker, signal, price) {
     return getActedItems().some(i => i.t === ticker.toUpperCase() && i.s === signal.toLowerCase() && i.p === String(price));
 }
 
+// ====== RECENT ENTRIES ======
+// Sides marked Entered in the last day (key TICKER_side -> ts). Open Trades lists them first with a
+// NEW tag, so a fresh entry doesn't land somewhere in the middle of a 30-card scroll box.
+const RECENT_ENTRY_KEY = 'spx_recent_entries';
+const RECENT_ENTRY_MS = 86400000;
+function getRecentEntries() {
+    try { return JSON.parse(localStorage.getItem(RECENT_ENTRY_KEY) || '{}'); } catch { return {}; }
+}
+function addRecentEntry(key) {
+    const now = Date.now();
+    const items = {};
+    Object.entries(getRecentEntries()).forEach(([k, ts]) => { if (now - ts < RECENT_ENTRY_MS) items[k] = ts; });
+    items[key] = now;
+    localStorage.setItem(RECENT_ENTRY_KEY, JSON.stringify(items));
+    markStateDirty(RECENT_ENTRY_KEY);
+}
+
 // ====== FETCH DATA ======
 async function fetchData(force) {
     force = force === true; // setTimeout / scheduleRefresh pass nothing
@@ -288,6 +306,7 @@ async function fetchData(force) {
         if (data.status !== 'ok') throw new Error(data.message || 'Bad response');
 
         lastGoodData = data;
+        lastGoodDataReqAt = t0;
         try { localStorage.setItem(DASH_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch (e) { /* quota - ignore */ }
         try { renderDashboard(data); } catch (e) { renderError = e; console.error('Render error:', e); }
         try { checkNewSignals(data); } catch (e) { console.warn('Notification check failed:', e); }
@@ -475,21 +494,26 @@ function renderDashboard(data) {
         }).join('');
     }
 
-    // --- Open Trades (per-side) — hide a side only while ITS OWN signal is still pending in Action Needed.
-    // (Previously a pending SELL signal hid the open BUY card of the same ticker, and vice versa.)
-    const pendingSides = new Set(newSignals.map(a => a.ticker.toUpperCase() + '_' + (['sell', 'reduce'].includes((a.signal || '').toLowerCase()) ? 'sell' : 'buy')));
+    // --- Open Trades (per-side) — every side the sheet has OPEN. Sides with a new signal waiting in
+    // Action Needed used to be hidden here, so an entered trade vanished from this list as soon as
+    // another signal fired on it (and a pending SHORT hid the open BUY). Entered in the last day go first.
+    const recent = getRecentEntries();
     let openTrades = [];
     tickers.forEach(t => {
         const bs = t.buyStatus || '';
         const ss = t.sellStatus || '';
-        const tk = String(t.ticker).toUpperCase();
-        if (bs === 'OPEN' && !pendingSides.has(tk + '_buy')) {
+        if (bs === 'OPEN') {
             openTrades.push({ ticker: t.ticker, lastSignal: t.buyLastSignal || 'buy', price: parseDollar(t.buyPrice || t.price), phase: t.buyPhase || t.phase, nextSize: t.buyNextSize != null ? t.buyNextSize : t.nextSize, status: bs, side: 'buy', outcome: t.buyOutcome || '', profitLocked: parseDollar(t.buyProfitLocked) });
         }
-        if (ss === 'OPEN' && !pendingSides.has(tk + '_sell')) {
+        if (ss === 'OPEN') {
             openTrades.push({ ticker: t.ticker, lastSignal: t.sellLastSignal || 'sell', price: parseDollar(t.sellPrice || t.price), phase: t.sellPhase || '', nextSize: t.sellNextSize || 0, status: ss, side: 'sell', outcome: t.sellOutcome || '', profitLocked: parseDollar(t.sellProfitLocked) });
         }
     });
+    openTrades.forEach(t => {
+        const ts = recent[String(t.ticker).toUpperCase() + '_' + t.side];
+        t.enteredAt = ts && Date.now() - ts < RECENT_ENTRY_MS ? ts : 0;
+    });
+    openTrades.sort((a, b) => b.enteredAt - a.enteredAt); // stable - the rest keep sheet order
     renderOpenTrades(openTrades);
     checkPendingWrites(openTrades, stats);
 
@@ -840,7 +864,7 @@ async function checkScriptVersion() {
 // Device-local state (skipped signals, 4-day timers, ticker links, review milestone, unlocked level)
 // is mirrored to the sheet so the Mac and the phone agree. Per-key last-writer-wins by timestamp.
 // Needs get_state / set_state in the Apps Script; degrades silently to local-only without them.
-const SYNC_KEYS = ['spx_acted_items_v2', 'spx_4day_checks', 'spx_ticker_links', 'spx_last_review_trades', 'spx_pokemon_level'];
+const SYNC_KEYS = ['spx_acted_items_v2', 'spx_4day_checks', 'spx_ticker_links', 'spx_last_review_trades', 'spx_pokemon_level', 'spx_recent_entries'];
 const SYNC_META_KEY = 'spx_state_meta';
 let pushTimer = null;
 function getSyncMeta() { try { return JSON.parse(localStorage.getItem(SYNC_META_KEY) || '{}'); } catch (e) { return {}; } }
@@ -891,11 +915,27 @@ async function pullState() {
 // After a close / partial TP we remember what the sheet should show next. When a refresh comes back
 // and the sheet disagrees, say so instead of leaving a silently-unchanged P&L.
 const pendingCloses = {};    // key ticker_side -> { ts, pnl, netBefore, label }
+const pendingEntries = {};   // key ticker_side -> { ts, label } - Entered, waiting to show in Open Trades
 const WATCHDOG_MIN_AGE = 12000, WATCHDOG_MAX_AGE = 10 * 60 * 1000;
-function sideOf(signal) { return ['sell', 'reduce'].includes(String(signal || '').toLowerCase()) ? 'sell' : 'buy'; }
+// Same split as the script's dashSide_ (short/cover are sell-side)
+function sideOf(signal) { return ['sell', 'reduce', 'short', 'cover'].includes(String(signal || '').toLowerCase()) ? 'sell' : 'buy'; }
 function checkPendingWrites(openTrades, stats) {
     const now = Date.now();
     const openKeys = new Set(openTrades.map(t => String(t.ticker).toUpperCase() + '_' + t.side));
+    let entryLanded = false;
+    Object.keys(pendingEntries).forEach(k => {
+        const pe = pendingEntries[k];
+        if (openKeys.has(k)) { entryLanded = true; delete pendingEntries[k]; return; }
+        if (now - pe.ts > WATCHDOG_MAX_AGE) { delete pendingEntries[k]; return; }
+        // Only judge data that was requested after the Entered write was confirmed
+        if (now - pe.ts < WATCHDOG_MIN_AGE || lastGoodDataReqAt <= pe.ts) return;
+        showToast(pe.label + ' was marked Entered, but the sheet does not show it open - check its Positions row', 'error', 9000);
+        delete pendingEntries[k];
+    });
+    if (entryLanded) {
+        const list = document.getElementById('openTradesList');
+        if (list) list.scrollTop = 0; // the new card is first in the list
+    }
     Object.keys(pendingCloses).forEach(k => {
         const pc = pendingCloses[k];
         const age = now - pc.ts;
@@ -946,6 +986,10 @@ async function markAction(ticker, signal, price, value, elemId) {
             return;
         }
         if (value === 'Entered') {
+            const key = String(ticker).toUpperCase() + '_' + sideOf(signal);
+            addRecentEntry(key);
+            pendingEntries[key] = { ts: Date.now(), label: displayName(ticker) + ' ' + sideOf(signal).toUpperCase() };
+            showToast(displayName(ticker) + ' entered - moving to Open Trades' + (r.verified ? '' : ' (unconfirmed)'), r.verified ? 'success' : 'error', 3000);
             // Bypass the script cache so the new trade shows in Open Trades. A dashboard build that
             // started before this write can re-cache stale data, so check again a bit later too.
             setTimeout(() => fetchData(true), 1500);
@@ -1065,13 +1109,14 @@ function renderOpenTrades(trades) {
         const logo = logoUrl(t.ticker);
         const pnl = parseDollar(t.profitLocked);
         return `
-            <div class="action-item" id="${id}" data-ticker="${esc(t.ticker)}" data-side="${t.side}" data-pnl="${pnl}">
+            <div class="action-item${t.enteredAt ? ' just-entered' : ''}" id="${id}" data-ticker="${esc(t.ticker)}" data-side="${t.side}" data-pnl="${pnl}">
                 <div>
                     <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem">
                         <img src="${logo}" class="stock-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" style="margin-right:0">
                         <span class="stock-logo-fallback" style="display:none;margin-right:0">${esc(displayName(t.ticker).slice(0,2))}</span>
                         <span class="ticker-badge" style="margin-right:0">${esc(displayName(t.ticker))}</span>
                         <span class="signal-badge ${signalClass(t.lastSignal)}" style="font-size:0.4rem;padding:1px 4px;opacity:0.7">${signalLabel(t.lastSignal)}</span>
+                        ${t.enteredAt ? '<span class="new-entry-badge" title="Marked Entered in the last day">NEW</span>' : ''}
                         ${pnl ? `<span class="pnl-badge ${pnl > 0 ? 'positive' : 'negative'}" style="font-size:0.4rem;padding:1px 4px;opacity:0.7;margin-left:auto" title="Already banked on the sheet - added to whatever you close with">banked ${fmtSigned(pnl)}</span>` : ''}
                     </div>
                     <div class="action-buttons">
