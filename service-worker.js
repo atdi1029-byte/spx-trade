@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spx-trade-v146';
+const CACHE_NAME = 'spx-trade-v147';
 // Same-origin app shell. Cached atomically - if any of these 404s the worker won't install, which is what you want.
 const ASSETS = [
   './',
