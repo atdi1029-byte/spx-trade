@@ -440,7 +440,7 @@ function renderCharts(data) {
   document.querySelectorAll('.chart-wrap').forEach(w => w.scrollLeft = w.scrollWidth);
 }
 
-// ─── Sector rotation (rotation.json, written Mon + Thu by projection_tests/rotation.py) ───
+// ─── Sector rotation (rotation.json, written every weekday by projection_tests/rotation.py) ───
 const KEY_GREEN = [0x5C,0xCB,0x7E], KEY_RED = [0xF2,0x6A,0x4C], PAPER_RGB = [0xFA,0xF6,0xEC];
 const SECTOR_SHORT = {'Information Technology':'Technology','Communication Services':'Comm Services','Consumer Discretionary':'Discretionary','Consumer Staples':'Staples'};
 function keyTint(v) {
@@ -478,7 +478,7 @@ function rotationHTML(rot) {
       ${brief.map((l,i)=>`<p class="${i===0?'lead':''}">${l}</p>`).join('')}
       ${more.length ? `<div class="more">${more.map(l=>`<p>${l}</p>`).join('')}</div>` : ''}
     </div>
-    <div class="foot" style="margin-top:10px"><div class="sub">as of ${fmtDate(rot.date)} · refreshed Monday and Thursday after the close${graded.length ? ` · report card ${hits} of ${graded.length} calls right` : ''}</div></div>
+    <div class="foot" style="margin-top:10px"><div class="sub">as of ${fmtDate(rot.date)} · refreshed every weekday after the close${graded.length ? ` · report card ${hits} of ${graded.length} calls right` : ''}</div></div>
   </section>`;
 }
 
