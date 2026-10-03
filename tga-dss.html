@@ -57,13 +57,32 @@ h1 { font-family: var(--serif); font-weight: 600; font-size: 1.7rem; letter-spac
 }
 .chart-tooltip .v { font-family: var(--serif); font-weight: 600; font-size: 1.05rem; }
 
+/* Sector rotation keys (same palette as the desktop widget pages) */
+.keys { display: grid; gap: 8px; margin-top: 4px; }
+.keys.sectors { grid-template-columns: repeat(6, 1fr); grid-auto-rows: 76px; }
+.keys.indexes { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 84px; margin-top: 10px; }
+.key { border-radius: 6px; border: 1px solid rgba(35,38,51,0.35); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4px; overflow: hidden; color: var(--ink); }
+.key.dashed { border-style: dashed; }
+.key .kname { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; line-height: 1.1; }
+.key .kwave { font-family: var(--serif); font-size: 1.6rem; font-weight: 600; line-height: 1.05; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.key .ksub { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.02em; margin-top: 1px; font-variant-numeric: tabular-nums; }
+.keys.indexes .kwave { font-size: 2rem; } .keys.indexes .kname { font-size: 0.84rem; }
+.klegend { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 0.7rem; color: var(--muted); letter-spacing: 0.03em; }
+.kbar { flex: 1; height: 5px; margin: 0 12px; border-radius: 3px; background: linear-gradient(90deg, #5CCB7E, var(--snow) 50%, #F26A4C); }
+.words { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); max-width: 72ch; }
+.words p { margin: 0 0 8px; font-size: 0.92rem; line-height: 1.5; color: var(--ink-2); }
+.words p.lead { font-size: 1rem; color: var(--ink); }
+.words .more { margin-top: 8px; font-size: 0.84rem; color: var(--ink-2); }
+.words .more p { font-size: 0.84rem; margin: 0 0 5px; }
+@media (max-width: 760px) { .keys.sectors { grid-template-columns: repeat(3, 1fr); } .keys.indexes { grid-template-columns: repeat(2, 1fr); } body { padding: 20px 16px 40px; } }
+
 .loading { color: var(--muted); font-size: 0.85rem; padding: 40px; text-align: center; }
 </style>
 </head>
 <body>
 
 <h1>Liquidity</h1>
-<p class="subtitle">DSS Bressert (13, 8) with signal (5) and tide (30) on net liquidity and the Treasury General Account</p>
+<p class="subtitle">DSS Bressert (13, 8) with signal (5) and tide (30) on net liquidity and the Treasury General Account, and the sector cycle of the S&amp;P 500</p>
 <div id="content">
   <div class="loading">Fetching macro data...</div>
 </div>
@@ -421,6 +440,48 @@ function renderCharts(data) {
   document.querySelectorAll('.chart-wrap').forEach(w => w.scrollLeft = w.scrollWidth);
 }
 
+// ─── Sector rotation (rotation.json, written Mon + Thu by projection_tests/rotation.py) ───
+const KEY_GREEN = [0x5C,0xCB,0x7E], KEY_RED = [0xF2,0x6A,0x4C], PAPER_RGB = [0xFA,0xF6,0xEC];
+const SECTOR_SHORT = {'Information Technology':'Technology','Communication Services':'Comm Services','Consumer Discretionary':'Discretionary','Consumer Staples':'Staples'};
+function keyTint(v) {
+  const t = Math.max(-1, Math.min(1, v/20)), a = 0.08 + Math.abs(t)*0.72, c = t<0 ? KEY_GREEN : KEY_RED;
+  const m = PAPER_RGB.map((x,i)=>Math.round(x+(c[i]-x)*a));
+  return `rgb(${m[0]},${m[1]},${m[2]})`;
+}
+function keyGlow(v) {
+  const t = Math.abs(Math.max(-1, Math.min(1, v/20))), base = 'inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 0 rgba(35,38,51,0.22)';
+  if (t < 0.5) return base;
+  const c = v<0 ? KEY_GREEN : KEY_RED;
+  return base + `, 0 0 14px rgba(${c[0]},${c[1]},${c[2]},${((t-0.5)*0.9).toFixed(2)})`;
+}
+const keyFmt = v => (v>0?'+':'') + Math.round(v);
+const keyArrow = ch => ch>2 ? '▲' : ch<-2 ? '▼' : '→';
+function keyHTML(name, wave, ch20, dashed) {
+  return `<div class="key${dashed?' dashed':''}" style="background:${keyTint(wave)};box-shadow:${keyGlow(wave)}">
+    <div class="kname">${name}</div><div class="kwave">${keyFmt(wave)}</div><div class="ksub">${keyArrow(ch20)} ${keyFmt(ch20)} in 20d</div></div>`;
+}
+function rotationHTML(rot) {
+  const keys = rot.sectors.slice().sort((a,b)=>a.wave-b.wave);
+  const brief = rot.brief ? rot.brief.split(/(?<=\.) (?=[A-Z])/) : [];
+  const more = (rot.summary||[]).filter(l => !brief.includes(l));
+  const graded = rot.graded||[], hits = graded.filter(g=>g.hit).length;
+  const head = rot.spx_wave < -5 ? 'zc-os' : rot.spx_wave > 5 ? 'zc-ob' : '';
+  return `<section class="card">
+    <div class="head"><span class="title">Sector cycle<span class="frame">S&amp;P 500 members on the DSS long wave</span></span><span class="headline ${head}">${keyFmt(rot.spx_wave)}</span></div>
+    <div class="keys sectors">
+      ${keys.map(r => keyHTML(SECTOR_SHORT[r.sector]||r.sector, r.wave, r.ch20)).join('')}
+      ${keyHTML('Whole market', rot.spx_wave, rot.spx_ch20, true)}
+    </div>
+    <div class="keys indexes">${(rot.indexes||[]).map(r => keyHTML(r.name, r.wave, r.ch20, true)).join('')}</div>
+    <div class="klegend"><span>-20 cycle bottom · money flows in</span><span class="kbar"></span><span>+20 cycle top · money leaves</span></div>
+    <div class="words">
+      ${brief.map((l,i)=>`<p class="${i===0?'lead':''}">${l}</p>`).join('')}
+      ${more.length ? `<div class="more">${more.map(l=>`<p>${l}</p>`).join('')}</div>` : ''}
+    </div>
+    <div class="foot" style="margin-top:10px"><div class="sub">as of ${fmtDate(rot.date)} · refreshed Monday and Thursday after the close${graded.length ? ` · report card ${hits} of ${graded.length} calls right` : ''}</div></div>
+  </section>`;
+}
+
 // ─── Main ───
 async function init() {
   const el = document.getElementById('content');
@@ -457,6 +518,11 @@ async function init() {
   }
 
   el.innerHTML = html;
+
+  // the sector rotation card, when its file is there
+  fetch('rotation.json?t='+Date.now()).then(r => r.ok ? r.json() : null).then(rot => {
+    if (rot && rot.sectors) el.insertAdjacentHTML('beforeend', rotationHTML(rot));
+  }).catch(() => {});
 
   requestAnimationFrame(() => {
     renderCharts(netData);

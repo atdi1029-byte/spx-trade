@@ -1,0 +1,185 @@
+{
+ "date": "2026-10-01",
+ "spx_wave": -5.9,
+ "spx_ch20": -6.2,
+ "sectors": [
+  {
+   "sector": "Utilities",
+   "n": 31,
+   "wave": -17.2,
+   "ch20": -5.0,
+   "ch60": -19.0,
+   "stage": "Still falling",
+   "flow": "wait",
+   "pct_bottom": 90,
+   "pct_peak": 0,
+   "bottoms45": 10,
+   "peaks45": 0
+  },
+  {
+   "sector": "Real Estate",
+   "n": 30,
+   "wave": -12.7,
+   "ch20": -9.1,
+   "ch60": -19.1,
+   "stage": "Still falling",
+   "flow": "wait",
+   "pct_bottom": 53,
+   "pct_peak": 0,
+   "bottoms45": 4,
+   "peaks45": 0
+  },
+  {
+   "sector": "Consumer Staples",
+   "n": 32,
+   "wave": -8.3,
+   "ch20": -9.6,
+   "ch60": -10.3,
+   "stage": "Falling",
+   "flow": "out",
+   "pct_bottom": 22,
+   "pct_peak": 0,
+   "bottoms45": 3,
+   "peaks45": 0
+  },
+  {
+   "sector": "Consumer Discretionary",
+   "n": 47,
+   "wave": -8.2,
+   "ch20": -6.5,
+   "ch60": -7.4,
+   "stage": "Falling",
+   "flow": "out",
+   "pct_bottom": 36,
+   "pct_peak": 0,
+   "bottoms45": 8,
+   "peaks45": 0
+  },
+  {
+   "sector": "Industrials",
+   "n": 79,
+   "wave": -8.2,
+   "ch20": -5.2,
+   "ch60": -10.2,
+   "stage": "Falling",
+   "flow": "out",
+   "pct_bottom": 35,
+   "pct_peak": 1,
+   "bottoms45": 12,
+   "peaks45": 0
+  },
+  {
+   "sector": "Materials",
+   "n": 24,
+   "wave": -7.8,
+   "ch20": -8.7,
+   "ch60": -7.0,
+   "stage": "Falling",
+   "flow": "out",
+   "pct_bottom": 33,
+   "pct_peak": 0,
+   "bottoms45": 5,
+   "peaks45": 0
+  },
+  {
+   "sector": "Financials",
+   "n": 76,
+   "wave": -7.3,
+   "ch20": -11.3,
+   "ch60": -14.2,
+   "stage": "Falling",
+   "flow": "out",
+   "pct_bottom": 29,
+   "pct_peak": 1,
+   "bottoms45": 0,
+   "peaks45": 0
+  },
+  {
+   "sector": "Energy",
+   "n": 21,
+   "wave": -4.7,
+   "ch20": -10.6,
+   "ch60": 4.2,
+   "stage": "Falling",
+   "flow": "out",
+   "pct_bottom": 14,
+   "pct_peak": 0,
+   "bottoms45": 0,
+   "peaks45": 0
+  },
+  {
+   "sector": "Communication Services",
+   "n": 21,
+   "wave": -4.2,
+   "ch20": -6.5,
+   "ch60": -0.5,
+   "stage": "Falling",
+   "flow": "out",
+   "pct_bottom": 19,
+   "pct_peak": 0,
+   "bottoms45": 0,
+   "peaks45": 0
+  },
+  {
+   "sector": "Information Technology",
+   "n": 72,
+   "wave": 1.5,
+   "ch20": 2.6,
+   "ch60": 2.2,
+   "stage": "Rising",
+   "flow": "in",
+   "pct_bottom": 8,
+   "pct_peak": 15,
+   "bottoms45": 1,
+   "peaks45": 0
+  },
+  {
+   "sector": "Health Care",
+   "n": 59,
+   "wave": 1.9,
+   "ch20": -5.8,
+   "ch60": -4.1,
+   "stage": "Falling",
+   "flow": "out",
+   "pct_bottom": 8,
+   "pct_peak": 20,
+   "bottoms45": 2,
+   "peaks45": 1
+  }
+ ],
+ "indexes": [
+  {
+   "sym": "SPY",
+   "name": "S&P 500",
+   "wave": 4.9,
+   "ch20": -3.8
+  },
+  {
+   "sym": "QQQ",
+   "name": "Nasdaq 100",
+   "wave": 11.7,
+   "ch20": 5.6
+  },
+  {
+   "sym": "IWM",
+   "name": "Small caps",
+   "wave": -14.0,
+   "ch20": -17.2
+  },
+  {
+   "sym": "DIA",
+   "name": "Dow 30",
+   "wave": -11.2,
+   "ch20": -12.1
+  }
+ ],
+ "summary": [
+  "Broad pullback: most sectors are falling together (market wave -5, -6 over 20 days). Rotation matters less than the turn itself right now.",
+  "Money should be going into: Information Technology.",
+  "Closest to a cycle low but still sinking: Utilities, Real Estate. Wait for the turn; Utilities has the most names with 4-5 bottom signs (10).",
+  "Money is leaving: Consumer Staples, Consumer Discretionary, Industrials, Materials, Financials, Energy, Communication Services, Health Care.",
+  "To trade it: buys come from the Bottoming sectors (none yet), with the most 4-5-sign names first; sells from Topping sectors. Falling means not yet."
+ ],
+ "brief": "Broad pullback: most sectors are falling together. Nothing has turned yet; utilities, real estate are closest to a cycle low but still sinking, so wait for the turn (utilities has the most names showing bottom signs). Money is leaving staples, discretionary, industrials, materials, financials, energy, comm services, health care; tech is the one sector rising.",
+ "graded": []
+}
