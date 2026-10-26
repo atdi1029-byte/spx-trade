@@ -1,150 +1,150 @@
 {
- "date": "2026-10-15",
- "spx_wave": -3.3,
- "spx_ch20": 0.5,
+ "date": "2026-10-22",
+ "spx_wave": -1.4,
+ "spx_ch20": 3.6,
  "sectors": [
   {
    "sector": "Real Estate",
    "n": 30,
-   "wave": -9.4,
-   "ch20": -0.5,
-   "ch60": -13.7,
-   "stage": "Flat",
-   "flow": "hold",
-   "pct_bottom": 33,
-   "pct_peak": 0,
-   "bottoms45": 4,
-   "peaks45": 0
-  },
-  {
-   "sector": "Materials",
-   "n": 24,
-   "wave": -6.8,
-   "ch20": -3.1,
-   "ch60": -3.6,
-   "stage": "Falling",
-   "flow": "out",
-   "pct_bottom": 25,
-   "pct_peak": 4,
-   "bottoms45": 1,
-   "peaks45": 0
-  },
-  {
-   "sector": "Utilities",
-   "n": 31,
-   "wave": -6.8,
-   "ch20": 8.5,
-   "ch60": -6.7,
+   "wave": -6.5,
+   "ch20": 4.2,
+   "ch60": -11.7,
    "stage": "Rising",
    "flow": "in",
-   "pct_bottom": 16,
+   "pct_bottom": 13,
    "pct_peak": 0,
-   "bottoms45": 3,
+   "bottoms45": 0,
    "peaks45": 0
   },
   {
    "sector": "Industrials",
    "n": 79,
-   "wave": -6.0,
-   "ch20": 2.0,
-   "ch60": -5.5,
+   "wave": -4.7,
+   "ch20": 3.6,
+   "ch60": -4.9,
    "stage": "Rising",
    "flow": "in",
-   "pct_bottom": 23,
-   "pct_peak": 3,
-   "bottoms45": 7,
+   "pct_bottom": 18,
+   "pct_peak": 8,
+   "bottoms45": 3,
    "peaks45": 0
   },
   {
-   "sector": "Consumer Discretionary",
-   "n": 47,
-   "wave": -5.5,
-   "ch20": 1.7,
-   "ch60": -2.6,
-   "stage": "Flat",
-   "flow": "hold",
-   "pct_bottom": 26,
+   "sector": "Utilities",
+   "n": 31,
+   "wave": -3.4,
+   "ch20": 13.8,
+   "ch60": -3.5,
+   "stage": "Rising",
+   "flow": "in",
+   "pct_bottom": 3,
    "pct_peak": 0,
-   "bottoms45": 5,
+   "bottoms45": 1,
    "peaks45": 0
   },
   {
-   "sector": "Financials",
-   "n": 76,
-   "wave": -5.1,
-   "ch20": -4.1,
-   "ch60": -13.6,
-   "stage": "Falling",
-   "flow": "out",
-   "pct_bottom": 25,
-   "pct_peak": 1,
-   "bottoms45": 4,
-   "peaks45": 0
-  },
-  {
-   "sector": "Consumer Staples",
-   "n": 32,
-   "wave": -3.9,
-   "ch20": 0.1,
-   "ch60": -4.6,
-   "stage": "Flat",
-   "flow": "hold",
-   "pct_bottom": 12,
-   "pct_peak": 3,
+   "sector": "Materials",
+   "n": 24,
+   "wave": -3.3,
+   "ch20": 2.4,
+   "ch60": -1.9,
+   "stage": "Rising",
+   "flow": "in",
+   "pct_bottom": 8,
+   "pct_peak": 4,
    "bottoms45": 1,
    "peaks45": 0
   },
   {
    "sector": "Communication Services",
    "n": 21,
-   "wave": -3.6,
-   "ch20": -3.8,
-   "ch60": -0.4,
-   "stage": "Falling",
-   "flow": "out",
-   "pct_bottom": 19,
+   "wave": -3.0,
+   "ch20": -1.4,
+   "ch60": 0.3,
+   "stage": "Flat",
+   "flow": "hold",
+   "pct_bottom": 14,
    "pct_peak": 10,
-   "bottoms45": 1,
+   "bottoms45": 2,
    "peaks45": 0
   },
   {
-   "sector": "Energy",
-   "n": 21,
-   "wave": 0.1,
-   "ch20": -4.3,
-   "ch60": 1.3,
-   "stage": "Falling",
-   "flow": "out",
-   "pct_bottom": 5,
-   "pct_peak": 0,
-   "bottoms45": 0,
+   "sector": "Consumer Discretionary",
+   "n": 47,
+   "wave": -2.8,
+   "ch20": 5.0,
+   "ch60": -1.3,
+   "stage": "Rising",
+   "flow": "in",
+   "pct_bottom": 11,
+   "pct_peak": 4,
+   "bottoms45": 4,
+   "peaks45": 0
+  },
+  {
+   "sector": "Financials",
+   "n": 76,
+   "wave": -2.1,
+   "ch20": 2.3,
+   "ch60": -10.7,
+   "stage": "Rising",
+   "flow": "in",
+   "pct_bottom": 9,
+   "pct_peak": 8,
+   "bottoms45": 2,
+   "peaks45": 1
+  },
+  {
+   "sector": "Consumer Staples",
+   "n": 32,
+   "wave": -0.1,
+   "ch20": 6.1,
+   "ch60": -2.4,
+   "stage": "Rising",
+   "flow": "in",
+   "pct_bottom": 6,
+   "pct_peak": 6,
+   "bottoms45": 1,
    "peaks45": 0
   },
   {
    "sector": "Information Technology",
    "n": 72,
-   "wave": 2.3,
-   "ch20": 4.1,
-   "ch60": 4.5,
-   "stage": "Rising",
-   "flow": "in",
-   "pct_bottom": 11,
-   "pct_peak": 21,
+   "wave": 0.1,
+   "ch20": -0.2,
+   "ch60": 3.1,
+   "stage": "Flat",
+   "flow": "hold",
+   "pct_bottom": 19,
+   "pct_peak": 17,
    "bottoms45": 2,
    "peaks45": 1
   },
   {
+   "sector": "Energy",
+   "n": 21,
+   "wave": 2.9,
+   "ch20": 3.4,
+   "ch60": 3.5,
+   "stage": "Rising",
+   "flow": "in",
+   "pct_bottom": 5,
+   "pct_peak": 24,
+   "bottoms45": 0,
+   "peaks45": 0
+  },
+  {
    "sector": "Health Care",
    "n": 59,
-   "wave": 3.1,
-   "ch20": 0.4,
-   "ch60": -2.0,
-   "stage": "Flat",
-   "flow": "hold",
-   "pct_bottom": 3,
-   "pct_peak": 17,
-   "bottoms45": 0,
-   "peaks45": 2
+   "wave": 6.2,
+   "ch20": 3.6,
+   "ch60": 0.2,
+   "stage": "Rising",
+   "flow": "in",
+   "pct_bottom": 2,
+   "pct_peak": 27,
+   "bottoms45": 1,
+   "peaks45": 4
   }
  ],
  "indexes": [
@@ -174,11 +174,83 @@
   }
  ],
  "summary": [
-  "Mixed tape: a rotation rather than a market-wide move (market wave -3, +0 over 20 days).",
-  "Money should be going into: Utilities, Industrials, Information Technology.",
-  "Money is leaving: Materials, Financials, Communication Services, Energy.",
+  "Broad advance: most sectors are rising (market wave -1, +3 over 20 days).",
+  "Money should be going into: Real Estate, Industrials, Utilities, Materials, Consumer Discretionary, Financials, Consumer Staples, Energy, Health Care.",
   "To trade it: buys come from the Bottoming sectors (none yet), with the most 4-5-sign names first; sells from Topping sectors. Falling means not yet."
  ],
- "brief": "A rotation, not a market-wide move. Money should be flowing into utilities, industrials, tech. Money is leaving materials, financials, comm services, energy; utilities, industrials, tech is the one sector rising.",
- "graded": []
+ "brief": "Broad advance: most sectors are rising. Money should be flowing into real estate, industrials, utilities, materials, discretionary, financials, staples, energy, health care.",
+ "graded": [
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "in",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  },
+  {
+   "flow": "in",
+   "hit": false
+  },
+  {
+   "flow": "out",
+   "hit": false
+  }
+ ]
 }
