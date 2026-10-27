@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-27d';
+const DASH_VERSION = 'v2026-10-27e';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -1013,6 +1013,29 @@ function annotateBxMins() {
 let _bxMinsTimer = null;
 new MutationObserver(() => { clearTimeout(_bxMinsTimer); _bxMinsTimer = setTimeout(annotateBxMins, 300); })
     .observe(document.documentElement, { childList: true, subtree: true });
+// Bitunix refuses API orders on US stocks (300108 from the script's server, 710002 from Claude's Mac:
+// INTC, LRCX, NOK, AAOI, Oct 27 - only ASTS went through). So stocks skip the API and Open gives the
+// numbers to type in by hand; commodities still go through the script.
+const BX_AUTO_OPEN = new Set(['XAU', 'XAG', 'XPT', 'XPD', 'CL', 'NATGAS', 'COPPER', 'GAS', 'PAXG', 'XAUT']);
+// What to type on Bitunix for a hand-opened trade: qty at 4x, SL on all, TP1 on half, TP2 on the rest
+function manualOrderText(ticker, side, p, size) {
+    const isBuy = side === 'buy', bt = btFor(ticker, side);
+    const at = pct => isBuy ? p * (1 + pct / 100) : p * (1 - pct / 100);
+    const fmt = v => v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toPrecision(4);
+    const lines = ['SL  ' + fmt(at(-bt.sl)) + '  (' + bt.sl + '%)', 'TP1 ' + fmt(at(bt.halfTp)) + '  (' + bt.halfTp + '%)', 'TP2 ' + fmt(at(SPX_RUNNER_TP[side])) + '  (' + SPX_RUNNER_TP[side] + '%)'];
+    const m = _bxMins && _bxMins[bxSymbol(ticker)];
+    if (m && size > 0) {
+        const dec = (String(m[0]).split('.')[1] || '').length, f = Math.pow(10, dec);
+        const qty = Math.max(m[0], Math.floor(size * OPEN_LEVERAGE / p * f + 1e-8) / f);
+        const half = Math.floor(qty / 2 * f + 1e-8) / f, rest = Math.round((qty - half) * f) / f;
+        lines.unshift('Qty ' + qty.toFixed(dec) + ' at ' + OPEN_LEVERAGE + 'x  (~$' + (qty * p / OPEN_LEVERAGE).toFixed(2) + ')');
+        lines[1] += '  on all ' + qty.toFixed(dec);
+        if (half >= Math.pow(10, -dec) && rest > 0) { lines[2] += '  on ' + half.toFixed(dec); lines[3] += '  on ' + rest.toFixed(dec); }
+        else { lines[2] += '  on all (too small to split)'; lines.pop(); }
+    }
+    return (isBuy ? 'LONG ' : 'SHORT ') + bxSymbol(ticker) + 'USDT\n' + lines.join('\n');
+}
+
 async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     const size = Number(String((document.getElementById(elemId + '-size') || {}).value || '').replace(/[$,]/g, ''));
     // Open Bitunix now, inside the click (a window.open after an await gets popup-blocked); pair ready to paste
@@ -1023,6 +1046,14 @@ async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     const p = Number(String(entryEl ? entryEl.value : price).replace(/,/g, '')) || Number(price);
     if (!(p > 0)) { showToast('No price for ' + displayName(ticker), 'error'); return; }
     const side = sideOf(signal), isBuy = side === 'buy';
+    if (!BX_AUTO_OPEN.has(bxSymbol(ticker))) {
+        // US stock: Bitunix won't take it from the API - open by hand with these numbers
+        if (confirm('Open by hand on Bitunix (pair copied):\n\n' + manualOrderText(ticker, side, p, size) +
+            '\n\nOK = opened (mark Entered)\nCancel = leave the card')) {
+            markAction(ticker, signal, price, 'Entered', elemId);
+        }
+        return;
+    }
     const bt = btFor(ticker, side);
     const at = pct => isBuy ? p * (1 + pct / 100) : p * (1 - pct / 100);
     const params = new URLSearchParams({
@@ -1045,7 +1076,8 @@ async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     }
     if (!r.ok) {
         // Cancel leaves the card alone (it used to Skip it: AVGO, Oct 27 - API-blocked, card lost)
-        if (confirm(displayName(ticker) + ' trade failed to open:\n' + (d.msg || writeErr(r)) +
+        if (confirm(displayName(ticker) + ' trade failed to open:\n' + String(d.msg || writeErr(r)).split(' | sent=')[0] +
+            '\n\nOpen it by hand:\n' + manualOrderText(ticker, side, p, size) +
             '\n\nOK = I opened it manually (mark Entered)\nCancel = leave the card')) {
             markAction(ticker, signal, price, 'Entered', elemId);
         }
