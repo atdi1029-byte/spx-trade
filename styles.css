@@ -1935,3 +1935,5 @@ body {
 .action-buttons .entry-input { background: #132438; border-color: #1e3a5f; color: #e8f0f8; }
 .action-buttons .entry-input::placeholder { color: #6a8aaa; }
 .action-buttons .entry-input:focus { border-color: #4a9eff; }
+.bx-min { font-family: 'Space Mono', monospace; font-size: 0.55rem; color: #6a8aaa; align-self: center; white-space: nowrap; }
+.bx-min.under { color: #ffa000; }

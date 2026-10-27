@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-27c';
+const DASH_VERSION = 'v2026-10-27d';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -18,6 +18,9 @@ const CLOSE_OUTCOME = 'Closed';
 
 // Uniform SL/TP levels (same as crypto — guardrails, not overfitted per-ticker)
 const BT_DEFAULTS = { buy: { sl:14.5, tp:15, halfTp:7 }, sell: { sl:20, tp:13, halfTp:7 } };
+// TP2 for the runner half, like the crypto app's +400%: Alex asked for "like 300% higher" (Oct 27).
+// A short can't fall 300%, so shorts park it at -90%.
+const SPX_RUNNER_TP = { buy: 300, sell: 90 };
 
 // Per-ticker winners from the backtests in notes.txt (4h, 50-bar lookforward). A ticker listed here
 // shows its tested levels; anything else falls back to BT_DEFAULTS. sell:null = no profitable sell config.
@@ -443,17 +446,18 @@ function renderDashboard(data) {
             }
             const btSide = isBuy ? 'buy' : 'sell';
             const bt = btFor(a.ticker, btSide);
-            const btDataAttr = `data-sl="${bt.sl}" data-tp="${bt.tp}" data-half="${bt.halfTp}" data-side="${btSide}"`;
+            const runTp = SPX_RUNNER_TP[btSide]; // TP2 = the runner half Open parks far out
+            const btDataAttr = `data-sl="${bt.sl}" data-tp="${runTp}" data-half="${bt.halfTp}" data-side="${btSide}"`;
             const noEdgeHtml = bt.noEdge ? `<div style="background:#c44b3f22;border:1px solid #c44b3f55;border-radius:4px;padding:4px 8px;margin:4px 0;font-size:0.65rem;color:var(--red-bright)">&#9888; Backtest found no profitable ${btSide.toUpperCase()} config for ${esc(displayName(a.ticker))} — consider skipping</div>` : '';
             // Stale-signal guard: age of the signal and how far price has moved since it fired
             const staleInfo = signalStaleness(a, matchTicker, p);
             let btLevelsHtml = '';
             if (p > 0) {
                 const slP = isBuy ? p * (1 - bt.sl / 100) : p * (1 + bt.sl / 100);
-                const tpP = isBuy ? p * (1 + bt.tp / 100) : p * (1 - bt.tp / 100);
+                const tpP = isBuy ? p * (1 + runTp / 100) : p * (1 - runTp / 100);
                 const halfP = isBuy ? p * (1 + bt.halfTp / 100) : p * (1 - bt.halfTp / 100);
                 const fmt = v => v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toPrecision(4);
-                btLevelsHtml = `<div class="meta" style="margin-top:0.2rem"><span class="bt-levels" ${btDataAttr}><span style="color:var(--red-bright)">SL <span class="bt-sl tap-copy" onclick="copyVal(this)">${fmt(slP)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.sl}%)</span></span> &middot; <span style="color:var(--green-bright)">TP1 <span class="bt-half tap-copy" onclick="copyVal(this)">${fmt(halfP)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.halfTp}%)</span></span> &middot; <span style="color:var(--green-bright)">TP2 <span class="bt-tp tap-copy" onclick="copyVal(this)">${fmt(tpP)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.tp}%)</span></span> ${btTag(bt)}</span></div>`;
+                btLevelsHtml = `<div class="meta" style="margin-top:0.2rem"><span class="bt-levels" ${btDataAttr}><span style="color:var(--red-bright)">SL <span class="bt-sl tap-copy" onclick="copyVal(this)">${fmt(slP)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.sl}%)</span></span> &middot; <span style="color:var(--green-bright)">TP1 <span class="bt-half tap-copy" onclick="copyVal(this)">${fmt(halfP)}</span> <span style="opacity:0.6;font-size:0.55rem">(${bt.halfTp}%)</span></span> &middot; <span style="color:var(--green-bright)">TP2 <span class="bt-tp tap-copy" onclick="copyVal(this)">${fmt(tpP)}</span> <span style="opacity:0.6;font-size:0.55rem">(${runTp}%)</span></span> ${btTag(bt)}</span></div>`;
             }
             const aoSide = isBuy ? 'buy' : 'sell';
             const isAlreadyOpen = openTickerSides.has(a.ticker.toUpperCase() + '_' + aoSide);
@@ -483,7 +487,8 @@ function renderDashboard(data) {
                         ${btLevelsHtml}
                         ${proxyHtml}
                         <div class="action-buttons">
-                            <input type="text" class="entry-input" placeholder="Size $" id="${id}-size" value="${effSizeStr !== 'SIT OUT' ? effSizeStr : ''}">
+                            <input type="text" class="entry-input" placeholder="Size $" data-bx="${esc(a.ticker)}" id="${id}-size" value="${effSizeStr !== 'SIT OUT' ? effSizeStr : ''}" oninput="annotateBxMins()">
+                            <span class="bx-min"></span>
                             <input type="text" class="entry-input" placeholder="Entry $" id="${id}-entry" value="${p}" style="width:80px" oninput="recalcLevels('${id}')">
                             <button class="action-btn tb-open" onclick="openOnBitunix(this,'${esc(a.ticker)}','${esc(a.signal)}',${p},'${id}','${esc(a.timestamp || '')}')">Open</button>
                             <button class="action-btn tb-skip" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${p},'Skipped','${id}')">Skip</button>
@@ -972,6 +977,42 @@ function bxSymbol(ticker) {
     return (BX_SYMBOL[raw] || raw).replace(/USDT$|USDC$|USD$/, '');
 }
 function bxUrl(ticker) { return 'https://www.bitunix.com/contract-trade/' + bxSymbol(ticker) + 'USDT'; }
+
+// Bitunix's smallest order as margin at Open's 4x, next to the Size box ("min $1.02"; "manual" when
+// Bitunix blocks API trading; orange when the size typed is under it). Data: Trade App ?action=bx_mins.
+const OPEN_LEVERAGE = 4;
+let _bxMins = null, _bxMinsAt = 0, _bxMinsLoading = false;
+async function loadBxMins() {
+    if (_bxMinsLoading || (_bxMins && Date.now() - _bxMinsAt < 5 * 60000)) return;
+    _bxMinsLoading = true;
+    try {
+        const r = await fetch(TRADE_APP_URL + '?action=bx_mins', { cache: 'no-store' });
+        const d = await r.json();
+        if (d && d.pairs) { _bxMins = d.pairs; _bxMinsAt = Date.now(); }
+    } catch (e) { console.warn('bx_mins failed', e); }
+    _bxMinsLoading = false;
+    annotateBxMins();
+}
+function annotateBxMins() {
+    if (!_bxMins || Date.now() - _bxMinsAt > 5 * 60000) loadBxMins();
+    if (!_bxMins) return;
+    document.querySelectorAll('input[data-bx]').forEach(el => {
+        const m = _bxMins[bxSymbol(el.dataset.bx)];
+        const label = el.nextElementSibling && el.nextElementSibling.classList.contains('bx-min') ? el.nextElementSibling : null;
+        if (!m) { if (label) label.textContent = ''; return; }
+        const usd = m[0] * m[1] / OPEN_LEVERAGE;
+        const text = m[2] === 1 ? 'min $' + Math.max(0.01, usd).toFixed(2) : 'manual';
+        el.placeholder = text;
+        if (!label) return;
+        label.textContent = text;
+        const typed = Number(String(el.value).replace(/[$,]/g, ''));
+        label.classList.toggle('under', m[2] === 1 && typed > 0 && typed < usd);
+        label.title = m[2] === 1 ? 'Smallest Bitunix order: $' + usd.toFixed(2) + ' at ' + OPEN_LEVERAGE + 'x' : 'Bitunix blocks API trading on this one: open it by hand';
+    });
+}
+let _bxMinsTimer = null;
+new MutationObserver(() => { clearTimeout(_bxMinsTimer); _bxMinsTimer = setTimeout(annotateBxMins, 300); })
+    .observe(document.documentElement, { childList: true, subtree: true });
 async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     const size = Number(String((document.getElementById(elemId + '-size') || {}).value || '').replace(/[$,]/g, ''));
     // Open Bitunix now, inside the click (a window.open after an await gets popup-blocked); pair ready to paste
@@ -986,7 +1027,7 @@ async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     const at = pct => isBuy ? p * (1 + pct / 100) : p * (1 - pct / 100);
     const params = new URLSearchParams({
         action: 'execute_trade', symbol: bxSymbol(ticker), side, size_usd: String(size),
-        sl_price: String(at(-bt.sl)), tp_price: String(at(bt.halfTp)), tp2_price: String(at(bt.tp)),
+        sl_price: String(at(-bt.sl)), tp_price: String(at(bt.halfTp)), tp2_price: String(at(SPX_RUNNER_TP[side])),
         leverage: '4', leverage_fallback: '5', signal_ts: 'SPX' + signalTs
     });
     const buttons = btn.parentElement.querySelectorAll('button');
