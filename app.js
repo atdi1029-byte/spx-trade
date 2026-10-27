@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-27b';
+const DASH_VERSION = 'v2026-10-27c';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -1003,9 +1003,11 @@ async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
         return;
     }
     if (!r.ok) {
-        const opened = confirm(displayName(ticker) + ' trade failed to open:\n' + (d.msg || writeErr(r)) +
-            '\n\nOK = I opened it manually (mark Entered)\nCancel = Skip it');
-        markAction(ticker, signal, price, opened ? 'Entered' : 'Skipped', elemId);
+        // Cancel leaves the card alone (it used to Skip it: AVGO, Oct 27 - API-blocked, card lost)
+        if (confirm(displayName(ticker) + ' trade failed to open:\n' + (d.msg || writeErr(r)) +
+            '\n\nOK = I opened it manually (mark Entered)\nCancel = leave the card')) {
+            markAction(ticker, signal, price, 'Entered', elemId);
+        }
         return;
     }
     const tpTxt = d.split ? ' · TP1 ' + d.tp1Qty + ' @ ' + d.tp + ' · TP2 ' + d.tp2Qty + ' @ ' + d.tp2 : '';
