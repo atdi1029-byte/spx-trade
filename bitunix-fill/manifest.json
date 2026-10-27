@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Bitunix Fill",
+  "version": "1.0",
+  "description": "Fills Bitunix's order form from the SPX app's Open button. You press Open Long/Short and Confirm.",
+  "content_scripts": [
+    {
+      "matches": ["https://www.bitunix.com/*contract-trade/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

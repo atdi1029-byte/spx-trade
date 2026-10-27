@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-27f';
+const DASH_VERSION = 'v2026-10-27g';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -960,7 +960,7 @@ function checkPendingWrites(openTrades, stats) {
 function skipAllActions() {
     const items = document.querySelectorAll('#actionList .action-item');
     items.forEach(el => {
-        const btn = el.querySelector('.action-btn.skipped');
+        const btn = el.querySelector('.action-btn.tb-skip');
         if (btn) btn.click();
     });
 }
@@ -1021,7 +1021,8 @@ const BX_AUTO_OPEN = new Set(['XAU', 'XAG', 'XPT', 'XPD', 'CL', 'NATGAS', 'COPPE
 function manualOrder(ticker, side, p, size) {
     const isBuy = side === 'buy', bt = btFor(ticker, side);
     const at = pct => isBuy ? p * (1 + pct / 100) : p * (1 - pct / 100);
-    const fmt = v => v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toPrecision(4);
+    const m = _bxMins && _bxMins[bxSymbol(ticker)];
+    const fmt = v => m && m[3] >= 0 ? v.toFixed(m[3]) : v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toPrecision(4);
     const o = {
         title: (isBuy ? 'LONG ' : 'SHORT ') + bxSymbol(ticker) + 'USDT', qty: null, cost: null,
         rows: [{ k: 'SL', price: fmt(at(-bt.sl)), pct: '-' + bt.sl + '%', qty: null },
@@ -1029,7 +1030,6 @@ function manualOrder(ticker, side, p, size) {
                { k: 'TP2', price: fmt(at(SPX_RUNNER_TP[side])), pct: '+' + SPX_RUNNER_TP[side] + '%', qty: null }]
     };
     if (!isBuy) { o.rows[0].pct = '+' + bt.sl + '%'; o.rows[1].pct = '-' + bt.halfTp + '%'; o.rows[2].pct = '-' + SPX_RUNNER_TP[side] + '%'; }
-    const m = _bxMins && _bxMins[bxSymbol(ticker)];
     if (m && size > 0) {
         const dec = (String(m[0]).split('.')[1] || '').length, f = Math.pow(10, dec);
         const qty = Math.max(m[0], Math.floor(size * OPEN_LEVERAGE / p * f + 1e-8) / f);
@@ -1069,17 +1069,25 @@ function showManualPanel(o, reason) {
 
 async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     const size = Number(String((document.getElementById(elemId + '-size') || {}).value || '').replace(/[$,]/g, ''));
-    // Open Bitunix now, inside the click (a window.open after an await gets popup-blocked); pair ready to paste
-    navigator.clipboard.writeText(bxSymbol(ticker) + 'USDT').catch(() => {});
-    window.open(bxUrl(ticker), '_blank');
-    if (!(size > 0)) { markAction(ticker, signal, price, 'Entered', elemId); return; }
     const entryEl = document.getElementById(elemId + '-entry');
     const p = Number(String(entryEl ? entryEl.value : price).replace(/,/g, '')) || Number(price);
-    if (!(p > 0)) { showToast('No price for ' + displayName(ticker), 'error'); return; }
     const side = sideOf(signal), isBuy = side === 'buy';
-    if (!BX_AUTO_OPEN.has(bxSymbol(ticker))) {
-        // US stock: Bitunix won't take it from the API - open by hand with these numbers
-        if (await showManualPanel(manualOrder(ticker, side, p, size))) markAction(ticker, signal, price, 'Entered', elemId);
+    // US stock: Bitunix won't take it from the API. The link carries the trade for the Bitunix Fill
+    // extension (SPX/bitunix-fill), which fills the order form; the panel has the same numbers to tap-copy.
+    const manual = size > 0 && p > 0 && !BX_AUTO_OPEN.has(bxSymbol(ticker)) ? manualOrder(ticker, side, p, size) : null;
+    let url = bxUrl(ticker);
+    if (manual) {
+        const row = k => manual.rows.find(r => r.k === k) || {};
+        url += '#cfill=' + encodeURIComponent(JSON.stringify({ v: 1, ts: Date.now(), sym: bxSymbol(ticker) + 'USDT', side, size: size.toFixed(2),
+            qty: manual.qty, sl: row('SL').price, tp1: row('TP1').price, tp1qty: row('TP2').qty ? row('TP1').qty : null, tp2: row('TP2').price || row('TP1').price }));
+    }
+    // Open Bitunix now, inside the click (a window.open after an await gets popup-blocked); pair ready to paste
+    navigator.clipboard.writeText(bxSymbol(ticker) + 'USDT').catch(() => {});
+    window.open(url, '_blank');
+    if (!(size > 0)) { markAction(ticker, signal, price, 'Entered', elemId); return; }
+    if (!(p > 0)) { showToast('No price for ' + displayName(ticker), 'error'); return; }
+    if (manual) {
+        if (await showManualPanel(manual)) markAction(ticker, signal, price, 'Entered', elemId);
         return;
     }
     const bt = btFor(ticker, side);
