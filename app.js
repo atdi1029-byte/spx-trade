@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-09-26b';
+const DASH_VERSION = 'v2026-10-27a';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -485,6 +485,7 @@ function renderDashboard(data) {
                         <div class="action-buttons">
                             <input type="text" class="entry-input" placeholder="Size $" id="${id}-size" value="${effSizeStr !== 'SIT OUT' ? effSizeStr : ''}">
                             <input type="text" class="entry-input" placeholder="Entry $" id="${id}-entry" value="${p}" style="width:80px" oninput="recalcLevels('${id}')">
+                            <button class="action-btn open-bx" onclick="openOnBitunix(this,'${esc(a.ticker)}','${esc(a.signal)}',${p},'${id}','${esc(a.timestamp || '')}')">Open</button>
                             <button class="action-btn entered" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${p},'Entered','${id}')">Entered</button>
                             <button class="action-btn skipped" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${p},'Skipped','${id}')">Skipped</button>
                         </div>
@@ -957,6 +958,52 @@ function skipAllActions() {
         const btn = el.querySelector('.action-btn.skipped');
         if (btn) btn.click();
     });
+}
+
+// ====== OPEN ON BITUNIX ======
+// Open places the trade through the crypto Trade App's script (the same Bitunix code as the crypto
+// Open button): SL on the whole position, half at TP1, the rest at TP2, 4x (5x if 4x won't go, else
+// nothing is opened). Then it marks the card Entered. Entered alone still means "opened by hand".
+const TRADE_APP_URL = 'https://script.google.com/macros/s/AKfycbywWcasm7wwI14tUc64XpTscePJlgiU3Q7sZ4uY-TmqjqVZzuxJOhf6T8fO2ZpSaKwV/exec';
+const BX_SYMBOL = { 'CL1!': 'CL', 'USOIL': 'CL', 'NG1!': 'NATGAS', 'SILVER': 'XAG', 'GOLD': 'XAU', 'PLATINUM': 'XPT', 'XCUUSD': 'COPPER', 'BRK.B': 'BRKB' };
+async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
+    const size = Number(String((document.getElementById(elemId + '-size') || {}).value || '').replace(/[$,]/g, ''));
+    if (!(size > 0)) { showToast('Enter a size first', 'error'); return; }
+    const entryEl = document.getElementById(elemId + '-entry');
+    const p = Number(String(entryEl ? entryEl.value : price).replace(/,/g, '')) || Number(price);
+    if (!(p > 0)) { showToast('No price for ' + displayName(ticker), 'error'); return; }
+    const side = sideOf(signal), isBuy = side === 'buy';
+    const bt = btFor(ticker, side);
+    const at = pct => isBuy ? p * (1 + pct / 100) : p * (1 - pct / 100);
+    const raw = String(ticker).toUpperCase().replace(/\.P$/, '');
+    const params = new URLSearchParams({
+        action: 'execute_trade', symbol: BX_SYMBOL[raw] || raw, side, size_usd: String(size),
+        sl_price: String(at(-bt.sl)), tp_price: String(at(bt.halfTp)), tp2_price: String(at(bt.tp)),
+        leverage: '4', leverage_fallback: '5', signal_ts: 'SPX' + signalTs
+    });
+    const buttons = btn.parentElement.querySelectorAll('button');
+    buttons.forEach(b => b.disabled = true);
+    const label = btn.textContent;
+    btn.textContent = '...';
+    // beacon:false: never re-send a trade the script may already have placed
+    const r = await apiGet(TRADE_APP_URL + '?' + params, { beacon: false, timeoutMs: 60000 });
+    btn.textContent = label;
+    buttons.forEach(b => b.disabled = false);
+    const d = r.data || {};
+    if (r.ok === null) {
+        showToast(displayName(ticker) + ': no answer from the trade script (' + writeErr(r) + '). Check Bitunix before trying again.', 'error', 9000);
+        return;
+    }
+    if (!r.ok) {
+        showToast(displayName(ticker) + ' not opened: ' + (d.msg || writeErr(r)), 'error', 9000);
+        return;
+    }
+    const tpTxt = d.split ? ' · TP1 ' + d.tp1Qty + ' @ ' + d.tp + ' · TP2 ' + d.tp2Qty + ' @ ' + d.tp2 : '';
+    showToast('Opened ' + displayName(ticker) + ' ' + d.qty + ' @ ' + d.price + ' (' + d.leverage + 'x)' + tpTxt, 'success', 6000);
+    if (d.via === 'order_ok_tpsl_failed') showToast(displayName(ticker) + ' opened but TP/SL failed — set them on Bitunix! ' + (d.tpSlWarning || ''), 'error', 10000);
+    if (d.splitNote) showToast(displayName(ticker) + ': ' + d.splitNote, 'error', 8000);
+    if (d.warnings) showToast(displayName(ticker) + ': ' + d.warnings, 'error', 8000);
+    markAction(ticker, signal, price, 'Entered', elemId);
 }
 
 async function markAction(ticker, signal, price, value, elemId) {

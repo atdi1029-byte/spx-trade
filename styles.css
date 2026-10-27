@@ -368,6 +368,13 @@ body {
     border-color: var(--green-candle);
 }
 .action-btn.entered:hover { background: var(--green-candle); color: var(--cream); }
+.action-btn.open-bx {
+    background: var(--green-candle);
+    color: var(--cream);
+    border-color: var(--green-bright);
+}
+.action-btn.open-bx:hover { background: var(--green-bright); color: var(--bg-dark); }
+.action-btn:disabled { opacity: 0.5; cursor: wait; transform: none; }
 .action-btn.skipped {
     background: var(--bg-dark);
     color: var(--text-dim);
