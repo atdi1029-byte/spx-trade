@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-27e';
+const DASH_VERSION = 'v2026-10-27f';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -1018,22 +1018,53 @@ new MutationObserver(() => { clearTimeout(_bxMinsTimer); _bxMinsTimer = setTimeo
 // numbers to type in by hand; commodities still go through the script.
 const BX_AUTO_OPEN = new Set(['XAU', 'XAG', 'XPT', 'XPD', 'CL', 'NATGAS', 'COPPER', 'GAS', 'PAXG', 'XAUT']);
 // What to type on Bitunix for a hand-opened trade: qty at 4x, SL on all, TP1 on half, TP2 on the rest
-function manualOrderText(ticker, side, p, size) {
+function manualOrder(ticker, side, p, size) {
     const isBuy = side === 'buy', bt = btFor(ticker, side);
     const at = pct => isBuy ? p * (1 + pct / 100) : p * (1 - pct / 100);
     const fmt = v => v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toPrecision(4);
-    const lines = ['SL  ' + fmt(at(-bt.sl)) + '  (' + bt.sl + '%)', 'TP1 ' + fmt(at(bt.halfTp)) + '  (' + bt.halfTp + '%)', 'TP2 ' + fmt(at(SPX_RUNNER_TP[side])) + '  (' + SPX_RUNNER_TP[side] + '%)'];
+    const o = {
+        title: (isBuy ? 'LONG ' : 'SHORT ') + bxSymbol(ticker) + 'USDT', qty: null, cost: null,
+        rows: [{ k: 'SL', price: fmt(at(-bt.sl)), pct: '-' + bt.sl + '%', qty: null },
+               { k: 'TP1', price: fmt(at(bt.halfTp)), pct: '+' + bt.halfTp + '%', qty: null },
+               { k: 'TP2', price: fmt(at(SPX_RUNNER_TP[side])), pct: '+' + SPX_RUNNER_TP[side] + '%', qty: null }]
+    };
+    if (!isBuy) { o.rows[0].pct = '+' + bt.sl + '%'; o.rows[1].pct = '-' + bt.halfTp + '%'; o.rows[2].pct = '-' + SPX_RUNNER_TP[side] + '%'; }
     const m = _bxMins && _bxMins[bxSymbol(ticker)];
     if (m && size > 0) {
         const dec = (String(m[0]).split('.')[1] || '').length, f = Math.pow(10, dec);
         const qty = Math.max(m[0], Math.floor(size * OPEN_LEVERAGE / p * f + 1e-8) / f);
         const half = Math.floor(qty / 2 * f + 1e-8) / f, rest = Math.round((qty - half) * f) / f;
-        lines.unshift('Qty ' + qty.toFixed(dec) + ' at ' + OPEN_LEVERAGE + 'x  (~$' + (qty * p / OPEN_LEVERAGE).toFixed(2) + ')');
-        lines[1] += '  on all ' + qty.toFixed(dec);
-        if (half >= Math.pow(10, -dec) && rest > 0) { lines[2] += '  on ' + half.toFixed(dec); lines[3] += '  on ' + rest.toFixed(dec); }
-        else { lines[2] += '  on all (too small to split)'; lines.pop(); }
+        o.qty = qty.toFixed(dec); o.cost = (qty * p / OPEN_LEVERAGE).toFixed(2);
+        o.rows[0].qty = o.qty;
+        if (half >= 1 / f && rest > 0) { o.rows[1].qty = half.toFixed(dec); o.rows[2].qty = rest.toFixed(dec); }
+        else { o.rows[1].qty = o.qty; o.rows[1].note = 'too small to split'; o.rows.pop(); }
     }
-    return (isBuy ? 'LONG ' : 'SHORT ') + bxSymbol(ticker) + 'USDT\n' + lines.join('\n');
+    return o;
+}
+
+// Panel with every number as a tap-to-copy chip (a confirm() can't be copied from). Resolves true on Opened.
+function showManualPanel(o, reason) {
+    return new Promise(resolve => {
+        const chip = v => `<button class="mo-chip" data-copy="${esc(v)}">${esc(v)}</button>`;
+        const wrap = document.createElement('div');
+        wrap.className = 'mo-wrap';
+        wrap.innerHTML = `<div class="mo-box">
+            <div class="mo-title">${esc(o.title)}</div>
+            ${reason ? `<div class="mo-reason">${esc(reason)}</div>` : ''}
+            <div class="mo-hint">Pair copied, Bitunix open. Tap a number to copy it.</div>
+            ${o.qty ? `<div class="mo-row"><span class="mo-k">Qty</span>${chip(o.qty)}<span class="mo-q">${OPEN_LEVERAGE}x &middot; ~$${o.cost}</span></div>` : ''}
+            ${o.rows.map(r => `<div class="mo-row"><span class="mo-k">${r.k}</span>${chip(r.price)}<span class="mo-q">${r.pct}${r.qty ? ' &middot; qty ' : ''}</span>${r.qty ? chip(r.qty) : ''}${r.note ? `<span class="mo-q">${esc(r.note)}</span>` : ''}</div>`).join('')}
+            <div class="mo-btns"><button class="action-btn tb-open" data-ok>Opened</button><button class="action-btn tb-skip" data-no>Not now</button></div>
+        </div>`;
+        const done = v => { wrap.remove(); resolve(v); };
+        wrap.addEventListener('click', e => {
+            const c = e.target.closest('[data-copy]');
+            if (c) { navigator.clipboard.writeText(c.dataset.copy).catch(() => {}); c.classList.add('copied'); return; }
+            if (e.target.closest('[data-ok]')) return done(true);
+            if (e.target.closest('[data-no]') || e.target === wrap) return done(false);
+        });
+        document.body.appendChild(wrap);
+    });
 }
 
 async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
@@ -1048,10 +1079,7 @@ async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     const side = sideOf(signal), isBuy = side === 'buy';
     if (!BX_AUTO_OPEN.has(bxSymbol(ticker))) {
         // US stock: Bitunix won't take it from the API - open by hand with these numbers
-        if (confirm('Open by hand on Bitunix (pair copied):\n\n' + manualOrderText(ticker, side, p, size) +
-            '\n\nOK = opened (mark Entered)\nCancel = leave the card')) {
-            markAction(ticker, signal, price, 'Entered', elemId);
-        }
+        if (await showManualPanel(manualOrder(ticker, side, p, size))) markAction(ticker, signal, price, 'Entered', elemId);
         return;
     }
     const bt = btFor(ticker, side);
@@ -1076,11 +1104,8 @@ async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     }
     if (!r.ok) {
         // Cancel leaves the card alone (it used to Skip it: AVGO, Oct 27 - API-blocked, card lost)
-        if (confirm(displayName(ticker) + ' trade failed to open:\n' + String(d.msg || writeErr(r)).split(' | sent=')[0] +
-            '\n\nOpen it by hand:\n' + manualOrderText(ticker, side, p, size) +
-            '\n\nOK = I opened it manually (mark Entered)\nCancel = leave the card')) {
-            markAction(ticker, signal, price, 'Entered', elemId);
-        }
+        const why = 'Not opened: ' + String(d.msg || writeErr(r)).split(' | sent=')[0] + ' Open it by hand:';
+        if (await showManualPanel(manualOrder(ticker, side, p, size), why)) markAction(ticker, signal, price, 'Entered', elemId);
         return;
     }
     const tpTxt = d.split ? ' · TP1 ' + d.tp1Qty + ' @ ' + d.tp + ' · TP2 ' + d.tp2Qty + ' @ ' + d.tp2 : '';

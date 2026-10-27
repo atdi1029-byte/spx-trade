@@ -1937,3 +1937,18 @@ body {
 .action-buttons .entry-input:focus { border-color: #4a9eff; }
 .bx-min { font-family: 'Space Mono', monospace; font-size: 0.55rem; color: #6a8aaa; align-self: center; white-space: nowrap; }
 .bx-min.under { color: #ffa000; }
+/* By-hand order panel (SPX Open on stocks): crypto Trade app colors */
+.mo-wrap { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
+.mo-box { background: #1a2d45; border: 1px solid #1e3a5f; border-radius: 6px; padding: 14px 16px; width: 100%; max-width: 360px; font-family: 'Space Mono', monospace; color: #c8d8e8; }
+.mo-title { font-size: 0.85rem; font-weight: 700; color: #e8f0f8; margin-bottom: 4px; }
+.mo-reason { font-size: 0.6rem; color: #ff6b6b; margin-bottom: 6px; }
+.mo-hint { font-size: 0.6rem; color: #6a8aaa; margin-bottom: 10px; }
+.mo-row { display: flex; align-items: center; gap: 8px; margin: 7px 0; flex-wrap: wrap; }
+.mo-k { width: 34px; font-size: 0.65rem; font-weight: 700; color: #6a8aaa; }
+.mo-q { font-size: 0.6rem; color: #6a8aaa; }
+.mo-chip { font-family: 'Space Mono', monospace; font-size: 0.8rem; font-weight: 700; padding: 6px 10px; border-radius: 4px; border: 1px solid #1e3a5f; background: #132438; color: #e8f0f8; cursor: pointer; }
+.mo-chip:hover { border-color: #4a9eff; }
+.mo-chip.copied { background: #1a3a36; border-color: #26a69a; color: #4dd0c4; }
+.mo-chip.copied::after { content: ' \2713'; }
+.mo-btns { display: flex; gap: 8px; margin-top: 12px; }
+.mo-btns .action-btn { flex: 1; padding: 8px 12px; }
