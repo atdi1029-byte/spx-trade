@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-27a';
+const DASH_VERSION = 'v2026-10-27b';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -485,9 +485,9 @@ function renderDashboard(data) {
                         <div class="action-buttons">
                             <input type="text" class="entry-input" placeholder="Size $" id="${id}-size" value="${effSizeStr !== 'SIT OUT' ? effSizeStr : ''}">
                             <input type="text" class="entry-input" placeholder="Entry $" id="${id}-entry" value="${p}" style="width:80px" oninput="recalcLevels('${id}')">
-                            <button class="action-btn open-bx" onclick="openOnBitunix(this,'${esc(a.ticker)}','${esc(a.signal)}',${p},'${id}','${esc(a.timestamp || '')}')">Open</button>
-                            <button class="action-btn entered" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${p},'Entered','${id}')">Entered</button>
-                            <button class="action-btn skipped" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${p},'Skipped','${id}')">Skipped</button>
+                            <button class="action-btn tb-open" onclick="openOnBitunix(this,'${esc(a.ticker)}','${esc(a.signal)}',${p},'${id}','${esc(a.timestamp || '')}')">Open</button>
+                            <button class="action-btn tb-skip" onclick="markAction('${esc(a.ticker)}','${esc(a.signal)}',${p},'Skipped','${id}')">Skip</button>
+                            <a href="${bxUrl(a.ticker)}" target="_blank" style="font-size:0.65rem;opacity:0.5;margin-left:0.3rem;text-decoration:none;color:var(--text-dim);align-self:center" title="Open on Bitunix">↗</a>
                         </div>
                     </div>
                     ${warnHtml}${earnHtml}${noEdgeHtml}
@@ -961,23 +961,31 @@ function skipAllActions() {
 }
 
 // ====== OPEN ON BITUNIX ======
-// Open places the trade through the crypto Trade App's script (the same Bitunix code as the crypto
-// Open button): SL on the whole position, half at TP1, the rest at TP2, 4x (5x if 4x won't go, else
-// nothing is opened). Then it marks the card Entered. Entered alone still means "opened by hand".
+// Open works like the crypto app's Open button. With a size: the trade goes through the crypto Trade
+// App's script (SL on the whole position, half at TP1, the rest at TP2, 4x - 5x if 4x won't go, else
+// nothing is opened), then the card is marked Entered. Empty size: copy the pair, open Bitunix, mark
+// Entered (opened by hand).
 const TRADE_APP_URL = 'https://script.google.com/macros/s/AKfycbywWcasm7wwI14tUc64XpTscePJlgiU3Q7sZ4uY-TmqjqVZzuxJOhf6T8fO2ZpSaKwV/exec';
 const BX_SYMBOL = { 'CL1!': 'CL', 'USOIL': 'CL', 'NG1!': 'NATGAS', 'SILVER': 'XAG', 'GOLD': 'XAU', 'PLATINUM': 'XPT', 'XCUUSD': 'COPPER', 'BRK.B': 'BRKB' };
+function bxSymbol(ticker) {
+    const raw = String(ticker).toUpperCase().replace(/\.P$/, '');
+    return (BX_SYMBOL[raw] || raw).replace(/USDT$|USDC$|USD$/, '');
+}
+function bxUrl(ticker) { return 'https://www.bitunix.com/contract-trade/' + bxSymbol(ticker) + 'USDT'; }
 async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     const size = Number(String((document.getElementById(elemId + '-size') || {}).value || '').replace(/[$,]/g, ''));
-    if (!(size > 0)) { showToast('Enter a size first', 'error'); return; }
+    // Open Bitunix now, inside the click (a window.open after an await gets popup-blocked); pair ready to paste
+    navigator.clipboard.writeText(bxSymbol(ticker) + 'USDT').catch(() => {});
+    window.open(bxUrl(ticker), '_blank');
+    if (!(size > 0)) { markAction(ticker, signal, price, 'Entered', elemId); return; }
     const entryEl = document.getElementById(elemId + '-entry');
     const p = Number(String(entryEl ? entryEl.value : price).replace(/,/g, '')) || Number(price);
     if (!(p > 0)) { showToast('No price for ' + displayName(ticker), 'error'); return; }
     const side = sideOf(signal), isBuy = side === 'buy';
     const bt = btFor(ticker, side);
     const at = pct => isBuy ? p * (1 + pct / 100) : p * (1 - pct / 100);
-    const raw = String(ticker).toUpperCase().replace(/\.P$/, '');
     const params = new URLSearchParams({
-        action: 'execute_trade', symbol: BX_SYMBOL[raw] || raw, side, size_usd: String(size),
+        action: 'execute_trade', symbol: bxSymbol(ticker), side, size_usd: String(size),
         sl_price: String(at(-bt.sl)), tp_price: String(at(bt.halfTp)), tp2_price: String(at(bt.tp)),
         leverage: '4', leverage_fallback: '5', signal_ts: 'SPX' + signalTs
     });
@@ -995,7 +1003,9 @@ async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
         return;
     }
     if (!r.ok) {
-        showToast(displayName(ticker) + ' not opened: ' + (d.msg || writeErr(r)), 'error', 9000);
+        const opened = confirm(displayName(ticker) + ' trade failed to open:\n' + (d.msg || writeErr(r)) +
+            '\n\nOK = I opened it manually (mark Entered)\nCancel = Skip it');
+        markAction(ticker, signal, price, opened ? 'Entered' : 'Skipped', elemId);
         return;
     }
     const tpTxt = d.split ? ' · TP1 ' + d.tp1Qty + ' @ ' + d.tp + ' · TP2 ' + d.tp2Qty + ' @ ' + d.tp2 : '';
@@ -1097,6 +1107,19 @@ async function closeTrade(elemId, forceLoss) {
 }
 
 
+// 0x0 — TP1 banked and SL at entry; the trade stays open (the sheet keeps 0x0 rows open)
+async function markZero(elemId) {
+    const t = openTradeById.get(elemId);
+    if (!t) { showToast('Card is stale - refreshing'); scheduleRefresh(0); return; }
+    const btn = document.getElementById(elemId + '-zero');
+    if (btn) btn.disabled = true;
+    const r = await apiGet(buildUpdateUrl({ ticker: t.ticker, signal: t.lastSignal || '', price: t.price || 0, field: 'outcome', value: '0x0' }));
+    if (btn) btn.disabled = false;
+    if (r.ok === false) { showToast(displayName(t.ticker) + ' 0x0 was NOT saved: ' + writeErr(r), 'error', 9000); return; }
+    showToast(displayName(t.ticker) + ' marked 0x0' + (r.verified ? '' : ' (unconfirmed)'), r.verified ? 'success' : 'error', 3000);
+    scheduleRefresh(1500);
+}
+
 // Reopen trade — resets outcome back to Open on the sheet
 async function reopenTrade(ticker, signal) {
     const url = new URL(POST_URL);
@@ -1167,10 +1190,11 @@ function renderOpenTrades(trades) {
                         ${pnl ? `<span class="pnl-badge ${pnl > 0 ? 'positive' : 'negative'}" style="font-size:0.4rem;padding:1px 4px;opacity:0.7;margin-left:auto" title="Already banked on the sheet - added to whatever you close with">banked ${fmtSigned(pnl)}</span>` : ''}
                     </div>
                     <div class="action-buttons">
-                        <input type="text" class="entry-input" placeholder="P&L $ (- for loss)" id="${id}-profit" inputmode="decimal">
-                        <button class="action-btn won" id="${id}-close" onclick="closeTrade('${id}')">Close</button>
-                        <button class="action-btn stopped-out" id="${id}-stop" onclick="closeTrade('${id}', true)">Stop Out</button>
-                        <button class="action-btn four-day-btn" id="${id}-4day" onclick="toggle4DayCheck('${id}')">4 Day</button>
+                        <input type="text" class="entry-input" placeholder="P&L $" id="${id}-profit" inputmode="decimal" style="width:55px">
+                        <button class="action-btn tb-zero" id="${id}-zero" onclick="markZero('${id}')">0x0</button>
+                        <button class="action-btn tb-stop" id="${id}-stop" onclick="closeTrade('${id}', true)">Stopped Out</button>
+                        <button class="action-btn tb-closed" id="${id}-close" onclick="closeTrade('${id}')">Closed</button>
+                        <button class="action-btn four-day-btn tb-clock" id="${id}-4day" onclick="toggle4DayCheck('${id}')">--</button>
                     </div>
                 </div>
                 <div class="meta">${t.side === 'sell' ? 'SHORT ' : ''}$${parseDollar(t.price).toFixed(2)} · Next: $${t.nextSize === 'SIT OUT' ? 'SIT OUT' : parseDollar(t.nextSize).toFixed(2)}</div>
@@ -1657,19 +1681,9 @@ function update4DayBtn(ticker, cardId) {
     }
     const elapsed = Date.now() - (states[ticker] || Date.now());
     const fourDays = 4 * 24 * 60 * 60 * 1000;
-    const remaining = fourDays - elapsed;
-    if (remaining <= 0) {
-        btn.className = 'action-btn four-day-btn needs-check';
-        btn.textContent = 'CHECK!';
-    } else {
-        btn.className = 'action-btn four-day-btn checked';
-        const hoursLeft = Math.ceil(remaining / (1000 * 60 * 60));
-        if (hoursLeft > 24) {
-            btn.textContent = Math.ceil(hoursLeft / 24) + 'd';
-        } else {
-            btn.textContent = hoursLeft + 'h';
-        }
-    }
+    const hours = Math.floor(elapsed / (60 * 60 * 1000));
+    btn.textContent = hours >= 24 ? Math.floor(hours / 24) + 'd ' + (hours % 24) + 'h' : hours + 'h';
+    btn.className = 'action-btn four-day-btn tb-clock' + (elapsed >= fourDays ? ' overdue' : elapsed >= fourDays * 0.75 ? ' warn' : '');
 }
 function restore4DayStates() {
     document.querySelectorAll('#openTradesList .action-item').forEach(el => {

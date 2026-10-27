@@ -368,12 +368,21 @@ body {
     border-color: var(--green-candle);
 }
 .action-btn.entered:hover { background: var(--green-candle); color: var(--cream); }
-.action-btn.open-bx {
-    background: var(--green-candle);
-    color: var(--cream);
-    border-color: var(--green-bright);
+/* Signal + open-trade buttons in the crypto Trade app's colors (its :root values) */
+.action-btn.tb-open, .action-btn.tb-zero { background: #1a3a36; color: #4dd0c4; border-color: #26a69a; }
+.action-btn.tb-open:hover, .action-btn.tb-zero:hover { background: #26a69a; color: #e8f0f8; }
+.action-btn.tb-skip, .action-btn.tb-closed { background: #132438; color: #6a8aaa; border-color: #1e3a5f; }
+.action-btn.tb-skip:hover, .action-btn.tb-closed:hover { background: #1e3a5f; color: #c8d8e8; }
+.action-btn.tb-stop { background: #3a1a1a; color: #ff6b6b; border-color: #ef5350; }
+.action-btn.tb-stop:hover { background: #ef5350; color: #e8f0f8; }
+.action-btn.tb-clock { background: rgba(30, 58, 95, 0.3); color: #6a8aaa; border-color: rgba(30, 58, 95, 0.5); font-size: 0.55rem; opacity: 1; animation: none; }
+.action-btn.tb-clock:hover { background: rgba(30, 58, 95, 0.5); color: #c8d8e8; }
+.action-btn.tb-clock.warn { background: rgba(255, 160, 0, 0.15); color: #ffa000; border-color: #ffa000; }
+.action-btn.tb-clock.overdue { background: rgba(255, 80, 80, 0.15); color: #ff6b6b; border-color: #ef5350; animation: tbClockGlow 1.5s ease-in-out infinite alternate; }
+@keyframes tbClockGlow {
+    0%, 100% { box-shadow: 0 0 12px rgba(74, 158, 255, 0.3), 0 0 30px rgba(74, 158, 255, 0.12); border-color: #6ab4ff; }
+    50% { box-shadow: 0 0 25px rgba(74, 158, 255, 0.5), 0 0 60px rgba(74, 158, 255, 0.2); border-color: #8cc8ff; }
 }
-.action-btn.open-bx:hover { background: var(--green-bright); color: var(--bg-dark); }
 .action-btn:disabled { opacity: 0.5; cursor: wait; transform: none; }
 .action-btn.skipped {
     background: var(--bg-dark);
@@ -1922,3 +1931,7 @@ body {
     background: var(--pumpkin);
     color: white;
 }
+/* Size / Entry / P&L boxes in the crypto Trade app's colors, next to its buttons */
+.action-buttons .entry-input { background: #132438; border-color: #1e3a5f; color: #e8f0f8; }
+.action-buttons .entry-input::placeholder { color: #6a8aaa; }
+.action-buttons .entry-input:focus { border-color: #4a9eff; }
