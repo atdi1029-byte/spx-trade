@@ -1,6 +1,8 @@
 // Bitunix Fill: the SPX app's Open button opens Bitunix with the trade in the link (#cfill=...).
-// This fills the order form (size, SL, TP2 on the whole position) - you press Open Long/Short.
-// Then it opens the new position's Partial TP/SL, fills TP1 on half - you press Confirm.
+// This fills the order form (size + SL) - you press Open Long/Short. Then it opens the new position's
+// Partial TP/SL twice: TP1 on half, you press Confirm; TP2 on the rest, you press Confirm.
+// (A TP in the order form covers the whole position and leaves 0 for partial TPs - RUM, Oct 27.
+// Too small to split = that one TP goes in the order form.)
 // It never presses Open or Confirm itself, and never touches the Market/Limit close buttons.
 (() => {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -67,7 +69,7 @@
     if (qtyNow().value !== String(want)) return banner('Could not fill the size. Type ' + (/USDT/.test(unit) ? o.size + ' USDT' : o.qty) + ' by hand.', 'err');
     if (!tp || !sl) return banner('Size filled, but the TP / SL fields did not show. Set SL ' + o.sl + ' and TP ' + o.tp2 + ' by hand.', 'err');
     if (!onPair()) return wrongPair();
-    setVal(tp, o.tp2);
+    setVal(tp, o.tp1qty ? '' : o.tp2);
     setVal(sl, o.sl);
     // Leverage: SPX sizes for 4x; OKLO was sitting at 20X (liquidation before the SL)
     const levEl = [...document.querySelectorAll('div, span')].filter(visible)
@@ -78,12 +80,12 @@
     const btn = [...document.querySelectorAll('button')].find(b => visible(b) && (b.innerText || '').trim() === (longSide ? 'Open Long' : 'Open Short'));
     ring(btn);
     const before = new Set(rowsFor().map(rowKey));
-    const filled = 'Filled ' + sym + ': size ' + (/USDT/.test(unit) ? '$' + o.size : o.qty) + ', SL ' + o.sl + ', TP2 ' + o.tp2 + '.';
+    const filled = 'Filled ' + sym + ': size ' + (/USDT/.test(unit) ? '$' + o.size : o.qty) + ', SL ' + o.sl + (o.tp1qty ? '' : ', TP ' + o.tp2) + '.';
     if (levWrong) {
       ring(levEl);
       banner(filled + '<br><b style="color:#ff6b6b">Leverage is ' + lev + 'X here - SPX sizes for ' + o.lev + 'X.</b> Click ' + lev + 'X (ringed), set ' + o.lev + ', confirm, then press ' + (longSide ? 'Open Long' : 'Open Short') + '.', 'err');
     } else {
-      banner(filled + '<br><b>Press ' + (longSide ? 'Open Long' : 'Open Short') + '.</b>' + (o.tp1qty ? '<br>TP1 on half comes next.' : ''), 'go');
+      banner(filled + '<br><b>Press ' + (longSide ? 'Open Long' : 'Open Short') + '.</b>' + (o.tp1qty ? '<br>TP1 and TP2 come next.' : ''), 'go');
     }
     // not once: a press that Bitunix rejects (no size, low margin) must not use up the TP1 step
     let busy = false, done = false;
@@ -91,35 +93,59 @@
       if (busy || done) return;
       if (!onPair()) return wrongPair();
       busy = true;
-      done = await addTp1(before);
+      done = await addTps(before);
       busy = false;
     });
   }
 
-  async function addTp1(before) {
+  const visibleModals = () => [...document.querySelectorAll('.arco-modal')].filter(visible);
+  const addForm = () => visibleModals().find(m => m.querySelector('input[placeholder="Trigger"]') && m.querySelector('input[placeholder="Order Quantity"]'));
+  const listModal = () => visibleModals().find(m => [...m.querySelectorAll('button')].some(b => visible(b) && (b.innerText || '').trim() === 'Add'));
+
+  // Open the position's Partial TP/SL list (if it isn't up) and its Add form
+  async function openAdd(row) {
+    if (!listModal()) {
+      const hdr = [...document.querySelectorAll('div')].find(d => d.children.length >= 10 && [...d.children].some(c => (c.innerText || '').trim() === 'Partial TP/SL'));
+      const idx = hdr ? [...hdr.children].findIndex(c => (c.innerText || '').trim() === 'Partial TP/SL') : -1;
+      const cell = idx >= 0 ? row.children[idx] : null;
+      const target = cell && (cell.querySelector('svg') ? cell.querySelector('svg').parentElement : cell.querySelector('.cell-content') || cell);
+      if (!target) return null;
+      click(target);
+      if (!await waitFor(listModal, 6000)) return null;
+    }
+    const add = [...listModal().querySelectorAll('button')].find(b => visible(b) && (b.innerText || '').trim() === 'Add');
+    click(add);
+    return waitFor(addForm, 6000);
+  }
+
+  // Fill one partial TP and wait for Confirm (true) or Cancel/close (false)
+  async function oneTp(row, name, price, qty) {
+    const form = await openAdd(row);
+    if (!form) { banner('Could not open Partial TP/SL. Add ' + name + ' ' + price + ' on ' + qty + ' by hand.', 'err'); return false; }
+    const trig = [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Trigger');      // first = TP side
+    const q = [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Order Quantity');
+    if (!trig || !q) { banner('TP form fields not found. Add ' + name + ' ' + price + ' on ' + qty + ' by hand.', 'err'); return false; }
+    await sleep(500);
+    setVal(trig, price);
+    await sleep(400);  // typing the trigger re-sets the quantity a moment later (NOK test, Oct 27)
+    const qIn = () => [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Order Quantity') || q;
+    for (let k = 0; k < 4 && qIn().value !== String(qty); k++) { setVal(qIn(), qty); await sleep(400); }
+    if (qIn().value !== String(qty)) { banner(name + ': Bitunix only allows ' + (qIn().value || 0) + ' here (is a TP already on the whole position?). Add ' + name + ' ' + price + ' on ' + qty + ' by hand.', 'err'); return false; }
+    ring([...form.querySelectorAll('button')].find(b => visible(b) && (b.innerText || '').trim() === 'Confirm'));
+    banner(name + ' ' + price + ' on ' + qty + ' filled.<br><b>Press Confirm.</b>', 'go');
+    await waitFor(() => !form.isConnected || !visible(form), 5 * 60000);
+    await sleep(1200);
+    const list = listModal();
+    return !!list && (list.innerText || '').includes(price);
+  }
+
+  async function addTps(before) {
     banner('Waiting for the new ' + sym + ' position...');
     const row = await waitFor(() => rowsFor().find(r => !before.has(rowKey(r))), 20000);
     if (!row) { banner('No new ' + sym + ' position showed up. If Bitunix said why, fix it and press ' + (longSide ? 'Open Long' : 'Open Short') + ' again.', 'err'); return false; }
-    const hdr = [...document.querySelectorAll('div')].find(d => d.children.length >= 10 && [...d.children].some(c => (c.innerText || '').trim() === 'Partial TP/SL'));
-    const idx = hdr ? [...hdr.children].findIndex(c => (c.innerText || '').trim() === 'Partial TP/SL') : -1;
-    const cell = idx >= 0 ? row.children[idx] : null;
-    const target = cell && (cell.querySelector('svg') ? cell.querySelector('svg').parentElement : cell.querySelector('.cell-content') || cell);
-    if (!target) return banner('Could not find Partial TP/SL for ' + sym + '. Add TP1 ' + o.tp1 + ' on ' + o.tp1qty + ' by hand.', 'err');
-    click(target);
-    const add = await waitFor(() => [...document.querySelectorAll('.arco-modal button')].find(b => visible(b) && (b.innerText || '').trim() === 'Add'), 6000);
-    if (!add) return banner('Partial TP/SL window did not open. Add TP1 ' + o.tp1 + ' on ' + o.tp1qty + ' by hand.', 'err');
-    click(add);
-    // the "Add TP/SL" window (the Partial TP/SL list behind it is a modal too, without these boxes)
-    const form = await waitFor(() => [...document.querySelectorAll('.arco-modal')].filter(visible)
-      .find(m => m.querySelector('input[placeholder="Trigger"]') && m.querySelector('input[placeholder="Order Quantity"]')), 6000);
-    if (!form) return banner('TP form did not open. Add TP1 ' + o.tp1 + ' on ' + o.tp1qty + ' by hand.', 'err');
-    const trig = [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Trigger');      // first = TP side
-    const q = [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Order Quantity');
-    if (!trig || !q) return banner('TP form fields not found. Add TP1 ' + o.tp1 + ' on ' + o.tp1qty + ' by hand.', 'err');
-    setVal(trig, o.tp1);
-    setVal(q, o.tp1qty);
-    ring([...form.querySelectorAll('button')].find(b => visible(b) && (b.innerText || '').trim() === 'Confirm'));
-    banner('TP1 ' + o.tp1 + ' on ' + o.tp1qty + ' filled.<br><b>Press Confirm.</b>', 'go');
+    if (!await oneTp(row, 'TP1', o.tp1, o.tp1qty)) { banner('TP1 was not added - stopped. Add TP1 ' + o.tp1 + ' on ' + o.tp1qty + ' and TP2 ' + o.tp2 + ' on ' + o.tp2qty + ' by hand.', 'err'); return true; }
+    if (!await oneTp(row, 'TP2', o.tp2, o.tp2qty)) { banner('TP1 is on. TP2 was not added - add TP2 ' + o.tp2 + ' on ' + o.tp2qty + ' by hand.', 'err'); return true; }
+    banner(sym + ' done: SL ' + o.sl + ', TP1 ' + o.tp1 + ' on ' + o.tp1qty + ', TP2 ' + o.tp2 + ' on ' + o.tp2qty + '.');
     return true;
   }
 

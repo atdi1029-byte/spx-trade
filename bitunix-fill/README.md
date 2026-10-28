@@ -3,8 +3,11 @@
 Chrome extension for the SPX app's **Open** button on US stocks (Bitunix blocks API orders on them).
 
 Open puts the trade in the Bitunix link (`#cfill=...`). On bitunix.com this extension:
-1. fills the order form: size (USDT box), TP/SL ticked, TP = TP2 runner, SL — and rings Open Long/Short;
-2. after you press Open, finds the new position, opens its Partial TP/SL → Add, fills TP1 on half — and rings Confirm.
+1. fills the order form: size (USDT box), TP/SL ticked, SL only — and rings Open Long/Short;
+2. after you press Open, finds the new position, opens its Partial TP/SL → Add, fills TP1 on half — rings Confirm;
+3. after that Confirm, Add again with TP2 on the rest — rings Confirm.
+A TP typed in the order form covers the whole position and leaves 0 for partial TPs, so the split goes in as two partial TPs
+(too small to split = the one TP goes in the order form).
 
 It never presses Open or Confirm, never touches the positions' Market/Limit close buttons, and ignores links older than 10 minutes.
 
