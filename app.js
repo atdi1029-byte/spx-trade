@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-27i';
+const DASH_VERSION = 'v2026-10-27j';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -971,7 +971,10 @@ function skipAllActions() {
 // nothing is opened), then the card is marked Entered. Empty size: copy the pair, open Bitunix, mark
 // Entered (opened by hand).
 const TRADE_APP_URL = 'https://script.google.com/macros/s/AKfycbywWcasm7wwI14tUc64XpTscePJlgiU3Q7sZ4uY-TmqjqVZzuxJOhf6T8fO2ZpSaKwV/exec';
-const BX_SYMBOL = { 'CL1!': 'CL', 'USOIL': 'CL', 'NG1!': 'NATGAS', 'SILVER': 'XAG', 'GOLD': 'XAU', 'PLATINUM': 'XPT', 'XCUUSD': 'COPPER', 'BRK.B': 'BRKB' };
+// Bitunix names some stocks in full when the ticker is a crypto's (CAT -> CATERPILLARUSDT, GME -> GAMESTOPUSDT).
+// Only USD-priced tickers here: the HK/KR codes (005930, 1810...) are priced in won/HKD, so their levels would be nonsense.
+const BX_SYMBOL = { 'CL1!': 'CL', 'USOIL': 'CL', 'NG1!': 'NATGAS', 'SILVER': 'XAG', 'GOLD': 'XAU', 'PLATINUM': 'XPT', 'XCUUSD': 'COPPER', 'BRK.B': 'BRKB',
+                    'CAT': 'CATERPILLAR', 'GME': 'GAMESTOP' };
 function bxSymbol(ticker) {
     const raw = String(ticker).toUpperCase().replace(/\.P$/, '');
     return (BX_SYMBOL[raw] || raw).replace(/USDT$|USDC$|USD$/, '');
@@ -1072,9 +1075,15 @@ async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     const entryEl = document.getElementById(elemId + '-entry');
     const p = Number(String(entryEl ? entryEl.value : price).replace(/,/g, '')) || Number(price);
     const side = sideOf(signal), isBuy = side === 'buy';
-    // Not listed on Bitunix (CAT, Oct 27: Bitunix sent the link to BTCUSDT) - don't open anything
-    if (size > 0 && _bxMins && !_bxMins[bxSymbol(ticker)]) {
+    // Not listed on Bitunix (an unknown pair lands on BTCUSDT) - don't open anything
+    const bxPair = _bxMins && _bxMins[bxSymbol(ticker)];
+    if (size > 0 && _bxMins && !bxPair) {
         showToast(displayName(ticker) + ' (' + bxSymbol(ticker) + 'USDT) isn\'t on Bitunix - nothing opened', 'error', 7000);
+        return;
+    }
+    // The card's price and Bitunix's must be the same thing (wrong pair, other currency, stale signal)
+    if (size > 0 && bxPair && bxPair[1] > 0 && p > 0 && Math.abs(p / bxPair[1] - 1) > 0.2) {
+        showToast(displayName(ticker) + ': card price ' + p + ' vs Bitunix ' + bxPair[1] + ' - too far apart, nothing opened. Fix the Entry box or open by hand.', 'error', 9000);
         return;
     }
     // US stock: Bitunix won't take it from the API. The link carries the trade for the Bitunix Fill
