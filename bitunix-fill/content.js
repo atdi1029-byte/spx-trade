@@ -39,8 +39,9 @@
   if (!o.ts || Date.now() - o.ts > 10 * 60000) return banner('Link is old - not filling.', 'err');
   const sym = String(o.sym || '').toUpperCase();
   const longSide = o.side !== 'sell';
-  // Bitunix sends unknown pairs to BTCUSDT (CAT, Oct 27): only ever fill the pair the link is for
-  const onPair = () => location.pathname.toUpperCase().endsWith('/' + sym) && document.title.toUpperCase().includes(sym);
+  // Bitunix sends unknown pairs to BTCUSDT (CAT, Oct 27): only ever fill the pair the link is for.
+  // (Path only: the title uses Bitunix's short name - CATERPILLARUSDT's title says CATUSDT.)
+  const onPair = () => location.pathname.toUpperCase().endsWith('/' + sym);
   const wrongPair = () => banner('<b style="color:#ff6b6b">This page is not ' + sym + '</b> (Bitunix may not list it) - nothing filled. Don\'t open anything here.', 'err');
 
   // --- position rows for this symbol (cells: 0 name/side, 1 size, 2 entry ...)
@@ -79,6 +80,7 @@
     const levWrong = o.lev && lev && lev !== Number(o.lev);
     const btn = [...document.querySelectorAll('button')].find(b => visible(b) && (b.innerText || '').trim() === (longSide ? 'Open Long' : 'Open Short'));
     ring(btn);
+    keepFilled(qtyNow, want, btn);
     const before = new Set(rowsFor().map(rowKey));
     const filled = 'Filled ' + sym + ': size ' + (/USDT/.test(unit) ? '$' + o.size : o.qty) + ', SL ' + o.sl + (o.tp1qty ? '' : ', TP ' + o.tp2) + '.';
     if (levWrong) {
@@ -96,6 +98,39 @@
       done = await addTps(before);
       busy = false;
     });
+  }
+
+  // Bitunix resets the order form a few times while the page settles (size wiped at 0.9s, 1.3s and
+  // 6.8s after load - RUM, Oct 27). Put the values back for 20s, until you touch the form or press Open.
+  function keepFilled(qtyNow, want, btn) {
+    let stop = false;
+    const t0 = Date.now();
+    const panel = qtyNow().closest('[class*=order], [class*=trade], [class*=panel]') || document;
+    const quit = e => { if (e.isTrusted) stop = true; };
+    panel.addEventListener('keydown', quit, true);
+    panel.addEventListener('mousedown', quit, true);
+    if (btn) btn.addEventListener('mousedown', () => { stop = true; }, true);
+    const put = (el, v) => {
+      const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      set.call(el, String(v));
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    const iv = setInterval(() => {
+      if (stop || Date.now() - t0 > 20000 || !onPair()) return clearInterval(iv);
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+      const q = qtyNow();
+      if (q && q.value !== String(want)) put(q, want);
+      let tp = inputs().find(i => i.placeholder === 'TP');
+      if (!tp) {
+        const tick = [...document.querySelectorAll('.check-icon-group')].find(e => visible(e) && /TP \/ SL/.test(e.innerText || ''));
+        if (tick) click(tick);
+        return;
+      }
+      const sl = inputs().find(i => i.placeholder === 'SL');
+      if (sl && sl.value !== String(o.sl)) put(sl, o.sl);
+      if (!o.tp1qty && tp.value !== String(o.tp2)) put(tp, o.tp2);
+    }, 400);
   }
 
   const visibleModals = () => [...document.querySelectorAll('.arco-modal')].filter(visible);
