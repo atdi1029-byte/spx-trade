@@ -192,35 +192,39 @@
   // Fill one partial TP (qtyOf(available) -> qty) and wait for Confirm (qty) or Cancel/close (null)
   async function oneTp(row, name, price, qtyOf) {
     const form = await openAdd(row);
-    if (!form) { banner('Could not open Partial TP/SL. Add ' + name + ' ' + price + ' by hand.', 'err'); return null; }
+    if (!form) { lastWhy = 'the Partial TP/SL window did not open'; return null; }
     const trig = [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Trigger');      // first = TP side
     const q = [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Order Quantity');
-    if (!trig || !q) { banner('TP form fields not found. Add ' + name + ' ' + price + ' by hand.', 'err'); return null; }
-    await sleep(500);
-    const avail = available(form);
+    if (!trig || !q) { lastWhy = 'the TP boxes were not found'; return null; }
+    // the window shows 0 available until Bitunix loads the position into it (CVNA, Oct 27)
+    const avail = (await waitFor(() => available(form) || null, 6000)) || 0;
+    await sleep(300);
     const qty = qtyOf(avail);
-    if (!(Number(qty) > 0)) { banner(name + ': Bitunix shows ' + avail + ' available for a TP. Add ' + name + ' ' + price + ' by hand.', 'err'); return null; }
+    if (!(Number(qty) > 0)) { lastWhy = 'Bitunix showed ' + avail + ' available for a TP'; return null; }
     setVal(trig, price);
     await sleep(400);  // typing the trigger re-sets the quantity a moment later (NOK test, Oct 27)
     const qIn = () => [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Order Quantity') || q;
     for (let k = 0; k < 4 && Number(qIn().value) !== Number(qty); k++) { setVal(qIn(), qty); await sleep(400); }
-    if (Number(qIn().value) !== Number(qty)) { banner(name + ': could not set ' + qty + ' (box says ' + (qIn().value || 0) + '). Add ' + name + ' ' + price + ' on ' + qty + ' by hand.', 'err'); return null; }
+    if (Number(qIn().value) !== Number(qty)) { lastWhy = 'the quantity box would not take ' + qty + ' (it says ' + (qIn().value || 0) + ')'; return null; }
     ring([...form.querySelectorAll('button')].find(b => visible(b) && (b.innerText || '').trim() === 'Confirm'));
     banner(name + ' ' + price + ' on ' + qty + ' filled.<br><b>Press Confirm.</b>', 'go');
     await waitFor(() => !form.isConnected || !visible(form), 5 * 60000);
     await sleep(1200);
     const list = listModal();
-    return list && (list.innerText || '').includes(price) ? qty : null;
+    if (list && (list.innerText || '').includes(price)) return qty;
+    lastWhy = 'it was cancelled or Bitunix refused it';
+    return null;
   }
+  let lastWhy = '';
 
   async function addTps(before) {
     banner('Waiting for the new ' + sym + ' position...');
     const row = await waitFor(() => rowsFor().find(r => !before.has(rowKey(r))), 20000);
     if (!row) { banner('No new ' + sym + ' position showed up. If Bitunix said why, fix it and press ' + (longSide ? 'Open Long' : 'Open Short') + ' again.', 'err'); return false; }
     const q1 = await oneTp(row, 'TP1', o.tp1, avail => floorTo(avail / 2, Math.max(qdec, decs(avail))));
-    if (!q1) { banner('TP1 was not added - stopped. Add TP1 ' + o.tp1 + ' on half and TP2 ' + o.tp2 + ' on the rest by hand.', 'err'); return true; }
+    if (!q1) { banner('TP1 was not added (' + lastWhy + ') - stopped. Add TP1 ' + o.tp1 + ' on half and TP2 ' + o.tp2 + ' on the rest by hand.', 'err'); return true; }
     const q2 = await oneTp(row, 'TP2', o.tp2, avail => String(avail));
-    if (!q2) { banner('TP1 is on. TP2 was not added - add TP2 ' + o.tp2 + ' on the rest by hand.', 'err'); return true; }
+    if (!q2) { banner('TP1 is on. TP2 was not added (' + lastWhy + ') - add TP2 ' + o.tp2 + ' on the rest by hand.', 'err'); return true; }
     banner(sym + ' done: SL ' + o.sl + ', TP1 ' + o.tp1 + ' on ' + q1 + ', TP2 ' + o.tp2 + ' on ' + q2 + '.');
     return true;
   }
