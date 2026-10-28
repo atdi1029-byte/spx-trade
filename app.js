@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-27k';
+const DASH_VERSION = 'v2026-10-28a';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -972,9 +972,16 @@ function skipAllActions() {
 // Entered (opened by hand).
 const TRADE_APP_URL = 'https://script.google.com/macros/s/AKfycbywWcasm7wwI14tUc64XpTscePJlgiU3Q7sZ4uY-TmqjqVZzuxJOhf6T8fO2ZpSaKwV/exec';
 // Bitunix names some stocks in full when the ticker is a crypto's (CAT -> CATERPILLARUSDT, GME -> GAMESTOPUSDT).
-// Only USD-priced tickers here: the HK/KR codes (005930, 1810...) are priced in won/HKD, so their levels would be nonsense.
 const BX_SYMBOL = { 'CL1!': 'CL', 'USOIL': 'CL', 'NG1!': 'NATGAS', 'SILVER': 'XAG', 'GOLD': 'XAU', 'PLATINUM': 'XPT', 'XCUUSD': 'COPPER', 'BRK.B': 'BRKB',
                     'CAT': 'CATERPILLAR', 'GME': 'GAMESTOP' };
+// Korean / HK / China listings Bitunix trades in USD (LG Electronics 066570 = LGEUSDT, Oct 28). The card's price
+// is in won/HKD/yuan, so Open takes Bitunix's live USD price as the entry and puts the same % levels on it.
+const BX_FOREIGN = {
+    '66570': 'LGE', '066570': 'LGE', '660': 'SKHYNIX', '000660': 'SKHYNIX', '5930': 'SAMSUNG', '005930': 'SAMSUNG',
+    '5380': 'HYUNDAI', '005380': 'HYUNDAI', '9150': 'SAMSUNGEM', '009150': 'SAMSUNGEM',
+    '1810': 'XIAOMI', '9992': 'POPMART', '300308': 'ZHONGJI'
+};
+Object.assign(BX_SYMBOL, BX_FOREIGN);
 function bxSymbol(ticker) {
     const raw = String(ticker).toUpperCase().replace(/\.P$/, '');
     return (BX_SYMBOL[raw] || raw).replace(/USDT$|USDC$|USD$/, '');
@@ -1073,7 +1080,16 @@ function showManualPanel(o, reason) {
 async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     const size = Number(String((document.getElementById(elemId + '-size') || {}).value || '').replace(/[$,]/g, ''));
     const entryEl = document.getElementById(elemId + '-entry');
-    const p = Number(String(entryEl ? entryEl.value : price).replace(/,/g, '')) || Number(price);
+    const foreign = !!BX_FOREIGN[String(ticker).toUpperCase()];
+    let p = Number(String(entryEl ? entryEl.value : price).replace(/,/g, '')) || Number(price);
+    if (foreign) {
+        if (!(_bxMins && _bxMins[bxSymbol(ticker)] && _bxMins[bxSymbol(ticker)][1] > 0)) {
+            loadBxMins();
+            showToast('Still loading Bitunix prices for ' + displayName(ticker) + ' - press Open again in a few seconds', 'error', 5000);
+            return;
+        }
+        p = _bxMins[bxSymbol(ticker)][1];   // won/HKD -> Bitunix USD
+    }
     const side = sideOf(signal), isBuy = side === 'buy';
     // Not listed on Bitunix (an unknown pair lands on BTCUSDT) - don't open anything
     const bxPair = _bxMins && _bxMins[bxSymbol(ticker)];
@@ -1082,7 +1098,7 @@ async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
         return;
     }
     // The card's price and Bitunix's must be the same thing (wrong pair, other currency, stale signal)
-    if (size > 0 && bxPair && bxPair[1] > 0 && p > 0 && Math.abs(p / bxPair[1] - 1) > 0.2) {
+    if (size > 0 && !foreign && bxPair && bxPair[1] > 0 && p > 0 && Math.abs(p / bxPair[1] - 1) > 0.2) {
         showToast(displayName(ticker) + ': card price ' + p + ' vs Bitunix ' + bxPair[1] + ' - too far apart, nothing opened. Fix the Entry box or open by hand.', 'error', 9000);
         return;
     }
