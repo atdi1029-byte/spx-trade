@@ -61,7 +61,14 @@
       const tick = [...document.querySelectorAll('.check-icon-group')].find(e => visible(e) && /TP \/ SL/.test(e.innerText || ''));
       if (tick) click(tick);
     }
-    const tp = await waitFor(tpIn, 3000), sl = inputs().find(i => i.placeholder === 'SL');
+    let tp = await waitFor(tpIn, 3000);
+    // splitting needs the order-form TP empty; a left-over TP (even 0) clears only by un-ticking and re-ticking
+    if (tp && o.tp1qty && tp.value !== '') {
+      const tick = () => [...document.querySelectorAll('.check-icon-group')].find(e => visible(e) && /TP \/ SL/.test(e.innerText || ''));
+      click(tick()); await sleep(500); click(tick());
+      tp = await waitFor(tpIn, 3000);
+    }
+    const sl = inputs().find(i => i.placeholder === 'SL');
     await sleep(400);
     const qtyNow = () => inputs().find(i => /^Min /.test(i.placeholder || '')) || qty;
     const unit = (qtyNow().closest('.arco-input-group-wrapper') || qtyNow().parentElement.parentElement).innerText || '';
