@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.alexbarnett.bitunix-sync</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/bin/open</string>
+		<string>-g</string>
+		<string>-a</string>
+		<string>Terminal</string>
+		<string>/Users/alexbarnett/Documents/Code/Claude/SPX/tools/bitunix_sync.command</string>
+	</array>
+	<key>StartCalendarInterval</key>
+	<array>
+		<dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>21</integer><key>Minute</key><integer>0</integer></dict>
+	</array>
+</dict>
+</plist>
