@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-28b';
+const DASH_VERSION = 'v2026-10-28c';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -982,8 +982,11 @@ const BX_FOREIGN = {
     '1810': 'XIAOMI', 'XIAMOI': 'XIAOMI', '9992': 'POPMART', '300308': 'ZHONGJI',
     '35420': 'NAVER', '035420': 'NAVER', '42700': 'HANMI', '042700': 'HANMI', '69500': 'KODEX200', '069500': 'KODEX200',
     '100': 'MINIMAX', '3986': 'GIGADEV', '688825': 'CXMT', '625': 'SHEIN', '2513': 'ZHIPU', '1211': 'BYD',
-    'TENCENT80': 'TENCENT', 'MEITUAN19': 'MEITUAN', 'KUAISH80': 'KUAISHOU'
+    'TENCENT80': 'TENCENT', 'MEITUAN19': 'MEITUAN', 'KUAISH80': 'KUAISHOU',
+    // NASDAQ signals are traded as QQQ (the card's QQQ box): QQQ's own tested SL/TP1, Bitunix's QQQ price
+    'NASDAQ': 'QQQ'
 };
+const BX_LEVELS_AS = { 'NASDAQ': 'QQQ' };
 Object.assign(BX_SYMBOL, BX_FOREIGN);
 function bxSymbol(ticker) {
     const raw = String(ticker).toUpperCase().replace(/\.P$/, '');
@@ -1033,7 +1036,7 @@ new MutationObserver(() => { clearTimeout(_bxMinsTimer); _bxMinsTimer = setTimeo
 const BX_AUTO_OPEN = new Set(['XAU', 'XAG', 'XPT', 'XPD', 'CL', 'NATGAS', 'COPPER', 'GAS', 'PAXG', 'XAUT']);
 // What to type on Bitunix for a hand-opened trade: qty at 4x, SL on all, TP1 on half, TP2 on the rest
 function manualOrder(ticker, side, p, size) {
-    const isBuy = side === 'buy', bt = btFor(ticker, side);
+    const isBuy = side === 'buy', bt = btFor(BX_LEVELS_AS[String(ticker).toUpperCase()] || ticker, side);
     const at = pct => isBuy ? p * (1 + pct / 100) : p * (1 - pct / 100);
     const m = _bxMins && _bxMins[bxSymbol(ticker)];
     const fmt = v => m && m[3] >= 0 ? v.toFixed(m[3]) : v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toPrecision(4);
