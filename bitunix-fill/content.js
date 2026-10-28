@@ -182,34 +182,46 @@
     return waitFor(addForm, 6000);
   }
 
-  // Fill one partial TP and wait for Confirm (true) or Cancel/close (false)
-  async function oneTp(row, name, price, qty) {
+  // Quantities come from what Bitunix actually filled, not SPX's estimate (RDW, Oct 27: SPX said 0.22,
+  // Bitunix filled 0.20, so TP1 0.11 left only 0.09 for TP2). The Add form says "Available TP quantity".
+  const decs = v => (String(v).split('.')[1] || '').length;
+  const qdec = Math.max(decs(o.qty || ''), decs(o.tp1qty || ''));
+  const floorTo = (v, d) => (Math.floor(v * Math.pow(10, d) + 1e-8) / Math.pow(10, d)).toFixed(d);
+  const available = form => Number(((form.innerText || '').match(/Available TP quantity\s*([\d.]+)/) || [])[1] || 0);
+
+  // Fill one partial TP (qtyOf(available) -> qty) and wait for Confirm (qty) or Cancel/close (null)
+  async function oneTp(row, name, price, qtyOf) {
     const form = await openAdd(row);
-    if (!form) { banner('Could not open Partial TP/SL. Add ' + name + ' ' + price + ' on ' + qty + ' by hand.', 'err'); return false; }
+    if (!form) { banner('Could not open Partial TP/SL. Add ' + name + ' ' + price + ' by hand.', 'err'); return null; }
     const trig = [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Trigger');      // first = TP side
     const q = [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Order Quantity');
-    if (!trig || !q) { banner('TP form fields not found. Add ' + name + ' ' + price + ' on ' + qty + ' by hand.', 'err'); return false; }
+    if (!trig || !q) { banner('TP form fields not found. Add ' + name + ' ' + price + ' by hand.', 'err'); return null; }
     await sleep(500);
+    const avail = available(form);
+    const qty = qtyOf(avail);
+    if (!(Number(qty) > 0)) { banner(name + ': Bitunix shows ' + avail + ' available for a TP. Add ' + name + ' ' + price + ' by hand.', 'err'); return null; }
     setVal(trig, price);
     await sleep(400);  // typing the trigger re-sets the quantity a moment later (NOK test, Oct 27)
     const qIn = () => [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Order Quantity') || q;
-    for (let k = 0; k < 4 && qIn().value !== String(qty); k++) { setVal(qIn(), qty); await sleep(400); }
-    if (qIn().value !== String(qty)) { banner(name + ': Bitunix only allows ' + (qIn().value || 0) + ' here (is a TP already on the whole position?). Add ' + name + ' ' + price + ' on ' + qty + ' by hand.', 'err'); return false; }
+    for (let k = 0; k < 4 && Number(qIn().value) !== Number(qty); k++) { setVal(qIn(), qty); await sleep(400); }
+    if (Number(qIn().value) !== Number(qty)) { banner(name + ': could not set ' + qty + ' (box says ' + (qIn().value || 0) + '). Add ' + name + ' ' + price + ' on ' + qty + ' by hand.', 'err'); return null; }
     ring([...form.querySelectorAll('button')].find(b => visible(b) && (b.innerText || '').trim() === 'Confirm'));
     banner(name + ' ' + price + ' on ' + qty + ' filled.<br><b>Press Confirm.</b>', 'go');
     await waitFor(() => !form.isConnected || !visible(form), 5 * 60000);
     await sleep(1200);
     const list = listModal();
-    return !!list && (list.innerText || '').includes(price);
+    return list && (list.innerText || '').includes(price) ? qty : null;
   }
 
   async function addTps(before) {
     banner('Waiting for the new ' + sym + ' position...');
     const row = await waitFor(() => rowsFor().find(r => !before.has(rowKey(r))), 20000);
     if (!row) { banner('No new ' + sym + ' position showed up. If Bitunix said why, fix it and press ' + (longSide ? 'Open Long' : 'Open Short') + ' again.', 'err'); return false; }
-    if (!await oneTp(row, 'TP1', o.tp1, o.tp1qty)) { banner('TP1 was not added - stopped. Add TP1 ' + o.tp1 + ' on ' + o.tp1qty + ' and TP2 ' + o.tp2 + ' on ' + o.tp2qty + ' by hand.', 'err'); return true; }
-    if (!await oneTp(row, 'TP2', o.tp2, o.tp2qty)) { banner('TP1 is on. TP2 was not added - add TP2 ' + o.tp2 + ' on ' + o.tp2qty + ' by hand.', 'err'); return true; }
-    banner(sym + ' done: SL ' + o.sl + ', TP1 ' + o.tp1 + ' on ' + o.tp1qty + ', TP2 ' + o.tp2 + ' on ' + o.tp2qty + '.');
+    const q1 = await oneTp(row, 'TP1', o.tp1, avail => floorTo(avail / 2, Math.max(qdec, decs(avail))));
+    if (!q1) { banner('TP1 was not added - stopped. Add TP1 ' + o.tp1 + ' on half and TP2 ' + o.tp2 + ' on the rest by hand.', 'err'); return true; }
+    const q2 = await oneTp(row, 'TP2', o.tp2, avail => String(avail));
+    if (!q2) { banner('TP1 is on. TP2 was not added - add TP2 ' + o.tp2 + ' on the rest by hand.', 'err'); return true; }
+    banner(sym + ' done: SL ' + o.sl + ', TP1 ' + o.tp1 + ' on ' + q1 + ', TP2 ' + o.tp2 + ' on ' + q2 + '.');
     return true;
   }
 
