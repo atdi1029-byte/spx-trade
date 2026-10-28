@@ -80,18 +80,31 @@
     if (!o.tp1qty) setVal(tp, o.tp2);  // split: leave TP empty (typing '' makes it 0)
     setVal(sl, o.sl);
     // Leverage: SPX sizes for 4x; OKLO was sitting at 20X (liquidation before the SL)
-    const levEl = [...document.querySelectorAll('div, span')].filter(visible)
-      .find(e => /^\d+X(\s+\d+X)?$/.test((e.innerText || '').trim()) && e.getBoundingClientRect().left > window.innerWidth * 0.6 && e.getBoundingClientRect().top < qtyNow().getBoundingClientRect().top);
-    const levs = levEl ? (levEl.innerText.match(/\d+/g) || []).map(Number) : [];
-    const lev = longSide ? levs[0] : (levs[1] || levs[0]);
+    const levNow = () => {
+      const el = [...document.querySelectorAll('div, span')].filter(visible)
+        .find(e => /^\d+X(\s+\d+X)?$/.test((e.innerText || '').trim()) && e.getBoundingClientRect().left > window.innerWidth * 0.6 && e.getBoundingClientRect().top < qtyNow().getBoundingClientRect().top);
+      const levs = el ? (el.innerText.match(/\d+/g) || []).map(Number) : [];
+      return { el, lev: longSide ? levs[0] : (levs[1] || levs[0]) };
+    };
+    const { el: levEl, lev } = levNow();
     const levWrong = o.lev && lev && lev !== Number(o.lev);
     const btn = [...document.querySelectorAll('button')].find(b => visible(b) && (b.innerText || '').trim() === (longSide ? 'Open Long' : 'Open Short'));
     ring(btn);
-    keepFilled(qtyNow, want, btn);
+    let levWarned = false;   // set below; once the pair is at o.lev the box turns back to "press Open"
+    keepFilled(qtyNow, want, btn, () => {
+      if (!levWarned) return;
+      const now = levNow();
+      if (now.lev === Number(o.lev)) {
+        levWarned = false;
+        if (now.el) now.el.style.outline = '';
+        banner(filled + '<br>Leverage is ' + o.lev + 'X now.<br><b>Press ' + (longSide ? 'Open Long' : 'Open Short') + '.</b>' + (o.tp1qty ? '<br>TP1 and TP2 come next.' : ''), 'go');
+      }
+    });
     const before = new Set(rowsFor().map(rowKey));
     const filled = 'Filled ' + sym + ': size ' + (/USDT/.test(unit) ? '$' + o.size : o.qty) + ', SL ' + o.sl + (o.tp1qty ? '' : ', TP ' + o.tp2) + '.';
     if (levWrong) {
       ring(levEl);
+      levWarned = true;
       banner(filled + '<br><b style="color:#ff6b6b">Leverage is ' + lev + 'X here - SPX sizes for ' + o.lev + 'X.</b> Click ' + lev + 'X (ringed), set ' + o.lev + ', confirm, then press ' + (longSide ? 'Open Long' : 'Open Short') + '.', 'err');
     } else {
       banner(filled + '<br><b>Press ' + (longSide ? 'Open Long' : 'Open Short') + '.</b>' + (o.tp1qty ? '<br>TP1 and TP2 come next.' : ''), 'go');
@@ -108,15 +121,22 @@
   }
 
   // Bitunix resets the order form a few times while the page settles (size wiped at 0.9s, 1.3s and
-  // 6.8s after load - RUM, Oct 27). Put the values back for 20s, until you touch the form or press Open.
-  function keepFilled(qtyNow, want, btn) {
-    let stop = false;
+  // 6.8s after load - RUM, Oct 27) and again when you change leverage (CAT, Oct 27). Keep putting the
+  // values back until you press Open (3 min max); a box you type in yourself is left alone.
+  function keepFilled(qtyNow, want, btn, onTick) {
+    let stop = false, toggleTouched = false;
+    const touched = new Set();
     const t0 = Date.now();
-    const panel = qtyNow().closest('[class*=order], [class*=trade], [class*=panel]') || document;
-    const quit = e => { if (e.isTrusted) stop = true; };
-    panel.addEventListener('keydown', quit, true);
-    panel.addEventListener('mousedown', quit, true);
-    if (btn) btn.addEventListener('mousedown', () => { stop = true; }, true);
+    const kind = el => el && el.tagName === 'INPUT' ? (/^Min /.test(el.placeholder || '') ? 'qty' : el.placeholder === 'TP' ? 'tp' : el.placeholder === 'SL' ? 'sl' : '') : '';
+    const mark = e => { if (e.isTrusted && kind(e.target)) touched.add(kind(e.target)); };
+    document.addEventListener('keydown', mark, true);
+    document.addEventListener('input', mark, true);
+    document.addEventListener('mousedown', e => {
+      if (!e.isTrusted) return;
+      if (e.target.closest && e.target.closest('.check-icon-group')) toggleTouched = true;
+      const b = e.target.closest && e.target.closest('button');
+      if (b && /^Open (Long|Short)$/.test((b.innerText || '').trim())) stop = true;
+    }, true);
     const put = (el, v) => {
       const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
       set.call(el, String(v));
@@ -124,19 +144,21 @@
       el.dispatchEvent(new Event('change', { bubbles: true }));
     };
     const iv = setInterval(() => {
-      if (stop || Date.now() - t0 > 20000 || !onPair()) return clearInterval(iv);
+      if (stop || Date.now() - t0 > 3 * 60000 || !onPair()) return clearInterval(iv);
+      if (visibleModals().length) return;                                    // leverage window etc.
       if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+      if (onTick) onTick();
       const q = qtyNow();
-      if (q && q.value !== String(want)) put(q, want);
-      let tp = inputs().find(i => i.placeholder === 'TP');
+      if (q && !touched.has('qty') && q.value !== String(want)) put(q, want);
+      const tp = inputs().find(i => i.placeholder === 'TP');
       if (!tp) {
         const tick = [...document.querySelectorAll('.check-icon-group')].find(e => visible(e) && /TP \/ SL/.test(e.innerText || ''));
-        if (tick) click(tick);
+        if (tick && !toggleTouched) click(tick);
         return;
       }
       const sl = inputs().find(i => i.placeholder === 'SL');
-      if (sl && sl.value !== String(o.sl)) put(sl, o.sl);
-      if (!o.tp1qty && tp.value !== String(o.tp2)) put(tp, o.tp2);
+      if (sl && !touched.has('sl') && sl.value !== String(o.sl)) put(sl, o.sl);
+      if (!o.tp1qty && !touched.has('tp') && tp.value !== String(o.tp2)) put(tp, o.tp2);
     }, 400);
   }
 
