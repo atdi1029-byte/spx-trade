@@ -190,7 +190,7 @@
   const available = form => Number(((form.innerText || '').match(/Available TP quantity\s*([\d.]+)/) || [])[1] || 0);
 
   // Fill one partial TP (qtyOf(available) -> qty) and wait for Confirm (qty) or Cancel/close (null)
-  async function oneTp(row, name, price, qtyOf) {
+  async function oneTp(row, name, price, qtyOf, takeRest) {
     const form = await openAdd(row);
     if (!form) { lastWhy = 'the Partial TP/SL window did not open'; return null; }
     const trig = [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Trigger');      // first = TP side
@@ -199,11 +199,13 @@
     // the window shows 0 available until Bitunix loads the position into it (CVNA, Oct 27)
     const avail = (await waitFor(() => available(form) || null, 6000)) || 0;
     await sleep(300);
-    const qty = qtyOf(avail);
-    if (!(Number(qty) > 0)) { lastWhy = 'Bitunix showed ' + avail + ' available for a TP'; return null; }
     setVal(trig, price);
-    await sleep(400);  // typing the trigger re-sets the quantity a moment later (NOK test, Oct 27)
+    await sleep(600);  // typing the trigger re-sets the quantity a moment later (NOK test, Oct 27)
     const qIn = () => [...form.querySelectorAll('input')].find(i => visible(i) && i.placeholder === 'Order Quantity') || q;
+    // TP2 = whatever is left: Bitunix fills the box with it. The "available" text can still show the
+    // amount from before TP1 (TENCENT, Oct 28: read 0.12, box had the real 0.06).
+    let qty = takeRest && Number(qIn().value) > 0 ? qIn().value : qtyOf(avail);
+    if (!(Number(qty) > 0)) { lastWhy = 'Bitunix showed ' + avail + ' available for a TP'; return null; }
     for (let k = 0; k < 4 && Number(qIn().value) !== Number(qty); k++) { setVal(qIn(), qty); await sleep(400); }
     if (Number(qIn().value) !== Number(qty)) { lastWhy = 'the quantity box would not take ' + qty + ' (it says ' + (qIn().value || 0) + ')'; return null; }
     ring([...form.querySelectorAll('button')].find(b => visible(b) && (b.innerText || '').trim() === 'Confirm'));
@@ -223,7 +225,7 @@
     if (!row) { banner('No new ' + sym + ' position showed up. If Bitunix said why, fix it and press ' + (longSide ? 'Open Long' : 'Open Short') + ' again.', 'err'); return false; }
     const q1 = await oneTp(row, 'TP1', o.tp1, avail => floorTo(avail / 2, Math.max(qdec, decs(avail))));
     if (!q1) { banner('TP1 was not added (' + lastWhy + ') - stopped. Add TP1 ' + o.tp1 + ' on half and TP2 ' + o.tp2 + ' on the rest by hand.', 'err'); return true; }
-    const q2 = await oneTp(row, 'TP2', o.tp2, avail => String(avail));
+    const q2 = await oneTp(row, 'TP2', o.tp2, avail => String(avail), true);
     if (!q2) { banner('TP1 is on. TP2 was not added (' + lastWhy + ') - add TP2 ' + o.tp2 + ' on the rest by hand.', 'err'); return true; }
     banner(sym + ' done: SL ' + o.sl + ', TP1 ' + o.tp1 + ' on ' + q1 + ', TP2 ' + o.tp2 + ' on ' + q2 + '.');
     return true;
