@@ -37,6 +37,9 @@
   if (!o.ts || Date.now() - o.ts > 10 * 60000) return banner('Link is old - not filling.', 'err');
   const sym = String(o.sym || '').toUpperCase();
   const longSide = o.side !== 'sell';
+  // Bitunix sends unknown pairs to BTCUSDT (CAT, Oct 27): only ever fill the pair the link is for
+  const onPair = () => location.pathname.toUpperCase().endsWith('/' + sym) && document.title.toUpperCase().includes(sym);
+  const wrongPair = () => banner('<b style="color:#ff6b6b">This page is not ' + sym + '</b> (Bitunix may not list it) - nothing filled. Don\'t open anything here.', 'err');
 
   // --- position rows for this symbol (cells: 0 name/side, 1 size, 2 entry ...)
   const rowsFor = () => [...document.querySelectorAll('.sample-position-list-cell')]
@@ -48,6 +51,7 @@
     const qty = await waitFor(() => inputs().find(i => /^Min /.test(i.placeholder || '')), 20000);
     if (!qty) return banner('Order form not found.', 'err');
     await sleep(500);
+    if (!await waitFor(onPair, 5000)) return wrongPair();
     // Tick TP / SL first: ticking it re-draws the form and wiped the size (OKLO, Oct 27)
     const tpIn = () => inputs().find(i => i.placeholder === 'TP');
     if (!tpIn()) {
@@ -62,6 +66,7 @@
     for (let k = 0; k < 4 && qtyNow().value !== String(want); k++) { setVal(qtyNow(), want); await sleep(400); }
     if (qtyNow().value !== String(want)) return banner('Could not fill the size. Type ' + (/USDT/.test(unit) ? o.size + ' USDT' : o.qty) + ' by hand.', 'err');
     if (!tp || !sl) return banner('Size filled, but the TP / SL fields did not show. Set SL ' + o.sl + ' and TP ' + o.tp2 + ' by hand.', 'err');
+    if (!onPair()) return wrongPair();
     setVal(tp, o.tp2);
     setVal(sl, o.sl);
     // Leverage: SPX sizes for 4x; OKLO was sitting at 20X (liquidation before the SL)
@@ -84,6 +89,7 @@
     let busy = false, done = false;
     if (btn && o.tp1qty) btn.addEventListener('click', async () => {
       if (busy || done) return;
+      if (!onPair()) return wrongPair();
       busy = true;
       done = await addTp1(before);
       busy = false;

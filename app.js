@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-27h';
+const DASH_VERSION = 'v2026-10-27i';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -999,7 +999,7 @@ function annotateBxMins() {
     document.querySelectorAll('input[data-bx]').forEach(el => {
         const m = _bxMins[bxSymbol(el.dataset.bx)];
         const label = el.nextElementSibling && el.nextElementSibling.classList.contains('bx-min') ? el.nextElementSibling : null;
-        if (!m) { if (label) label.textContent = ''; return; }
+        if (!m) { if (label) label.textContent = 'not on Bitunix'; el.placeholder = 'not on Bitunix'; return; }
         const usd = m[0] * m[1] / OPEN_LEVERAGE;
         const text = m[2] === 1 ? 'min $' + Math.max(0.01, usd).toFixed(2) : 'manual';
         el.placeholder = text;
@@ -1072,6 +1072,11 @@ async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     const entryEl = document.getElementById(elemId + '-entry');
     const p = Number(String(entryEl ? entryEl.value : price).replace(/,/g, '')) || Number(price);
     const side = sideOf(signal), isBuy = side === 'buy';
+    // Not listed on Bitunix (CAT, Oct 27: Bitunix sent the link to BTCUSDT) - don't open anything
+    if (size > 0 && _bxMins && !_bxMins[bxSymbol(ticker)]) {
+        showToast(displayName(ticker) + ' (' + bxSymbol(ticker) + 'USDT) isn\'t on Bitunix - nothing opened', 'error', 7000);
+        return;
+    }
     // US stock: Bitunix won't take it from the API. The link carries the trade for the Bitunix Fill
     // extension (SPX/bitunix-fill), which fills the order form; the panel has the same numbers to tap-copy.
     const manual = size > 0 && p > 0 && !BX_AUTO_OPEN.has(bxSymbol(ticker)) ? manualOrder(ticker, side, p, size) : null;
