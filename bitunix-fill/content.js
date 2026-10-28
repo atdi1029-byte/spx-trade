@@ -70,7 +70,7 @@
     if (qtyNow().value !== String(want)) return banner('Could not fill the size. Type ' + (/USDT/.test(unit) ? o.size + ' USDT' : o.qty) + ' by hand.', 'err');
     if (!tp || !sl) return banner('Size filled, but the TP / SL fields did not show. Set SL ' + o.sl + ' and TP ' + o.tp2 + ' by hand.', 'err');
     if (!onPair()) return wrongPair();
-    setVal(tp, o.tp1qty ? '' : o.tp2);
+    if (!o.tp1qty) setVal(tp, o.tp2);  // split: leave TP empty (typing '' makes it 0)
     setVal(sl, o.sl);
     // Leverage: SPX sizes for 4x; OKLO was sitting at 20X (liquidation before the SL)
     const levEl = [...document.querySelectorAll('div, span')].filter(visible)
