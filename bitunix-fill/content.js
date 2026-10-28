@@ -48,31 +48,52 @@
     const qty = await waitFor(() => inputs().find(i => /^Min /.test(i.placeholder || '')), 20000);
     if (!qty) return banner('Order form not found.', 'err');
     await sleep(500);
-    const unit = (qty.closest('.arco-input-group-wrapper') || qty.parentElement.parentElement).innerText || '';
-    if (/USDT/.test(unit)) setVal(qty, o.size);
-    else if (o.qty) setVal(qty, o.qty);
-    // TP/SL fields show only when the TP / SL box is ticked
+    // Tick TP / SL first: ticking it re-draws the form and wiped the size (OKLO, Oct 27)
     const tpIn = () => inputs().find(i => i.placeholder === 'TP');
     if (!tpIn()) {
       const tick = [...document.querySelectorAll('.check-icon-group')].find(e => visible(e) && /TP \/ SL/.test(e.innerText || ''));
       if (tick) click(tick);
     }
     const tp = await waitFor(tpIn, 3000), sl = inputs().find(i => i.placeholder === 'SL');
+    await sleep(400);
+    const qtyNow = () => inputs().find(i => /^Min /.test(i.placeholder || '')) || qty;
+    const unit = (qtyNow().closest('.arco-input-group-wrapper') || qtyNow().parentElement.parentElement).innerText || '';
+    const want = /USDT/.test(unit) ? o.size : o.qty;
+    for (let k = 0; k < 4 && qtyNow().value !== String(want); k++) { setVal(qtyNow(), want); await sleep(400); }
+    if (qtyNow().value !== String(want)) return banner('Could not fill the size. Type ' + (/USDT/.test(unit) ? o.size + ' USDT' : o.qty) + ' by hand.', 'err');
     if (!tp || !sl) return banner('Size filled, but the TP / SL fields did not show. Set SL ' + o.sl + ' and TP ' + o.tp2 + ' by hand.', 'err');
     setVal(tp, o.tp2);
     setVal(sl, o.sl);
+    // Leverage: SPX sizes for 4x; OKLO was sitting at 20X (liquidation before the SL)
+    const levEl = [...document.querySelectorAll('div, span')].filter(visible)
+      .find(e => /^\d+X(\s+\d+X)?$/.test((e.innerText || '').trim()) && e.getBoundingClientRect().left > window.innerWidth * 0.6 && e.getBoundingClientRect().top < qtyNow().getBoundingClientRect().top);
+    const levs = levEl ? (levEl.innerText.match(/\d+/g) || []).map(Number) : [];
+    const lev = longSide ? levs[0] : (levs[1] || levs[0]);
+    const levWrong = o.lev && lev && lev !== Number(o.lev);
     const btn = [...document.querySelectorAll('button')].find(b => visible(b) && (b.innerText || '').trim() === (longSide ? 'Open Long' : 'Open Short'));
     ring(btn);
     const before = new Set(rowsFor().map(rowKey));
-    banner('Filled ' + sym + ': size ' + (/USDT/.test(unit) ? '$' + o.size : o.qty) + ', SL ' + o.sl + ', TP2 ' + o.tp2 +
-           '.<br><b>Press ' + (longSide ? 'Open Long' : 'Open Short') + '.</b>' + (o.tp1qty ? '<br>TP1 on half comes next.' : ''), 'go');
-    if (btn && o.tp1qty) btn.addEventListener('click', () => addTp1(before), { once: true });
+    const filled = 'Filled ' + sym + ': size ' + (/USDT/.test(unit) ? '$' + o.size : o.qty) + ', SL ' + o.sl + ', TP2 ' + o.tp2 + '.';
+    if (levWrong) {
+      ring(levEl);
+      banner(filled + '<br><b style="color:#ff6b6b">Leverage is ' + lev + 'X here - SPX sizes for ' + o.lev + 'X.</b> Click ' + lev + 'X (ringed), set ' + o.lev + ', confirm, then press ' + (longSide ? 'Open Long' : 'Open Short') + '.', 'err');
+    } else {
+      banner(filled + '<br><b>Press ' + (longSide ? 'Open Long' : 'Open Short') + '.</b>' + (o.tp1qty ? '<br>TP1 on half comes next.' : ''), 'go');
+    }
+    // not once: a press that Bitunix rejects (no size, low margin) must not use up the TP1 step
+    let busy = false, done = false;
+    if (btn && o.tp1qty) btn.addEventListener('click', async () => {
+      if (busy || done) return;
+      busy = true;
+      done = await addTp1(before);
+      busy = false;
+    });
   }
 
   async function addTp1(before) {
     banner('Waiting for the new ' + sym + ' position...');
     const row = await waitFor(() => rowsFor().find(r => !before.has(rowKey(r))), 20000);
-    if (!row) return banner('No new ' + sym + ' position showed up. Add TP1 ' + o.tp1 + ' on ' + o.tp1qty + ' by hand.', 'err');
+    if (!row) { banner('No new ' + sym + ' position showed up. If Bitunix said why, fix it and press ' + (longSide ? 'Open Long' : 'Open Short') + ' again.', 'err'); return false; }
     const hdr = [...document.querySelectorAll('div')].find(d => d.children.length >= 10 && [...d.children].some(c => (c.innerText || '').trim() === 'Partial TP/SL'));
     const idx = hdr ? [...hdr.children].findIndex(c => (c.innerText || '').trim() === 'Partial TP/SL') : -1;
     const cell = idx >= 0 ? row.children[idx] : null;
@@ -93,6 +114,7 @@
     setVal(q, o.tp1qty);
     ring([...form.querySelectorAll('button')].find(b => visible(b) && (b.innerText || '').trim() === 'Confirm'));
     banner('TP1 ' + o.tp1 + ' on ' + o.tp1qty + ' filled.<br><b>Press Confirm.</b>', 'go');
+    return true;
   }
 
   fillOrder();

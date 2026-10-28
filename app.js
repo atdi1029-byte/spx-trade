@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-27g';
+const DASH_VERSION = 'v2026-10-27h';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -1078,7 +1078,7 @@ async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
     let url = bxUrl(ticker);
     if (manual) {
         const row = k => manual.rows.find(r => r.k === k) || {};
-        url += '#cfill=' + encodeURIComponent(JSON.stringify({ v: 1, ts: Date.now(), sym: bxSymbol(ticker) + 'USDT', side, size: size.toFixed(2),
+        url += '#cfill=' + encodeURIComponent(JSON.stringify({ v: 1, ts: Date.now(), sym: bxSymbol(ticker) + 'USDT', side, size: size.toFixed(2), lev: OPEN_LEVERAGE,
             qty: manual.qty, sl: row('SL').price, tp1: row('TP1').price, tp1qty: row('TP2').qty ? row('TP1').qty : null, tp2: row('TP2').price || row('TP1').price }));
     }
     // Open Bitunix now, inside the click (a window.open after an await gets popup-blocked); pair ready to paste
