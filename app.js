@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-28a';
+const DASH_VERSION = 'v2026-10-28b';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -973,13 +973,16 @@ function skipAllActions() {
 const TRADE_APP_URL = 'https://script.google.com/macros/s/AKfycbywWcasm7wwI14tUc64XpTscePJlgiU3Q7sZ4uY-TmqjqVZzuxJOhf6T8fO2ZpSaKwV/exec';
 // Bitunix names some stocks in full when the ticker is a crypto's (CAT -> CATERPILLARUSDT, GME -> GAMESTOPUSDT).
 const BX_SYMBOL = { 'CL1!': 'CL', 'USOIL': 'CL', 'NG1!': 'NATGAS', 'SILVER': 'XAG', 'GOLD': 'XAU', 'PLATINUM': 'XPT', 'XCUUSD': 'COPPER', 'BRK.B': 'BRKB',
-                    'CAT': 'CATERPILLAR', 'GME': 'GAMESTOP' };
+                    'CAT': 'CATERPILLAR', 'GME': 'GAMESTOP', 'PENG': 'PENGSTOCK', 'MDT': 'MDTUS' };
 // Korean / HK / China listings Bitunix trades in USD (LG Electronics 066570 = LGEUSDT, Oct 28). The card's price
 // is in won/HKD/yuan, so Open takes Bitunix's live USD price as the entry and puts the same % levels on it.
 const BX_FOREIGN = {
     '66570': 'LGE', '066570': 'LGE', '660': 'SKHYNIX', '000660': 'SKHYNIX', '5930': 'SAMSUNG', '005930': 'SAMSUNG',
     '5380': 'HYUNDAI', '005380': 'HYUNDAI', '9150': 'SAMSUNGEM', '009150': 'SAMSUNGEM',
-    '1810': 'XIAOMI', '9992': 'POPMART', '300308': 'ZHONGJI'
+    '1810': 'XIAOMI', 'XIAMOI': 'XIAOMI', '9992': 'POPMART', '300308': 'ZHONGJI',
+    '35420': 'NAVER', '035420': 'NAVER', '42700': 'HANMI', '042700': 'HANMI', '69500': 'KODEX200', '069500': 'KODEX200',
+    '100': 'MINIMAX', '3986': 'GIGADEV', '688825': 'CXMT', '625': 'SHEIN', '2513': 'ZHIPU', '1211': 'BYD',
+    'TENCENT80': 'TENCENT', 'MEITUAN19': 'MEITUAN', 'KUAISH80': 'KUAISHOU'
 };
 Object.assign(BX_SYMBOL, BX_FOREIGN);
 function bxSymbol(ticker) {
@@ -1009,15 +1012,16 @@ function annotateBxMins() {
     document.querySelectorAll('input[data-bx]').forEach(el => {
         const m = _bxMins[bxSymbol(el.dataset.bx)];
         const label = el.nextElementSibling && el.nextElementSibling.classList.contains('bx-min') ? el.nextElementSibling : null;
-        if (!m) { if (label) label.textContent = 'not on Bitunix'; el.placeholder = 'not on Bitunix'; return; }
+        if (!m) { if (label) label.textContent = 'not on Bitunix'; return; }
         const usd = m[0] * m[1] / OPEN_LEVERAGE;
-        const text = m[2] === 1 ? 'min $' + Math.max(0.01, usd).toFixed(2) : 'manual';
+        const viaApi = BX_AUTO_OPEN.has(bxSymbol(el.dataset.bx));
+        const text = m[2] === 1 || !viaApi ? 'min $' + Math.max(0.01, usd).toFixed(2) : 'manual';
         el.placeholder = text;
         if (!label) return;
         label.textContent = text;
         const typed = Number(String(el.value).replace(/[$,]/g, ''));
-        label.classList.toggle('under', m[2] === 1 && typed > 0 && typed < usd);
-        label.title = m[2] === 1 ? 'Smallest Bitunix order: $' + usd.toFixed(2) + ' at ' + OPEN_LEVERAGE + 'x' : 'Bitunix blocks API trading on this one: open it by hand';
+        label.classList.toggle('under', text !== 'manual' && typed > 0 && typed < usd);
+        label.title = text !== 'manual' ? 'Smallest Bitunix order: $' + usd.toFixed(2) + ' at ' + OPEN_LEVERAGE + 'x' : 'Bitunix blocks API trading on this one: open it by hand';
     });
 }
 let _bxMinsTimer = null;
