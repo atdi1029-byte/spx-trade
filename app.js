@@ -1,5 +1,5 @@
 // SPX Trade Dashboard - main app (split out of index.html). Loads before liquidity.js.
-const DASH_VERSION = 'v2026-10-28c';
+const DASH_VERSION = 'v2026-10-30a';
 console.log('SPX dashboard ' + DASH_VERSION);
 document.addEventListener('DOMContentLoaded', () => { const v = document.getElementById('dashVersion'); if (v) v.textContent = '· ' + DASH_VERSION; });
 // ====== CONFIG ======
@@ -1104,11 +1104,14 @@ async function openOnBitunix(btn, ticker, signal, price, elemId, signalTs) {
         showToast(displayName(ticker) + ' (' + bxSymbol(ticker) + 'USDT) isn\'t on Bitunix - nothing opened', 'error', 7000);
         return;
     }
-    // The card's price and Bitunix's must be the same thing (wrong pair, other currency, stale signal)
-    if (size > 0 && !foreign && bxPair && bxPair[1] > 0 && p > 0 && Math.abs(p / bxPair[1] - 1) > 0.2) {
-        showToast(displayName(ticker) + ': card price ' + p + ' vs Bitunix ' + bxPair[1] + ' - too far apart, nothing opened. Fix the Entry box or open by hand.', 'error', 9000);
+    // The card's price and Bitunix's must be the same thing (wrong pair or other currency)
+    if (size > 0 && !foreign && bxPair && bxPair[1] > 0 && p > 0 && Math.abs(p / bxPair[1] - 1) > 0.5) {
+        showToast(displayName(ticker) + ': card price ' + p + ' vs Bitunix ' + bxPair[1] + ' - too far apart, nothing opened. Open it by hand.', 'error', 9000);
         return;
     }
+    // Levels go on Bitunix's live price, not the signal's: after a big move the signal's SL sat ~2% from
+    // the fill (Oct 30 drop). Crypto Open does the same in the trade script.
+    if (size > 0 && bxPair && bxPair[1] > 0) p = bxPair[1];
     // US stock: Bitunix won't take it from the API. The link carries the trade for the Bitunix Fill
     // extension (SPX/bitunix-fill), which fills the order form; the panel has the same numbers to tap-copy.
     const manual = size > 0 && p > 0 && !BX_AUTO_OPEN.has(bxSymbol(ticker)) ? manualOrder(ticker, side, p, size) : null;
