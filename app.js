@@ -36,12 +36,19 @@ const BT_OVERRIDES = {
     'AVGO':   { buy: { sl:14, tp:10, halfTp:5   }, sell: null },
     'WMT':    { buy: { sl:14, tp:4,  halfTp:2   }, sell: { sl:12, tp:4, halfTp:2   } }
 };
+// Stock longs: first stop 10% at most (trade review, Nov 8 2026, TradeReview/notes/13_stock_stops.md). Stock
+// positions are ~4x a crypto one (Bitunix minimums), so a 14.5% stop cost ~$0.80 a hit; 10% with half at TP1
+// and a 7% trail on the rest (BreakevenBot's hand-moved list) halved the loss on Alex's stock longs since Aug 14.
+const STOCK_LONG_MAX_SL = 10;
 // Levels for a ticker/side: { sl, tp, halfTp, tested, noEdge }
 function btFor(ticker, side) {
     const o = BT_OVERRIDES[String(ticker || '').toUpperCase()];
-    if (o && o[side]) return Object.assign({ tested: true, noEdge: false }, o[side]);
-    if (o && o[side] === null) return Object.assign({ tested: false, noEdge: true }, BT_DEFAULTS[side]);
-    return Object.assign({ tested: false, noEdge: false }, BT_DEFAULTS[side]);
+    let r;
+    if (o && o[side]) r = Object.assign({ tested: true, noEdge: false }, o[side]);
+    else if (o && o[side] === null) r = Object.assign({ tested: false, noEdge: true }, BT_DEFAULTS[side]);
+    else r = Object.assign({ tested: false, noEdge: false }, BT_DEFAULTS[side]);
+    if (side === 'buy') r.sl = Math.min(r.sl, STOCK_LONG_MAX_SL);
+    return r;
 }
 function btTag(bt) {
     return bt.tested ? '<span style="opacity:0.55;font-size:0.5rem;color:var(--green-bright)">tested</span>'
