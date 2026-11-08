@@ -1952,3 +1952,33 @@ body {
 .mo-chip.copied::after { content: ' \2713'; }
 .mo-btns { display: flex; gap: 8px; margin-top: 12px; }
 .mo-btns .action-btn { flex: 1; padding: 8px 12px; }
+
+/* Stops to move by hand (written by BreakevenBot, see renderMoveStops in app.js) */
+.move-stops {
+    background: var(--bg-card);
+    border: 1px solid var(--pumpkin-deep);
+    border-left: 4px solid var(--red-bright);
+    border-radius: 4px;
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 0.6rem;
+}
+.move-stops-head {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem; font-weight: 700;
+    color: var(--red-bright);
+    margin-bottom: 0.4rem;
+    display: flex; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;
+}
+.move-stops-when { color: var(--text-dim); font-weight: 400; }
+.move-stops-when.old { color: var(--red-bright); }
+.move-stops-row {
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    padding: 0.25rem 0;
+    font-size: 0.75rem;
+}
+.move-stops-row .ticker-badge {
+    background: var(--pumpkin); color: var(--bg-deep);
+    font-weight: 700; font-size: 0.6rem; padding: 2px 6px; border-radius: 3px;
+}
+.move-stops-px b { color: var(--green-bright); }
+.move-stops-why { color: var(--text-dim); font-size: 0.65rem; }
