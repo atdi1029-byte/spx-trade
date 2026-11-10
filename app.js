@@ -937,13 +937,12 @@ function renderMoveStops(entry) {
     let d;
     try { d = JSON.parse(entry.v); } catch (e) { return; }
     const items = (d && d.items) || [], done = (d && d.done) || [];
-    if (!items.length && !done.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    if (!items.length) { box.style.display = 'none'; box.innerHTML = ''; return; }  // nothing to do: no box (Alex)
     const upd = d.updated ? new Date(d.updated) : null;
     const old = upd && (Date.now() - upd.getTime() > 26 * 3600 * 1000);
     const when = upd ? upd.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
-    box.classList.toggle('all-done', !items.length);
     box.innerHTML = `
-        <div class="move-stops-head">${!items.length ? 'Stops moved for today' : 'Move ' + (items.length === 1 ? 'this stop' : 'these ' + items.length + ' stops') + ' on Bitunix'}
+        <div class="move-stops-head">Move ${items.length === 1 ? 'this stop' : 'these ' + items.length + ' stops'} on Bitunix
             <span class="move-stops-when${old ? ' old' : ''}">${old ? 'old list, ' : ''}${esc(when)}</span></div>
         ${items.map(m => `
         <div class="move-stops-row">
@@ -957,7 +956,7 @@ function renderMoveStops(entry) {
             <span class="move-stops-px">&#10003; stop at <b>${esc(String(m.stop))}</b> on Bitunix</span>
             <span class="move-stops-why">done for today</span>
         </div>`).join('')}
-        ${items.length ? '<div class="move-stops-why move-stops-hint">Each row turns into a green &#10003; within a minute of the new stop showing on Bitunix (then that stock waits until tomorrow).</div>' : ''}`;
+        ${'<div class="move-stops-why move-stops-hint">Each row turns into a green &#10003; within a minute of the new stop showing on Bitunix (then that stock waits until tomorrow).</div>'}`;
     box.style.display = '';
 }
 
