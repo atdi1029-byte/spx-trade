@@ -1228,6 +1228,13 @@ async function markAction(ticker, signal, price, value, elemId) {
 
     // Send to the sheet and check the answer
     apiGet(buildUpdateUrl({ ticker, signal, price, field: 'action', value, entrySize })).then(r => {
+        if (r.ok === false && /No matching row/i.test(writeErr(r))) {
+            // the sheet has no unmarked row left for this alert: it was already marked (Open -> Opened, or
+            // a tap on a card the last refresh hadn't removed yet - 66570, Nov 10). Nothing to undo.
+            showToast(displayName(ticker) + ' was already marked on the sheet - nothing to change', 'success', 4000);
+            scheduleRefresh(500);
+            return;
+        }
         if (r.ok === false) {
             showToast(ticker + ' ' + value + ' was not saved: ' + writeErr(r), 'error', 7000);
             removeActedItem(ticker, signal, price);
