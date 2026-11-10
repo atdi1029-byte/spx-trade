@@ -928,26 +928,34 @@ async function pullState() {
 // ====== STOPS TO MOVE BY HAND ======
 // BreakevenBot (trail.py) trails crypto stops itself, but Bitunix refuses API stop changes on US stock
 // pairs, so it writes the stops Alex should move by hand to the state key below (read-only here, never
-// pushed back). The bot drops a row once the stop on Bitunix is close enough.
+// pushed back). Once Bitunix shows the new stop, the bot moves the row to "done" (a green check line,
+// the confirmation) and leaves that stock off the list until the next day: one move a day at most.
 const MOVE_STOPS_KEY = 'bx_manual_stops';
 function renderMoveStops(entry) {
     const box = document.getElementById('moveStopsBox');
     if (!box || !entry || typeof entry.v !== 'string') return;
     let d;
     try { d = JSON.parse(entry.v); } catch (e) { return; }
-    const items = (d && d.items) || [];
-    if (!items.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    const items = (d && d.items) || [], done = (d && d.done) || [];
+    if (!items.length && !done.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
     const upd = d.updated ? new Date(d.updated) : null;
     const old = upd && (Date.now() - upd.getTime() > 26 * 3600 * 1000);
     const when = upd ? upd.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+    box.classList.toggle('all-done', !items.length);
     box.innerHTML = `
-        <div class="move-stops-head">Move ${items.length === 1 ? 'this stop' : 'these ' + items.length + ' stops'} on Bitunix
+        <div class="move-stops-head">${!items.length ? 'Stops moved for today' : 'Move ' + (items.length === 1 ? 'this stop' : 'these ' + items.length + ' stops') + ' on Bitunix'}
             <span class="move-stops-when${old ? ' old' : ''}">${old ? 'old list, ' : ''}${esc(when)}</span></div>
         ${items.map(m => `
         <div class="move-stops-row">
             <span class="ticker-badge">${esc(m.symbol)}</span>
             <span class="move-stops-px">${m.stop_now == null ? 'no stop' : esc(String(m.stop_now))} &rarr; <b>${esc(String(m.move_to))}</b></span>
             <span class="move-stops-why">${esc(m.why || '')} · entry ${esc(String(m.entry))}</span>
+        </div>`).join('')}
+        ${done.map(m => `
+        <div class="move-stops-row done">
+            <span class="ticker-badge">${esc(m.symbol)}</span>
+            <span class="move-stops-px">&#10003; stop at <b>${esc(String(m.stop))}</b> on Bitunix</span>
+            <span class="move-stops-why">done for today</span>
         </div>`).join('')}`;
     box.style.display = '';
 }

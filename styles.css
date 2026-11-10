@@ -1982,3 +1982,7 @@ body {
 }
 .move-stops-px b { color: var(--green-bright); }
 .move-stops-why { color: var(--text-dim); font-size: 0.65rem; }
+.move-stops-row.done .move-stops-px { color: var(--green-bright); }
+.move-stops-row.done .ticker-badge { opacity: 0.6; }
+.move-stops.all-done { border-left-color: var(--green-bright); }
+.move-stops.all-done .move-stops-head { color: var(--green-bright); }
