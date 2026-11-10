@@ -956,7 +956,8 @@ function renderMoveStops(entry) {
             <span class="ticker-badge">${esc(m.symbol)}</span>
             <span class="move-stops-px">&#10003; stop at <b>${esc(String(m.stop))}</b> on Bitunix</span>
             <span class="move-stops-why">done for today</span>
-        </div>`).join('')}`;
+        </div>`).join('')}
+        ${items.length ? '<div class="move-stops-why move-stops-hint">Each row turns into a green &#10003; within a minute of the new stop showing on Bitunix (then that stock waits until tomorrow).</div>' : ''}`;
     box.style.display = '';
 }
 

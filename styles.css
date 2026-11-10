@@ -1986,3 +1986,4 @@ body {
 .move-stops-row.done .ticker-badge { opacity: 0.6; }
 .move-stops.all-done { border-left-color: var(--green-bright); }
 .move-stops.all-done .move-stops-head { color: var(--green-bright); }
+.move-stops-hint { margin-top: 0.35rem; }
